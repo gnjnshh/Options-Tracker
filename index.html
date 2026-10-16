@@ -311,11 +311,19 @@
         </div>
       </div>
       <div class="form-group">
-        <label>F&amp;O Symbol Universe (Includes 2024 Multi-Year Low Candidates)</label>
-        <input type="text" id="symbolsInput" value="VOLTAS,ASIANPAINT,DABUR,HAVELLS,ITC,NESTLEIND,POWERGRID,TCS,SUNPHARMA,HDFCBANK,INDUSINDBK,TRENT" />
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;flex-wrap:wrap;gap:4px;">
+          <label style="margin:0;">F&amp;O Symbol Universe <span id="symbolCountBadge" style="color:var(--accent);font-weight:600;">(12 selected)</span></label>
+          <div style="display:flex;gap:5px;">
+            <button type="button" class="btn-secondary" onclick="setSymbolBasket('2024low')" style="padding:2px 7px;font-size:0.7rem;" title="12 stocks testing 2024 multi-year support">🎯 2024 Low (12)</button>
+            <button type="button" class="btn-secondary" onclick="setSymbolBasket('top50')" style="padding:2px 7px;font-size:0.7rem;" title="Top 50 liquid F&O equities">🏆 Top 50 Liquid</button>
+            <button type="button" class="btn-secondary" onclick="setSymbolBasket('all')" style="padding:2px 7px;font-size:0.7rem;" title="Full 220 NSE F&O universe">⚡ All 220 F&amp;O</button>
+          </div>
+        </div>
+        <input type="text" id="symbolsInput" value="VOLTAS,ASIANPAINT,DABUR,HAVELLS,ITC,NESTLEIND,POWERGRID,TCS,SUNPHARMA,HDFCBANK,INDUSINDBK,TRENT" oninput="updateSymbolCount()" />
       </div>
       <div class="btn-row">
-        <button class="btn-primary" onclick="runLiveUpstoxScan()">Scan Live via Upstox API</button>
+        <button class="btn-primary" id="btnScan" onclick="runLiveUpstoxScan()">Scan Live via Upstox API</button>
+        <button class="btn-secondary" id="btnStopScan" onclick="stopLiveScan()" style="display:none;color:var(--rose);border-color:var(--rose);">⏹️ Stop Scan</button>
         <button class="btn-secondary" onclick="openUpstoxAuthDialog()">Get Auth Code via Upstox Login</button>
         <button class="btn-secondary" onclick="loadSampleUniverse()">Reset Sample Data</button>
       </div>
@@ -454,24 +462,1371 @@
 </div>
 
 <script>
-const ISIN_DIRECTORY = {
-  "VOLTAS": { name: "VOLTAS LTD", isin: "INE226A01021", lot_size: 375 },
-  "ASIANPAINT": { name: "ASIAN PAINTS LIMITED", isin: "INE021A01026", lot_size: 200 },
-  "DABUR": { name: "DABUR INDIA LTD", isin: "INE016A01026", lot_size: 1250 },
-  "HAVELLS": { name: "HAVELLS INDIA LIMITED", isin: "INE176B01034", lot_size: 500 },
-  "ITC": { name: "ITC LIMITED", isin: "INE154A01025", lot_size: 1600 },
-  "HDFCBANK": { name: "HDFC BANK LTD", isin: "INE040A01034", lot_size: 550 },
-  "SUNPHARMA": { name: "SUN PHARMACEUTICAL IND L", isin: "INE044A01036", lot_size: 350 },
-  "POWERGRID": { name: "POWER GRID CORP. LTD.", isin: "INE752E01010", lot_size: 3600 },
-  "TCS": { name: "TATA CONSULTANCY SERV LT", isin: "INE467B01029", lot_size: 175 },
-  "NESTLEIND": { name: "NESTLE INDIA LIMITED", isin: "INE239A01024", lot_size: 200 },
-  "ICICIBANK": { name: "ICICI BANK LTD.", isin: "INE090A01021", lot_size: 700 },
-  "RELIANCE": { name: "RELIANCE INDUSTRIES LTD", isin: "INE002A01018", lot_size: 500 },
-  "INFY": { name: "INFOSYS LIMITED", isin: "INE009A01021", lot_size: 400 },
-  "SBIN": { name: "STATE BANK OF INDIA", isin: "INE062A01020", lot_size: 750 },
-  "INDUSINDBK": { name: "INDUSIND BANK LIMITED", isin: "INE095A01012", lot_size: 500 },
-  "TRENT": { name: "TRENT LTD", isin: "INE849A01020", lot_size: 100 }
+const FNO_UNIVERSE = {
+  "360ONE": {
+    "name": "360 ONE WAM LIMITED",
+    "instrument_key": "NSE_EQ|INE466L01038",
+    "isin": "INE466L01038",
+    "lot_size": 500
+  },
+  "ABB": {
+    "name": "ABB INDIA LIMITED",
+    "instrument_key": "NSE_EQ|INE117A01022",
+    "isin": "INE117A01022",
+    "lot_size": 125
+  },
+  "ABCAPITAL": {
+    "name": "ADITYA BIRLA CAPITAL LTD.",
+    "instrument_key": "NSE_EQ|INE674K01013",
+    "isin": "INE674K01013",
+    "lot_size": 3100
+  },
+  "ADANIENSOL": {
+    "name": "ADANI ENERGY SOLUTION LTD",
+    "instrument_key": "NSE_EQ|INE931S01010",
+    "isin": "INE931S01010",
+    "lot_size": 675
+  },
+  "ADANIENT": {
+    "name": "ADANI ENTERPRISES LIMITED",
+    "instrument_key": "NSE_EQ|INE423A01024",
+    "isin": "INE423A01024",
+    "lot_size": 309
+  },
+  "ADANIGREEN": {
+    "name": "ADANI GREEN ENERGY LTD",
+    "instrument_key": "NSE_EQ|INE364U01010",
+    "isin": "INE364U01010",
+    "lot_size": 600
+  },
+  "ADANIPORTS": {
+    "name": "ADANI PORT & SEZ LTD",
+    "instrument_key": "NSE_EQ|INE742F01042",
+    "isin": "INE742F01042",
+    "lot_size": 475
+  },
+  "ADANIPOWER": {
+    "name": "ADANI POWER LTD",
+    "instrument_key": "NSE_EQ|INE814H01029",
+    "isin": "INE814H01029",
+    "lot_size": 3550
+  },
+  "ALKEM": {
+    "name": "ALKEM LABORATORIES LTD.",
+    "instrument_key": "NSE_EQ|INE540L01014",
+    "isin": "INE540L01014",
+    "lot_size": 125
+  },
+  "AMBER": {
+    "name": "AMBER ENTERPRISES (I) LTD",
+    "instrument_key": "NSE_EQ|INE371P01015",
+    "isin": "INE371P01015",
+    "lot_size": 100
+  },
+  "AMBUJACEM": {
+    "name": "AMBUJA CEMENTS LTD",
+    "instrument_key": "NSE_EQ|INE079A01024",
+    "isin": "INE079A01024",
+    "lot_size": 1200
+  },
+  "ANANDRATHI": {
+    "name": "ANAND RATHI WEALTH LTD",
+    "instrument_key": "NSE_EQ|INE463V01026",
+    "isin": "INE463V01026",
+    "lot_size": 250
+  },
+  "ANGELONE": {
+    "name": "ANGEL ONE LIMITED",
+    "instrument_key": "NSE_EQ|INE732I01021",
+    "isin": "INE732I01021",
+    "lot_size": 2500
+  },
+  "APLAPOLLO": {
+    "name": "APL APOLLO TUBES LTD",
+    "instrument_key": "NSE_EQ|INE702C01027",
+    "isin": "INE702C01027",
+    "lot_size": 350
+  },
+  "APOLLOHOSP": {
+    "name": "APOLLO HOSPITALS ENTER. L",
+    "instrument_key": "NSE_EQ|INE437A01024",
+    "isin": "INE437A01024",
+    "lot_size": 125
+  },
+  "ASHOKLEY": {
+    "name": "ASHOK LEYLAND LTD",
+    "instrument_key": "NSE_EQ|INE208A01029",
+    "isin": "INE208A01029",
+    "lot_size": 5000
+  },
+  "ASIANPAINT": {
+    "name": "ASIAN PAINTS LIMITED",
+    "instrument_key": "NSE_EQ|INE021A01026",
+    "isin": "INE021A01026",
+    "lot_size": 250
+  },
+  "ASTRAL": {
+    "name": "ASTRAL LIMITED",
+    "instrument_key": "NSE_EQ|INE006I01046",
+    "isin": "INE006I01046",
+    "lot_size": 425
+  },
+  "ATHERENERG": {
+    "name": "ATHER ENERGY LIMITED",
+    "instrument_key": "NSE_EQ|INE0LEZ01016",
+    "isin": "INE0LEZ01016",
+    "lot_size": 375
+  },
+  "AUBANK": {
+    "name": "AU SMALL FINANCE BANK LTD",
+    "instrument_key": "NSE_EQ|INE949L01017",
+    "isin": "INE949L01017",
+    "lot_size": 1000
+  },
+  "AUROPHARMA": {
+    "name": "AUROBINDO PHARMA LTD",
+    "instrument_key": "NSE_EQ|INE406A01037",
+    "isin": "INE406A01037",
+    "lot_size": 550
+  },
+  "AXISBANK": {
+    "name": "AXIS BANK LIMITED",
+    "instrument_key": "NSE_EQ|INE238A01034",
+    "isin": "INE238A01034",
+    "lot_size": 625
+  },
+  "BAJAJ-AUTO": {
+    "name": "BAJAJ AUTO LIMITED",
+    "instrument_key": "NSE_EQ|INE917I01010",
+    "isin": "INE917I01010",
+    "lot_size": 75
+  },
+  "BAJAJFINSV": {
+    "name": "BAJAJ FINSERV LTD.",
+    "instrument_key": "NSE_EQ|INE918I01026",
+    "isin": "INE918I01026",
+    "lot_size": 300
+  },
+  "BAJAJHLDNG": {
+    "name": "BAJAJ HOLDINGS & INVS LTD",
+    "instrument_key": "NSE_EQ|INE118A01012",
+    "isin": "INE118A01012",
+    "lot_size": 75
+  },
+  "BAJFINANCE": {
+    "name": "BAJAJ FINANCE LIMITED",
+    "instrument_key": "NSE_EQ|INE296A01032",
+    "isin": "INE296A01032",
+    "lot_size": 750
+  },
+  "BANDHANBNK": {
+    "name": "BANDHAN BANK LIMITED",
+    "instrument_key": "NSE_EQ|INE545U01014",
+    "isin": "INE545U01014",
+    "lot_size": 3600
+  },
+  "BANKBARODA": {
+    "name": "BANK OF BARODA",
+    "instrument_key": "NSE_EQ|INE028A01039",
+    "isin": "INE028A01039",
+    "lot_size": 2925
+  },
+  "BANKINDIA": {
+    "name": "BANK OF INDIA",
+    "instrument_key": "NSE_EQ|INE084A01016",
+    "isin": "INE084A01016",
+    "lot_size": 5200
+  },
+  "BANKNIFTY": {
+    "name": "BANK NIFTY",
+    "instrument_key": "NSE_INDEX|Nifty Bank",
+    "isin": "Nifty Bank",
+    "lot_size": 15
+  },
+  "BDL": {
+    "name": "BHARAT DYNAMICS LIMITED",
+    "instrument_key": "NSE_EQ|INE171Z01026",
+    "isin": "INE171Z01026",
+    "lot_size": 425
+  },
+  "BEL": {
+    "name": "BHARAT ELECTRONICS LTD",
+    "instrument_key": "NSE_EQ|INE263A01024",
+    "isin": "INE263A01024",
+    "lot_size": 1425
+  },
+  "BHARATFORG": {
+    "name": "BHARAT FORGE LTD",
+    "instrument_key": "NSE_EQ|INE465A01025",
+    "isin": "INE465A01025",
+    "lot_size": 500
+  },
+  "BHARTIARTL": {
+    "name": "BHARTI AIRTEL LIMITED",
+    "instrument_key": "NSE_EQ|INE397D01024",
+    "isin": "INE397D01024",
+    "lot_size": 475
+  },
+  "BHEL": {
+    "name": "BHEL",
+    "instrument_key": "NSE_EQ|INE257A01026",
+    "isin": "INE257A01026",
+    "lot_size": 2625
+  },
+  "BIOCON": {
+    "name": "BIOCON LIMITED.",
+    "instrument_key": "NSE_EQ|INE376G01013",
+    "isin": "INE376G01013",
+    "lot_size": 2500
+  },
+  "BLUESTARCO": {
+    "name": "BLUE STAR LIMITED",
+    "instrument_key": "NSE_EQ|INE472A01039",
+    "isin": "INE472A01039",
+    "lot_size": 325
+  },
+  "BOSCHLTD": {
+    "name": "BOSCH LIMITED",
+    "instrument_key": "NSE_EQ|INE323A01026",
+    "isin": "INE323A01026",
+    "lot_size": 25
+  },
+  "BPCL": {
+    "name": "BHARAT PETROLEUM CORP  LT",
+    "instrument_key": "NSE_EQ|INE029A01011",
+    "isin": "INE029A01011",
+    "lot_size": 1975
+  },
+  "BRITANNIA": {
+    "name": "BRITANNIA INDUSTRIES LTD",
+    "instrument_key": "NSE_EQ|INE216A01030",
+    "isin": "INE216A01030",
+    "lot_size": 125
+  },
+  "BSE": {
+    "name": "BSE LIMITED",
+    "instrument_key": "NSE_EQ|INE118H01025",
+    "isin": "INE118H01025",
+    "lot_size": 200
+  },
+  "CAMS": {
+    "name": "COMPUTER AGE MNGT SER LTD",
+    "instrument_key": "NSE_EQ|INE596I01020",
+    "isin": "INE596I01020",
+    "lot_size": 825
+  },
+  "CANBK": {
+    "name": "CANARA BANK",
+    "instrument_key": "NSE_EQ|INE476A01022",
+    "isin": "INE476A01022",
+    "lot_size": 6750
+  },
+  "CDSL": {
+    "name": "CENTRAL DEPO SER (I) LTD",
+    "instrument_key": "NSE_EQ|INE736A01011",
+    "isin": "INE736A01011",
+    "lot_size": 475
+  },
+  "CGPOWER": {
+    "name": "CG POWER AND IND SOL LTD",
+    "instrument_key": "NSE_EQ|INE067A01029",
+    "isin": "INE067A01029",
+    "lot_size": 850
+  },
+  "CHOLAFIN": {
+    "name": "CHOLAMANDALAM IN & FIN CO",
+    "instrument_key": "NSE_EQ|INE121A01024",
+    "isin": "INE121A01024",
+    "lot_size": 625
+  },
+  "CIPLA": {
+    "name": "CIPLA LTD",
+    "instrument_key": "NSE_EQ|INE059A01026",
+    "isin": "INE059A01026",
+    "lot_size": 425
+  },
+  "COALINDIA": {
+    "name": "COAL INDIA LTD",
+    "instrument_key": "NSE_EQ|INE522F01014",
+    "isin": "INE522F01014",
+    "lot_size": 1350
+  },
+  "COCHINSHIP": {
+    "name": "COCHIN SHIPYARD LIMITED",
+    "instrument_key": "NSE_EQ|INE704P01025",
+    "isin": "INE704P01025",
+    "lot_size": 400
+  },
+  "COFORGE": {
+    "name": "COFORGE LIMITED",
+    "instrument_key": "NSE_EQ|INE591G01025",
+    "isin": "INE591G01025",
+    "lot_size": 475
+  },
+  "COLPAL": {
+    "name": "COLGATE PALMOLIVE LTD.",
+    "instrument_key": "NSE_EQ|INE259A01022",
+    "isin": "INE259A01022",
+    "lot_size": 275
+  },
+  "CONCOR": {
+    "name": "CONTAINER CORP OF IND LTD",
+    "instrument_key": "NSE_EQ|INE111A01025",
+    "isin": "INE111A01025",
+    "lot_size": 1250
+  },
+  "CROMPTON": {
+    "name": "CROMPT GREA CON ELEC LTD",
+    "instrument_key": "NSE_EQ|INE299U01018",
+    "isin": "INE299U01018",
+    "lot_size": 2150
+  },
+  "CUMMINSIND": {
+    "name": "CUMMINS INDIA LTD",
+    "instrument_key": "NSE_EQ|INE298A01020",
+    "isin": "INE298A01020",
+    "lot_size": 200
+  },
+  "DABUR": {
+    "name": "DABUR INDIA LTD",
+    "instrument_key": "NSE_EQ|INE016A01026",
+    "isin": "INE016A01026",
+    "lot_size": 1250
+  },
+  "DELHIVERY": {
+    "name": "DELHIVERY LIMITED",
+    "instrument_key": "NSE_EQ|INE148O01028",
+    "isin": "INE148O01028",
+    "lot_size": 2075
+  },
+  "DIVISLAB": {
+    "name": "DIVI S LABORATORIES LTD",
+    "instrument_key": "NSE_EQ|INE361B01024",
+    "isin": "INE361B01024",
+    "lot_size": 100
+  },
+  "DIXON": {
+    "name": "DIXON TECHNO (INDIA) LTD",
+    "instrument_key": "NSE_EQ|INE935N01020",
+    "isin": "INE935N01020",
+    "lot_size": 50
+  },
+  "DLF": {
+    "name": "DLF LIMITED",
+    "instrument_key": "NSE_EQ|INE271C01023",
+    "isin": "INE271C01023",
+    "lot_size": 950
+  },
+  "DMART": {
+    "name": "AVENUE SUPERMARTS LIMITED",
+    "instrument_key": "NSE_EQ|INE192R01011",
+    "isin": "INE192R01011",
+    "lot_size": 150
+  },
+  "DRREDDY": {
+    "name": "DR. REDDY S LABORATORIES",
+    "instrument_key": "NSE_EQ|INE089A01031",
+    "isin": "INE089A01031",
+    "lot_size": 625
+  },
+  "EICHERMOT": {
+    "name": "EICHER MOTORS LTD",
+    "instrument_key": "NSE_EQ|INE066A01021",
+    "isin": "INE066A01021",
+    "lot_size": 100
+  },
+  "ENRIN": {
+    "name": "SIEMENS ENERGY INDIA LTD",
+    "instrument_key": "NSE_EQ|INE1NPP01017",
+    "isin": "INE1NPP01017",
+    "lot_size": 175
+  },
+  "ETERNAL": {
+    "name": "ETERNAL LIMITED",
+    "instrument_key": "NSE_EQ|INE758T01015",
+    "isin": "INE758T01015",
+    "lot_size": 2425
+  },
+  "FEDERALBNK": {
+    "name": "FEDERAL BANK LTD",
+    "instrument_key": "NSE_EQ|INE171A01029",
+    "isin": "INE171A01029",
+    "lot_size": 2500
+  },
+  "FINNIFTY": {
+    "name": "FIN NIFTY",
+    "instrument_key": "NSE_INDEX|Nifty Fin Service",
+    "isin": "Nifty Fin Service",
+    "lot_size": 25
+  },
+  "FORCEMOT": {
+    "name": "FORCE MOTORS LIMITED",
+    "instrument_key": "NSE_EQ|INE451A01017",
+    "isin": "INE451A01017",
+    "lot_size": 25
+  },
+  "FORTIS": {
+    "name": "FORTIS HEALTHCARE LTD",
+    "instrument_key": "NSE_EQ|INE061F01013",
+    "isin": "INE061F01013",
+    "lot_size": 775
+  },
+  "GAIL": {
+    "name": "GAIL (INDIA) LTD",
+    "instrument_key": "NSE_EQ|INE129A01019",
+    "isin": "INE129A01019",
+    "lot_size": 3550
+  },
+  "GLENMARK": {
+    "name": "GLENMARK PHARMACEUTICALS",
+    "instrument_key": "NSE_EQ|INE935A01035",
+    "isin": "INE935A01035",
+    "lot_size": 375
+  },
+  "GMRAIRPORT": {
+    "name": "GMR AIRPORTS LIMITED",
+    "instrument_key": "NSE_EQ|INE776C01039",
+    "isin": "INE776C01039",
+    "lot_size": 6975
+  },
+  "GODFRYPHLP": {
+    "name": "GODFREY PHILLIPS INDIA LT",
+    "instrument_key": "NSE_EQ|INE260B01028",
+    "isin": "INE260B01028",
+    "lot_size": 275
+  },
+  "GODREJCP": {
+    "name": "GODREJ CONSUMER PRODUCTS",
+    "instrument_key": "NSE_EQ|INE102D01028",
+    "isin": "INE102D01028",
+    "lot_size": 500
+  },
+  "GODREJPROP": {
+    "name": "GODREJ PROPERTIES LTD",
+    "instrument_key": "NSE_EQ|INE484J01027",
+    "isin": "INE484J01027",
+    "lot_size": 325
+  },
+  "GRASIM": {
+    "name": "GRASIM INDUSTRIES LTD",
+    "instrument_key": "NSE_EQ|INE047A01021",
+    "isin": "INE047A01021",
+    "lot_size": 250
+  },
+  "GVT&D": {
+    "name": "GE VERNOVA T&D INDIA LTD",
+    "instrument_key": "NSE_EQ|INE200A01026",
+    "isin": "INE200A01026",
+    "lot_size": 125
+  },
+  "HAL": {
+    "name": "HINDUSTAN AERONAUTICS LTD",
+    "instrument_key": "NSE_EQ|INE066F01020",
+    "isin": "INE066F01020",
+    "lot_size": 150
+  },
+  "HAVELLS": {
+    "name": "HAVELLS INDIA LIMITED",
+    "instrument_key": "NSE_EQ|INE176B01034",
+    "isin": "INE176B01034",
+    "lot_size": 500
+  },
+  "HCLTECH": {
+    "name": "HCL TECHNOLOGIES LTD",
+    "instrument_key": "NSE_EQ|INE860A01027",
+    "isin": "INE860A01027",
+    "lot_size": 400
+  },
+  "HDFCAMC": {
+    "name": "HDFC AMC LIMITED",
+    "instrument_key": "NSE_EQ|INE127D01025",
+    "isin": "INE127D01025",
+    "lot_size": 300
+  },
+  "HDFCBANK": {
+    "name": "HDFC BANK LTD",
+    "instrument_key": "NSE_EQ|INE040A01034",
+    "isin": "INE040A01034",
+    "lot_size": 650
+  },
+  "HDFCLIFE": {
+    "name": "HDFC LIFE INS CO LTD",
+    "instrument_key": "NSE_EQ|INE795G01014",
+    "isin": "INE795G01014",
+    "lot_size": 1100
+  },
+  "HEROMOTOCO": {
+    "name": "HERO MOTOCORP LIMITED",
+    "instrument_key": "NSE_EQ|INE158A01026",
+    "isin": "INE158A01026",
+    "lot_size": 150
+  },
+  "HINDALCO": {
+    "name": "HINDALCO  INDUSTRIES  LTD",
+    "instrument_key": "NSE_EQ|INE038A01020",
+    "isin": "INE038A01020",
+    "lot_size": 700
+  },
+  "HINDPETRO": {
+    "name": "HINDUSTAN PETROLEUM CORP",
+    "instrument_key": "NSE_EQ|INE094A01015",
+    "isin": "INE094A01015",
+    "lot_size": 2025
+  },
+  "HINDUNILVR": {
+    "name": "HINDUSTAN UNILEVER LTD.",
+    "instrument_key": "NSE_EQ|INE030A01027",
+    "isin": "INE030A01027",
+    "lot_size": 300
+  },
+  "HINDZINC": {
+    "name": "HINDUSTAN ZINC LIMITED",
+    "instrument_key": "NSE_EQ|INE267A01025",
+    "isin": "INE267A01025",
+    "lot_size": 1225
+  },
+  "HYUNDAI": {
+    "name": "HYUNDAI MOTOR INDIA LTD",
+    "instrument_key": "NSE_EQ|INE0V6F01027",
+    "isin": "INE0V6F01027",
+    "lot_size": 275
+  },
+  "ICICIBANK": {
+    "name": "ICICI BANK LTD.",
+    "instrument_key": "NSE_EQ|INE090A01021",
+    "isin": "INE090A01021",
+    "lot_size": 700
+  },
+  "ICICIGI": {
+    "name": "ICICI LOMBARD GIC LIMITED",
+    "instrument_key": "NSE_EQ|INE765G01017",
+    "isin": "INE765G01017",
+    "lot_size": 325
+  },
+  "ICICIPRULI": {
+    "name": "ICICI PRU LIFE INS CO LTD",
+    "instrument_key": "NSE_EQ|INE726G01019",
+    "isin": "INE726G01019",
+    "lot_size": 925
+  },
+  "IDEA": {
+    "name": "VODAFONE IDEA LIMITED",
+    "instrument_key": "NSE_EQ|INE669E01016",
+    "isin": "INE669E01016",
+    "lot_size": 71475
+  },
+  "IDFCFIRSTB": {
+    "name": "IDFC FIRST BANK LIMITED",
+    "instrument_key": "NSE_EQ|INE092T01019",
+    "isin": "INE092T01019",
+    "lot_size": 9275
+  },
+  "IEX": {
+    "name": "INDIAN ENERGY EXC LTD",
+    "instrument_key": "NSE_EQ|INE022Q01020",
+    "isin": "INE022Q01020",
+    "lot_size": 4350
+  },
+  "INDHOTEL": {
+    "name": "THE INDIAN HOTELS CO. LTD",
+    "instrument_key": "NSE_EQ|INE053A01029",
+    "isin": "INE053A01029",
+    "lot_size": 1000
+  },
+  "INDIANB": {
+    "name": "INDIAN BANK",
+    "instrument_key": "NSE_EQ|INE562A01011",
+    "isin": "INE562A01011",
+    "lot_size": 1000
+  },
+  "INDIGO": {
+    "name": "INTERGLOBE AVIATION LTD",
+    "instrument_key": "NSE_EQ|INE646L01027",
+    "isin": "INE646L01027",
+    "lot_size": 150
+  },
+  "INDUSINDBK": {
+    "name": "INDUSIND BANK LIMITED",
+    "instrument_key": "NSE_EQ|INE095A01012",
+    "isin": "INE095A01012",
+    "lot_size": 700
+  },
+  "INDUSTOWER": {
+    "name": "INDUS TOWERS LIMITED",
+    "instrument_key": "NSE_EQ|INE121J01017",
+    "isin": "INE121J01017",
+    "lot_size": 1700
+  },
+  "INFY": {
+    "name": "INFOSYS LIMITED",
+    "instrument_key": "NSE_EQ|INE009A01021",
+    "isin": "INE009A01021",
+    "lot_size": 400
+  },
+  "INOXWIND": {
+    "name": "INOX WIND LIMITED",
+    "instrument_key": "NSE_EQ|INE066P01011",
+    "isin": "INE066P01011",
+    "lot_size": 6400
+  },
+  "IOC": {
+    "name": "INDIAN OIL CORP LTD",
+    "instrument_key": "NSE_EQ|INE242A01010",
+    "isin": "INE242A01010",
+    "lot_size": 4875
+  },
+  "IREDA": {
+    "name": "INDIAN RENEWABLE ENERGY",
+    "instrument_key": "NSE_EQ|INE202E01016",
+    "isin": "INE202E01016",
+    "lot_size": 4525
+  },
+  "IRFC": {
+    "name": "INDIAN RAILWAY FIN CORP L",
+    "instrument_key": "NSE_EQ|INE053F01010",
+    "isin": "INE053F01010",
+    "lot_size": 5425
+  },
+  "ITC": {
+    "name": "ITC LTD",
+    "instrument_key": "NSE_EQ|INE154A01025",
+    "isin": "INE154A01025",
+    "lot_size": 1725
+  },
+  "JINDALSTEL": {
+    "name": "JINDAL STEEL LIMITED",
+    "instrument_key": "NSE_EQ|INE749A01030",
+    "isin": "INE749A01030",
+    "lot_size": 625
+  },
+  "JIOFIN": {
+    "name": "JIO FIN SERVICES LTD",
+    "instrument_key": "NSE_EQ|INE758E01017",
+    "isin": "INE758E01017",
+    "lot_size": 2350
+  },
+  "JSWENERGY": {
+    "name": "JSW ENERGY LIMITED",
+    "instrument_key": "NSE_EQ|INE121E01018",
+    "isin": "INE121E01018",
+    "lot_size": 1075
+  },
+  "JSWSTEEL": {
+    "name": "JSW STEEL LIMITED",
+    "instrument_key": "NSE_EQ|INE019A01038",
+    "isin": "INE019A01038",
+    "lot_size": 675
+  },
+  "JUBLFOOD": {
+    "name": "JUBILANT FOODWORKS LTD",
+    "instrument_key": "NSE_EQ|INE797F01020",
+    "isin": "INE797F01020",
+    "lot_size": 1250
+  },
+  "KALYANKJIL": {
+    "name": "KALYAN JEWELLERS IND LTD",
+    "instrument_key": "NSE_EQ|INE303R01014",
+    "isin": "INE303R01014",
+    "lot_size": 1350
+  },
+  "KAYNES": {
+    "name": "KAYNES TECHNOLOGY IND LTD",
+    "instrument_key": "NSE_EQ|INE918Z01012",
+    "isin": "INE918Z01012",
+    "lot_size": 150
+  },
+  "KEI": {
+    "name": "KEI INDUSTRIES LTD.",
+    "instrument_key": "NSE_EQ|INE878B01027",
+    "isin": "INE878B01027",
+    "lot_size": 175
+  },
+  "KFINTECH": {
+    "name": "KFIN TECHNOLOGIES LIMITED",
+    "instrument_key": "NSE_EQ|INE138Y01010",
+    "isin": "INE138Y01010",
+    "lot_size": 575
+  },
+  "KOTAKBANK": {
+    "name": "KOTAK MAHINDRA BANK LTD",
+    "instrument_key": "NSE_EQ|INE237A01036",
+    "isin": "INE237A01036",
+    "lot_size": 2000
+  },
+  "KPITTECH": {
+    "name": "KPIT TECHNOLOGIES LIMITED",
+    "instrument_key": "NSE_EQ|INE04I401011",
+    "isin": "INE04I401011",
+    "lot_size": 775
+  },
+  "LAURUSLABS": {
+    "name": "LAURUS LABS LIMITED",
+    "instrument_key": "NSE_EQ|INE947Q01028",
+    "isin": "INE947Q01028",
+    "lot_size": 850
+  },
+  "LICHSGFIN": {
+    "name": "LIC HOUSING FINANCE LTD",
+    "instrument_key": "NSE_EQ|INE115A01026",
+    "isin": "INE115A01026",
+    "lot_size": 1000
+  },
+  "LICI": {
+    "name": "LIFE INSURA CORP OF INDIA",
+    "instrument_key": "NSE_EQ|INE0J1Y01017",
+    "isin": "INE0J1Y01017",
+    "lot_size": 1400
+  },
+  "LODHA": {
+    "name": "LODHA DEVELOPERS LIMITED",
+    "instrument_key": "NSE_EQ|INE670K01029",
+    "isin": "INE670K01029",
+    "lot_size": 625
+  },
+  "LT": {
+    "name": "LARSEN & TOUBRO LTD.",
+    "instrument_key": "NSE_EQ|INE018A01030",
+    "isin": "INE018A01030",
+    "lot_size": 175
+  },
+  "LTF": {
+    "name": "L&T FINANCE LIMITED",
+    "instrument_key": "NSE_EQ|INE498L01015",
+    "isin": "INE498L01015",
+    "lot_size": 2250
+  },
+  "LTM": {
+    "name": "LTM LIMITED",
+    "instrument_key": "NSE_EQ|INE214T01019",
+    "isin": "INE214T01019",
+    "lot_size": 150
+  },
+  "LUPIN": {
+    "name": "LUPIN LIMITED",
+    "instrument_key": "NSE_EQ|INE326A01037",
+    "isin": "INE326A01037",
+    "lot_size": 425
+  },
+  "M&M": {
+    "name": "MAHINDRA & MAHINDRA LTD",
+    "instrument_key": "NSE_EQ|INE101A01026",
+    "isin": "INE101A01026",
+    "lot_size": 200
+  },
+  "MAHABANK": {
+    "name": "BANK OF MAHARASHTRA",
+    "instrument_key": "NSE_EQ|INE457A01014",
+    "isin": "INE457A01014",
+    "lot_size": 6500
+  },
+  "MANAPPURAM": {
+    "name": "MANAPPURAM FINANCE LTD",
+    "instrument_key": "NSE_EQ|INE522D01027",
+    "isin": "INE522D01027",
+    "lot_size": 3000
+  },
+  "MANKIND": {
+    "name": "MANKIND PHARMA LIMITED",
+    "instrument_key": "NSE_EQ|INE634S01028",
+    "isin": "INE634S01028",
+    "lot_size": 250
+  },
+  "MARICO": {
+    "name": "MARICO LIMITED",
+    "instrument_key": "NSE_EQ|INE196A01026",
+    "isin": "INE196A01026",
+    "lot_size": 1200
+  },
+  "MARUTI": {
+    "name": "MARUTI SUZUKI INDIA LTD.",
+    "instrument_key": "NSE_EQ|INE585B01010",
+    "isin": "INE585B01010",
+    "lot_size": 50
+  },
+  "MAXHEALTH": {
+    "name": "MAX HEALTHCARE INS LTD",
+    "instrument_key": "NSE_EQ|INE027H01010",
+    "isin": "INE027H01010",
+    "lot_size": 525
+  },
+  "MAZDOCK": {
+    "name": "MAZAGON DOCK SHIPBUIL LTD",
+    "instrument_key": "NSE_EQ|INE249Z01020",
+    "isin": "INE249Z01020",
+    "lot_size": 225
+  },
+  "MCX": {
+    "name": "MULTI COMMODITY EXCHANGE",
+    "instrument_key": "NSE_EQ|INE745G01043",
+    "isin": "INE745G01043",
+    "lot_size": 225
+  },
+  "MFSL": {
+    "name": "MAX FINANCIAL SERV LTD",
+    "instrument_key": "NSE_EQ|INE180A01020",
+    "isin": "INE180A01020",
+    "lot_size": 400
+  },
+  "MIDCPNIFTY": {
+    "name": "MIDCP NIFTY",
+    "instrument_key": "NSE_INDEX|NIFTY MID SELECT",
+    "isin": "NIFTY MID SELECT",
+    "lot_size": 50
+  },
+  "MOTHERSON": {
+    "name": "SAMVRDHNA MTHRSN INTL LTD",
+    "instrument_key": "NSE_EQ|INE775A01035",
+    "isin": "INE775A01035",
+    "lot_size": 6150
+  },
+  "MOTILALOFS": {
+    "name": "MOTILAL OSWAL FIN LTD",
+    "instrument_key": "NSE_EQ|INE338I01027",
+    "isin": "INE338I01027",
+    "lot_size": 775
+  },
+  "MPHASIS": {
+    "name": "MPHASIS LIMITED",
+    "instrument_key": "NSE_EQ|INE356A01018",
+    "isin": "INE356A01018",
+    "lot_size": 275
+  },
+  "MUTHOOTFIN": {
+    "name": "MUTHOOT FINANCE LIMITED",
+    "instrument_key": "NSE_EQ|INE414G01012",
+    "isin": "INE414G01012",
+    "lot_size": 275
+  },
+  "NAM-INDIA": {
+    "name": "NIPPON L I A M LTD",
+    "instrument_key": "NSE_EQ|INE298J01013",
+    "isin": "INE298J01013",
+    "lot_size": 625
+  },
+  "NATIONALUM": {
+    "name": "NATIONAL ALUMINIUM CO LTD",
+    "instrument_key": "NSE_EQ|INE139A01034",
+    "isin": "INE139A01034",
+    "lot_size": 1875
+  },
+  "NAUKRI": {
+    "name": "INFO EDGE (I) LTD",
+    "instrument_key": "NSE_EQ|INE663F01032",
+    "isin": "INE663F01032",
+    "lot_size": 550
+  },
+  "NBCC": {
+    "name": "NBCC (INDIA) LIMITED",
+    "instrument_key": "NSE_EQ|INE095N01031",
+    "isin": "INE095N01031",
+    "lot_size": 6500
+  },
+  "NESTLEIND": {
+    "name": "NESTLE INDIA LIMITED",
+    "instrument_key": "NSE_EQ|INE239A01024",
+    "isin": "INE239A01024",
+    "lot_size": 500
+  },
+  "NHPC": {
+    "name": "NHPC LTD",
+    "instrument_key": "NSE_EQ|INE848E01016",
+    "isin": "INE848E01016",
+    "lot_size": 6950
+  },
+  "NIFTY": {
+    "name": "NIFTY 50",
+    "instrument_key": "NSE_INDEX|Nifty 50",
+    "isin": "Nifty 50",
+    "lot_size": 25
+  },
+  "NIFTY 50": {
+    "name": "NIFTY 50",
+    "instrument_key": "NSE_INDEX|Nifty 50",
+    "isin": "Nifty 50",
+    "lot_size": 25
+  },
+  "NIFTYFPI": {
+    "name": "Nifty FPI 150",
+    "instrument_key": "NSE_INDEX|Nifty FPI 150",
+    "isin": "Nifty FPI 150",
+    "lot_size": 1100
+  },
+  "NIFTYNXT50": {
+    "name": "Nifty Next 50",
+    "instrument_key": "NSE_INDEX|Nifty Next 50",
+    "isin": "Nifty Next 50",
+    "lot_size": 25
+  },
+  "NMDC": {
+    "name": "NMDC LTD.",
+    "instrument_key": "NSE_EQ|INE584A01023",
+    "isin": "INE584A01023",
+    "lot_size": 6750
+  },
+  "NTPC": {
+    "name": "NTPC LTD",
+    "instrument_key": "NSE_EQ|INE733E01010",
+    "isin": "INE733E01010",
+    "lot_size": 1500
+  },
+  "NYKAA": {
+    "name": "FSN E COMMERCE VENTURES",
+    "instrument_key": "NSE_EQ|INE388Y01029",
+    "isin": "INE388Y01029",
+    "lot_size": 3125
+  },
+  "OBEROIRLTY": {
+    "name": "OBEROI REALTY LIMITED",
+    "instrument_key": "NSE_EQ|INE093I01010",
+    "isin": "INE093I01010",
+    "lot_size": 350
+  },
+  "OFSS": {
+    "name": "ORACLE FIN SERV SOFT LTD.",
+    "instrument_key": "NSE_EQ|INE881D01027",
+    "isin": "INE881D01027",
+    "lot_size": 100
+  },
+  "OIL": {
+    "name": "OIL INDIA LTD",
+    "instrument_key": "NSE_EQ|INE274J01014",
+    "isin": "INE274J01014",
+    "lot_size": 1400
+  },
+  "ONGC": {
+    "name": "OIL AND NATURAL GAS CORP.",
+    "instrument_key": "NSE_EQ|INE213A01029",
+    "isin": "INE213A01029",
+    "lot_size": 2250
+  },
+  "PAGEIND": {
+    "name": "PAGE INDUSTRIES LTD",
+    "instrument_key": "NSE_EQ|INE761H01022",
+    "isin": "INE761H01022",
+    "lot_size": 20
+  },
+  "PATANJALI": {
+    "name": "PATANJALI FOODS LIMITED",
+    "instrument_key": "NSE_EQ|INE619A01035",
+    "isin": "INE619A01035",
+    "lot_size": 1075
+  },
+  "PAYTM": {
+    "name": "ONE 97 COMMUNICATIONS LTD",
+    "instrument_key": "NSE_EQ|INE982J01020",
+    "isin": "INE982J01020",
+    "lot_size": 725
+  },
+  "PERSISTENT": {
+    "name": "PERSISTENT SYSTEMS LTD",
+    "instrument_key": "NSE_EQ|INE262H01021",
+    "isin": "INE262H01021",
+    "lot_size": 125
+  },
+  "PETRONET": {
+    "name": "PETRONET LNG LIMITED",
+    "instrument_key": "NSE_EQ|INE347G01014",
+    "isin": "INE347G01014",
+    "lot_size": 1900
+  },
+  "PFC": {
+    "name": "POWER FIN CORP LTD.",
+    "instrument_key": "NSE_EQ|INE134E01011",
+    "isin": "INE134E01011",
+    "lot_size": 1300
+  },
+  "PGEL": {
+    "name": "PG ELECTROPLAST LTD",
+    "instrument_key": "NSE_EQ|INE457L01029",
+    "isin": "INE457L01029",
+    "lot_size": 950
+  },
+  "PHOENIXLTD": {
+    "name": "THE PHOENIX MILLS LTD",
+    "instrument_key": "NSE_EQ|INE211B01039",
+    "isin": "INE211B01039",
+    "lot_size": 350
+  },
+  "PIDILITIND": {
+    "name": "PIDILITE INDUSTRIES LTD",
+    "instrument_key": "NSE_EQ|INE318A01026",
+    "isin": "INE318A01026",
+    "lot_size": 500
+  },
+  "PIIND": {
+    "name": "PI INDUSTRIES LTD",
+    "instrument_key": "NSE_EQ|INE603J01030",
+    "isin": "INE603J01030",
+    "lot_size": 175
+  },
+  "PNB": {
+    "name": "PUNJAB NATIONAL BANK",
+    "instrument_key": "NSE_EQ|INE160A01022",
+    "isin": "INE160A01022",
+    "lot_size": 8000
+  },
+  "PNBHOUSING": {
+    "name": "PNB HOUSING FIN LTD.",
+    "instrument_key": "NSE_EQ|INE572E01012",
+    "isin": "INE572E01012",
+    "lot_size": 650
+  },
+  "POLICYBZR": {
+    "name": "PB FINTECH LIMITED",
+    "instrument_key": "NSE_EQ|INE417T01026",
+    "isin": "INE417T01026",
+    "lot_size": 350
+  },
+  "POLYCAB": {
+    "name": "POLYCAB INDIA LIMITED",
+    "instrument_key": "NSE_EQ|INE455K01017",
+    "isin": "INE455K01017",
+    "lot_size": 125
+  },
+  "POWERGRID": {
+    "name": "POWER GRID CORP. LTD.",
+    "instrument_key": "NSE_EQ|INE752E01010",
+    "isin": "INE752E01010",
+    "lot_size": 1900
+  },
+  "POWERINDIA": {
+    "name": "HITACHI ENERGY INDIA LTD",
+    "instrument_key": "NSE_EQ|INE07Y701011",
+    "isin": "INE07Y701011",
+    "lot_size": 25
+  },
+  "PREMIERENE": {
+    "name": "PREMIER ENERGIES LIMITED",
+    "instrument_key": "NSE_EQ|INE0BS701011",
+    "isin": "INE0BS701011",
+    "lot_size": 650
+  },
+  "PRESTIGE": {
+    "name": "PRESTIGE ESTATE LTD",
+    "instrument_key": "NSE_EQ|INE811K01011",
+    "isin": "INE811K01011",
+    "lot_size": 450
+  },
+  "RADICO": {
+    "name": "RADICO KHAITAN LTD",
+    "instrument_key": "NSE_EQ|INE944F01028",
+    "isin": "INE944F01028",
+    "lot_size": 150
+  },
+  "RBLBANK": {
+    "name": "RBL BANK LIMITED",
+    "instrument_key": "NSE_EQ|INE976G01028",
+    "isin": "INE976G01028",
+    "lot_size": 3175
+  },
+  "RECLTD": {
+    "name": "REC LIMITED",
+    "instrument_key": "NSE_EQ|INE020B01018",
+    "isin": "INE020B01018",
+    "lot_size": 1575
+  },
+  "RELIANCE": {
+    "name": "RELIANCE INDUSTRIES LTD",
+    "instrument_key": "NSE_EQ|INE002A01018",
+    "isin": "INE002A01018",
+    "lot_size": 500
+  },
+  "RVNL": {
+    "name": "RAIL VIKAS NIGAM LIMITED",
+    "instrument_key": "NSE_EQ|INE415G01027",
+    "isin": "INE415G01027",
+    "lot_size": 1925
+  },
+  "SAGILITY": {
+    "name": "SAGILITY LIMITED",
+    "instrument_key": "NSE_EQ|INE0W2G01015",
+    "isin": "INE0W2G01015",
+    "lot_size": 12000
+  },
+  "SAIL": {
+    "name": "STEEL AUTHORITY OF INDIA",
+    "instrument_key": "NSE_EQ|INE114A01011",
+    "isin": "INE114A01011",
+    "lot_size": 4700
+  },
+  "SBICARD": {
+    "name": "SBI CARDS & PAY SER LTD",
+    "instrument_key": "NSE_EQ|INE018E01016",
+    "isin": "INE018E01016",
+    "lot_size": 800
+  },
+  "SBILIFE": {
+    "name": "SBI LIFE INSURANCE CO LTD",
+    "instrument_key": "NSE_EQ|INE123W01016",
+    "isin": "INE123W01016",
+    "lot_size": 375
+  },
+  "SBIN": {
+    "name": "STATE BANK OF INDIA",
+    "instrument_key": "NSE_EQ|INE062A01020",
+    "isin": "INE062A01020",
+    "lot_size": 750
+  },
+  "SHREECEM": {
+    "name": "SHREE CEMENT LIMITED",
+    "instrument_key": "NSE_EQ|INE070A01015",
+    "isin": "INE070A01015",
+    "lot_size": 25
+  },
+  "SHRIRAMFIN": {
+    "name": "SHRIRAM FINANCE LIMITED",
+    "instrument_key": "NSE_EQ|INE721A01047",
+    "isin": "INE721A01047",
+    "lot_size": 825
+  },
+  "SIEMENS": {
+    "name": "SIEMENS LTD",
+    "instrument_key": "NSE_EQ|INE003A01024",
+    "isin": "INE003A01024",
+    "lot_size": 175
+  },
+  "SOLARINDS": {
+    "name": "SOLAR INDUSTRIES (I) LTD",
+    "instrument_key": "NSE_EQ|INE343H01029",
+    "isin": "INE343H01029",
+    "lot_size": 50
+  },
+  "SONACOMS": {
+    "name": "SONA BLW PRECISION FRGS L",
+    "instrument_key": "NSE_EQ|INE073K01018",
+    "isin": "INE073K01018",
+    "lot_size": 1225
+  },
+  "SRF": {
+    "name": "SRF LTD",
+    "instrument_key": "NSE_EQ|INE647A01010",
+    "isin": "INE647A01010",
+    "lot_size": 200
+  },
+  "SUNPHARMA": {
+    "name": "SUN PHARMACEUTICAL IND L",
+    "instrument_key": "NSE_EQ|INE044A01036",
+    "isin": "INE044A01036",
+    "lot_size": 350
+  },
+  "SUPREMEIND": {
+    "name": "SUPREME INDUSTRIES LTD",
+    "instrument_key": "NSE_EQ|INE195A01028",
+    "isin": "INE195A01028",
+    "lot_size": 175
+  },
+  "SUZLON": {
+    "name": "SUZLON ENERGY LIMITED",
+    "instrument_key": "NSE_EQ|INE040H01021",
+    "isin": "INE040H01021",
+    "lot_size": 12700
+  },
+  "SWIGGY": {
+    "name": "SWIGGY LIMITED",
+    "instrument_key": "NSE_EQ|INE00H001014",
+    "isin": "INE00H001014",
+    "lot_size": 1825
+  },
+  "TATACONSUM": {
+    "name": "TATA CONSUMER PRODUCT LTD",
+    "instrument_key": "NSE_EQ|INE192A01025",
+    "isin": "INE192A01025",
+    "lot_size": 550
+  },
+  "TATAELXSI": {
+    "name": "TATA ELXSI LIMITED",
+    "instrument_key": "NSE_EQ|INE670A01012",
+    "isin": "INE670A01012",
+    "lot_size": 125
+  },
+  "TATAPOWER": {
+    "name": "TATA POWER CO LTD",
+    "instrument_key": "NSE_EQ|INE245A01021",
+    "isin": "INE245A01021",
+    "lot_size": 1450
+  },
+  "TATASTEEL": {
+    "name": "TATA STEEL LIMITED",
+    "instrument_key": "NSE_EQ|INE081A01020",
+    "isin": "INE081A01020",
+    "lot_size": 2750
+  },
+  "TCS": {
+    "name": "TATA CONSULTANCY SERV LT",
+    "instrument_key": "NSE_EQ|INE467B01029",
+    "isin": "INE467B01029",
+    "lot_size": 225
+  },
+  "TECHM": {
+    "name": "TECH MAHINDRA LIMITED",
+    "instrument_key": "NSE_EQ|INE669C01036",
+    "isin": "INE669C01036",
+    "lot_size": 600
+  },
+  "TIINDIA": {
+    "name": "TUBE INVEST OF INDIA LTD",
+    "instrument_key": "NSE_EQ|INE974X01010",
+    "isin": "INE974X01010",
+    "lot_size": 200
+  },
+  "TITAN": {
+    "name": "TITAN COMPANY LIMITED",
+    "instrument_key": "NSE_EQ|INE280A01028",
+    "isin": "INE280A01028",
+    "lot_size": 175
+  },
+  "TMPV": {
+    "name": "TATA MOTORS PASS VEH LTD",
+    "instrument_key": "NSE_EQ|INE155A01022",
+    "isin": "INE155A01022",
+    "lot_size": 1600
+  },
+  "TORNTPHARM": {
+    "name": "TORRENT PHARMACEUTICALS L",
+    "instrument_key": "NSE_EQ|INE685A01028",
+    "isin": "INE685A01028",
+    "lot_size": 125
+  },
+  "TRENT": {
+    "name": "TRENT LTD",
+    "instrument_key": "NSE_EQ|INE849A01020",
+    "isin": "INE849A01020",
+    "lot_size": 225
+  },
+  "TVSMOTOR": {
+    "name": "TVS MOTOR COMPANY  LTD",
+    "instrument_key": "NSE_EQ|INE494B01023",
+    "isin": "INE494B01023",
+    "lot_size": 175
+  },
+  "UJJIVANSFB": {
+    "name": "UJJIVAN SMALL FINANC BANK",
+    "instrument_key": "NSE_EQ|INE551W01018",
+    "isin": "INE551W01018",
+    "lot_size": 8000
+  },
+  "ULTRACEMCO": {
+    "name": "ULTRATECH CEMENT LIMITED",
+    "instrument_key": "NSE_EQ|INE481G01011",
+    "isin": "INE481G01011",
+    "lot_size": 50
+  },
+  "UNIONBANK": {
+    "name": "UNION BANK OF INDIA",
+    "instrument_key": "NSE_EQ|INE692A01016",
+    "isin": "INE692A01016",
+    "lot_size": 4425
+  },
+  "UNITDSPR": {
+    "name": "UNITED SPIRITS LIMITED",
+    "instrument_key": "NSE_EQ|INE854D01024",
+    "isin": "INE854D01024",
+    "lot_size": 400
+  },
+  "UNOMINDA": {
+    "name": "UNO MINDA LIMITED",
+    "instrument_key": "NSE_EQ|INE405E01023",
+    "isin": "INE405E01023",
+    "lot_size": 550
+  },
+  "UPL": {
+    "name": "UPL LIMITED",
+    "instrument_key": "NSE_EQ|INE628A01036",
+    "isin": "INE628A01036",
+    "lot_size": 1355
+  },
+  "VBL": {
+    "name": "VARUN BEVERAGES LIMITED",
+    "instrument_key": "NSE_EQ|INE200M01039",
+    "isin": "INE200M01039",
+    "lot_size": 1275
+  },
+  "VEDL": {
+    "name": "VEDANTA LIMITED",
+    "instrument_key": "NSE_EQ|INE205A01025",
+    "isin": "INE205A01025",
+    "lot_size": 1150
+  },
+  "VMM": {
+    "name": "VISHAL MEGA MART LIMITED",
+    "instrument_key": "NSE_EQ|INE01EA01019",
+    "isin": "INE01EA01019",
+    "lot_size": 4850
+  },
+  "VOLTAS": {
+    "name": "VOLTAS LTD",
+    "instrument_key": "NSE_EQ|INE226A01021",
+    "isin": "INE226A01021",
+    "lot_size": 375
+  },
+  "WAAREEENER": {
+    "name": "WAAREE ENERGIES LIMITED",
+    "instrument_key": "NSE_EQ|INE377N01017",
+    "isin": "INE377N01017",
+    "lot_size": 175
+  },
+  "WIPRO": {
+    "name": "WIPRO LTD",
+    "instrument_key": "NSE_EQ|INE075A01022",
+    "isin": "INE075A01022",
+    "lot_size": 3000
+  },
+  "YESBANK": {
+    "name": "YES BANK LIMITED",
+    "instrument_key": "NSE_EQ|INE528G01035",
+    "isin": "INE528G01035",
+    "lot_size": 31100
+  },
+  "ZYDUSLIFE": {
+    "name": "ZYDUS LIFESCIENCES LTD",
+    "instrument_key": "NSE_EQ|INE010B01027",
+    "isin": "INE010B01027",
+    "lot_size": 900
+  }
 };
+
+
+const ISIN_DIRECTORY = FNO_UNIVERSE;
+
+const BASKET_2024_LOW = [
+  "VOLTAS", "ASIANPAINT", "DABUR", "HAVELLS", "ITC", "NESTLEIND", "POWERGRID",
+  "TCS", "SUNPHARMA", "HDFCBANK", "INDUSINDBK", "TRENT"
+];
+
+const BASKET_TOP_50 = [
+  "RELIANCE", "HDFCBANK", "ICICIBANK", "INFY", "TCS", "ITC", "BHARTIARTL", "SBIN",
+  "LT", "AXISBANK", "KOTAKBANK", "SUNPHARMA", "MARUTI", "BAJFINANCE", "TATAMOTORS",
+  "NTPC", "POWERGRID", "TITAN", "ULTRACEMCO", "WIPRO", "HCLTECH", "M&M", "BAJAJ-AUTO",
+  "TATASTEEL", "COALINDIA", "HINDALCO", "JSWSTEEL", "ADANIENT", "ADANIPORTS", "NESTLEIND",
+  "GRASIM", "TECHM", "DRREDDY", "CIPLA", "BRITANNIA", "HEROMOTOCO", "INDUSINDBK",
+  "EICHERMOT", "DIVISLAB", "APOLLOHOSP", "TATACONSUM", "BPCL", "SHRIRAMFIN", "HINDUNILVR",
+  "ASIANPAINT", "VOLTAS", "HAVELLS", "DABUR", "PIDILITEIND", "TRENT"
+];
+
+function updateSymbolCount() {
+  const raw = document.getElementById("symbolsInput").value;
+  const syms = raw.split(",").map(s => s.trim().toUpperCase()).filter(Boolean);
+  const badge = document.getElementById("symbolCountBadge");
+  if (badge) {
+    badge.textContent = `(${syms.length} selected)`;
+  }
+}
+
+function setSymbolBasket(type) {
+  const input = document.getElementById("symbolsInput");
+  if (type === "2024low") {
+    input.value = BASKET_2024_LOW.join(",");
+  } else if (type === "top50") {
+    input.value = BASKET_TOP_50.join(",");
+  } else if (type === "all") {
+    input.value = Object.keys(FNO_UNIVERSE).join(",");
+  }
+  updateSymbolCount();
+  try {
+    localStorage.setItem(STORAGE_KEY_SYMBOLS, input.value);
+  } catch (e) {}
+}
+
 
 const SAMPLE_DATA = [
   {
@@ -851,6 +2206,17 @@ function applyFilters() {
   }
 }
 
+let liveScanActive = false;
+
+function stopLiveScan() {
+  liveScanActive = false;
+  const btnScan = document.getElementById("btnScan");
+  const btnStop = document.getElementById("btnStopScan");
+  if (btnScan) btnScan.style.display = "";
+  if (btnStop) btnStop.style.display = "none";
+  document.getElementById("statusBanner").innerHTML = "Scan stopped by user.";
+}
+
 // Live Upstox API v2/v3 Fetcher in Browser (Pulls Since 2024-01-01)
 async function runLiveUpstoxScan() {
   const token = document.getElementById("accessTokenInput").value.trim();
@@ -860,6 +2226,13 @@ async function runLiveUpstoxScan() {
     return;
   }
   saveCredentialsToStorage();
+
+  liveScanActive = true;
+  const btnScan = document.getElementById("btnScan");
+  const btnStop = document.getElementById("btnStopScan");
+  if (btnScan) btnScan.style.display = "none";
+  if (btnStop) btnStop.style.display = "";
+
   const expiry = document.getElementById("expirySelect").value;
   const rawSyms = document.getElementById("symbolsInput").value.split(",").map(s => s.trim().toUpperCase()).filter(Boolean);
   const headers = { "Accept": "application/json", "Authorization": `Bearer ${token}` };
@@ -871,11 +2244,15 @@ async function runLiveUpstoxScan() {
   document.getElementById("connModeBadge").textContent = "Mode: Live Upstox API v2/v3 (2024–Present)";
 
   for (let i = 0; i < rawSyms.length; i++) {
+    if (!liveScanActive) {
+      statusEl.innerHTML = `Scan halted. Completed ${liveResults.length} symbols.`;
+      break;
+    }
     const sym = rawSyms[i];
     const meta = ISIN_DIRECTORY[sym];
     if (!meta) continue;
-    const ukey = `NSE_EQ|${meta.isin}`;
-    statusEl.innerHTML = `Scanning [${i + 1}/${rawSyms.length}] <strong>${sym}</strong> (${ukey}) since 2024-01-01 via Upstox API v2/v3...`;
+    const ukey = meta.instrument_key || `NSE_EQ|${meta.isin}`;
+    statusEl.innerHTML = `Scanning [${i + 1}/${rawSyms.length}] <strong>${sym}</strong> (${ukey}) since 2024-01-01... (${liveResults.length} matches found)`;
 
     try {
       const encKey = encodeURIComponent(ukey);
@@ -1013,6 +2390,10 @@ async function runLiveUpstoxScan() {
       console.warn(`Error scanning ${sym}:`, err);
     }
   }
+
+  liveScanActive = false;
+  if (btnScan) btnScan.style.display = "";
+  if (btnStop) btnStop.style.display = "none";
 
   if (liveResults.length > 0) {
     currentRows = liveResults;
@@ -1170,6 +2551,7 @@ function initStoredCredentials() {
 
 window.addEventListener("DOMContentLoaded", () => {
   initStoredCredentials();
+  updateSymbolCount();
   applyFilters();
 });
 </script>

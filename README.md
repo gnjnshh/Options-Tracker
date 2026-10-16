@@ -80,9 +80,13 @@ UPSTOX_ACCESS_TOKEN=your_upstox_bearer_token_here
 *(The screener also automatically detects `Upstox API.txt` on your Desktop if `.env` is omitted.)*
 
 #### 3. Run the Screener
-- **Live Upstox Scan across liquid F&O symbols:**
+- **Scan liquid F&O basket (Top 40):**
   ```bash
   python upstox_fno_option_screener.py
+  ```
+- **Scan ALL ~200+ NSE F&O equities across the entire market:**
+  ```bash
+  python upstox_fno_option_screener.py --symbols all --max-symbols 250
   ```
 - **Scan specific tickers:**
   ```bash

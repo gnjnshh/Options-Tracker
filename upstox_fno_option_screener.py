@@ -1095,9 +1095,20 @@ def main() -> None:
         sys.exit(1)
 
     client = UpstoxClient(access_token=access_token)
-    symbol_list = [s.strip().upper() for s in args.symbols.split(",") if s.strip()] if args.symbols else DEFAULT_LIQUID_FNO_SYMBOLS
-    print(f"Loading NSE F&O instruments from Upstox BOD master ({len(symbol_list)} target symbols)...")
-    universe = client.load_fno_equity_universe(filter_symbols=symbol_list)[: args.max_symbols]
+    raw_syms = args.symbols.strip().lower()
+    if raw_syms in ("all", "*"):
+        symbol_list = None
+        max_scan = args.max_symbols if args.max_symbols != 40 else 250
+    elif raw_syms:
+        symbol_list = [s.strip().upper() for s in args.symbols.split(",") if s.strip()]
+        max_scan = args.max_symbols
+    else:
+        symbol_list = DEFAULT_LIQUID_FNO_SYMBOLS
+        max_scan = args.max_symbols
+
+    target_desc = f"{len(symbol_list)} target symbols" if symbol_list is not None else "ALL available F&O symbols"
+    print(f"Loading NSE F&O instruments from Upstox BOD master ({target_desc})...")
+    universe = client.load_fno_equity_universe(filter_symbols=symbol_list)[: max_scan]
 
     results = []
     for idx, meta in enumerate(universe, 1):
