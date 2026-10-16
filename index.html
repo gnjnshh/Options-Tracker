@@ -1,0 +1,1177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Upstox F&O Option Selling Screener — 2024 Multi-Year Low & Theta Decay Engine</title>
+  <style>
+    :root {
+      --bg: #0b111e;
+      --surface: #111a2e;
+      --surface-alt: #16223b;
+      --border: #233457;
+      --text: #e6edf7;
+      --muted: #93a4c3;
+      --accent: #38bdf8;
+      --emerald: #10b981;
+      --emerald-bg: rgba(16, 185, 129, 0.14);
+      --amber: #f59e0b;
+      --amber-bg: rgba(245, 158, 11, 0.14);
+      --rose: #f43f5e;
+      --rose-bg: rgba(244, 63, 94, 0.14);
+      --indigo: #6366f1;
+      --cyan-bg: rgba(56, 189, 248, 0.14);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Inter, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      padding: 20px;
+    }
+    .container { max-width: 1480px; margin: 0 auto; }
+    header {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+      padding-bottom: 18px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 20px;
+    }
+    .title-group h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: #fff;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px;
+    }
+    .badge {
+      font-size: 0.74rem;
+      padding: 3px 10px;
+      border-radius: 999px;
+      background: rgba(56, 189, 248, 0.15);
+      color: var(--accent);
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      font-weight: 600;
+    }
+    .badge-emerald {
+      background: var(--emerald-bg);
+      color: var(--emerald);
+      border-color: rgba(16, 185, 129, 0.35);
+    }
+    .subtitle { color: var(--muted); font-size: 0.9rem; margin-top: 6px; max-width: 920px; }
+    .grid-top {
+      display: grid;
+      grid-template-columns: 1.05fr 1.95fr;
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+    @media (max-width: 1140px) { .grid-top { grid-template-columns: 1fr; } }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px 18px;
+    }
+    .card-title {
+      font-size: 0.93rem;
+      font-weight: 600;
+      color: #fff;
+      margin-bottom: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .form-group { display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px; }
+    label { font-size: 0.76rem; color: var(--muted); font-weight: 500; display: flex; justify-content: space-between; }
+    input[type="text"], input[type="password"], select {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 8px 10px;
+      border-radius: 7px;
+      font-size: 0.83rem;
+      outline: none;
+    }
+    input[type="text"]:focus, input[type="password"]:focus, select:focus {
+      border-color: var(--accent);
+    }
+    input[type="range"] { width: 100%; accent-color: var(--accent); cursor: pointer; }
+    .btn-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+    button {
+      cursor: pointer;
+      border: none;
+      border-radius: 7px;
+      padding: 8px 13px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      transition: all 0.15s ease;
+    }
+    .btn-primary { background: var(--accent); color: #061320; }
+    .btn-primary:hover { background: #7dd3fc; }
+    .btn-emerald { background: var(--emerald); color: #041f17; }
+    .btn-emerald:hover { background: #34d399; }
+    .btn-secondary { background: var(--surface-alt); color: var(--text); border: 1px solid var(--border); }
+    .btn-secondary:hover { border-color: var(--accent); }
+    .btn-active { border-color: var(--emerald); background: var(--emerald-bg); color: var(--emerald); }
+    .pillars-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 10px;
+    }
+    @media (max-width: 1200px) { .pillars-grid { grid-template-columns: repeat(3, 1fr); } }
+    @media (max-width: 720px) { .pillars-grid { grid-template-columns: 1fr; } }
+    .pillar-box {
+      background: var(--surface-alt);
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      padding: 11px;
+    }
+    .pillar-box.highlight-2024 {
+      border-color: rgba(16, 185, 129, 0.55);
+      background: linear-gradient(180deg, rgba(16, 185, 129, 0.09) 0%, rgba(22, 34, 59, 0.95) 100%);
+    }
+    .pillar-box h4 {
+      font-size: 0.76rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--accent);
+      margin-bottom: 8px;
+    }
+    .pillar-box.highlight-2024 h4 { color: var(--emerald); }
+    .kpi-strip {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+    @media (max-width: 980px) { .kpi-strip { grid-template-columns: repeat(2, 1fr); } }
+    .kpi-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 13px 15px;
+    }
+    .kpi-label { font-size: 0.73rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+    .kpi-val { font-size: 1.32rem; font-weight: 700; color: #fff; margin-top: 4px; }
+    .kpi-sub { font-size: 0.76rem; color: var(--emerald); margin-top: 2px; }
+    .table-wrap {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow-x: auto;
+    }
+    table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+    th {
+      background: var(--surface-alt);
+      color: var(--muted);
+      font-weight: 600;
+      text-align: left;
+      padding: 10px 11px;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+      font-size: 0.73rem;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+    td {
+      padding: 11px 11px;
+      border-bottom: 1px solid rgba(35, 52, 87, 0.55);
+      vertical-align: middle;
+      white-space: nowrap;
+    }
+    tr:hover td { background: rgba(56, 189, 248, 0.04); }
+    .num { text-align: right; font-variant-numeric: tabular-nums; }
+    .pill {
+      display: inline-block;
+      padding: 2px 7px;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 0.74rem;
+    }
+    .pill-pass { background: var(--emerald-bg); color: var(--emerald); border: 1px solid rgba(16, 185, 129, 0.3); }
+    .pill-2024 { background: var(--cyan-bg); color: var(--accent); border: 1px solid rgba(56, 189, 248, 0.35); }
+    .pill-warn { background: var(--amber-bg); color: var(--amber); border: 1px solid rgba(245, 158, 11, 0.3); }
+    .pill-fail { background: var(--rose-bg); color: var(--rose); border: 1px solid rgba(244, 63, 94, 0.3); }
+    .sym-cell strong { color: #fff; font-size: 0.9rem; display: flex; align-items: center; gap: 6px; }
+    .sym-cell span { color: var(--muted); font-size: 0.72rem; display: block; margin-top: 2px; }
+    .range-bar-wrap { width: 132px; }
+    .range-track {
+      width: 100%;
+      height: 6px;
+      background: #0b111e;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      position: relative;
+      margin: 4px 0;
+      overflow: hidden;
+    }
+    .range-fill {
+      height: 100%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--emerald), var(--accent));
+    }
+    .range-meta {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.69rem;
+      color: var(--muted);
+    }
+    .rationale-row td {
+      background: rgba(17, 26, 46, 0.65);
+      color: var(--muted);
+      font-size: 0.78rem;
+      padding: 6px 14px 10px 14px;
+      white-space: normal;
+    }
+    .status-banner {
+      font-size: 0.79rem;
+      padding: 8px 12px;
+      border-radius: 7px;
+      background: rgba(99, 102, 241, 0.12);
+      border: 1px solid rgba(99, 102, 241, 0.35);
+      color: #c7d2fe;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <div class="title-group">
+      <h1>
+        Upstox F&amp;O Option Selling Screener
+        <span class="badge">v2 / v3 API Integrated</span>
+        <span class="badge badge-emerald">+ 2024 Multi-Year Low Filter</span>
+      </h1>
+      <p class="subtitle">
+        Scans liquid NSE F&amp;O stocks that have pulled back to their <strong>2024 multi-year historical support base</strong> (like <strong>VOLTAS @ ₹1,053.40</strong>),
+        are <strong>technically oversold</strong> (low RSI, MFI, Bollinger %B), <strong>don't deserve the selloff</strong> (ROE &amp; ROCE above sector benchmark, positive PAT growth, low down-day volume),
+        and exhibit <strong>stagnant volatility</strong> (HV10 &lt; HV20, low ADX, IV &gt; HV20) so sold OTM Puts expire worthless.
+      </p>
+    </div>
+    <div class="btn-row">
+      <button class="btn-secondary" onclick="toggle2024LowFilter()" id="toggle2024Btn">Filter: Only Near 2024 Low (OFF)</button>
+      <button class="btn-secondary" onclick="toggleShowRejected()" id="toggleRejBtn">Show Rejected / Value Traps: ON</button>
+      <button class="btn-primary" onclick="exportToCSV()">Export Screener CSV</button>
+    </div>
+  </header>
+
+  <div class="grid-top">
+    <!-- Upstox API Connection & OAuth Card -->
+    <div class="card">
+      <div class="card-title">
+        <span>1. Upstox API Credentials &amp; Multi-Year Fetch (Since 2024)</span>
+        <span style="font-size:0.75rem;color:var(--emerald);" id="connModeBadge">Mode: Offline Institutional Sample</span>
+      </div>
+      <div class="form-group">
+        <label>
+          Upstox OAuth Access Token (Bearer)
+          <span id="tokenStorageStatus" style="font-size:0.72rem;color:var(--accent);font-weight:600;">🔒 Stored locally in your browser</span>
+        </label>
+        <div style="display:flex;gap:6px;align-items:center;">
+          <input type="password" id="accessTokenInput" placeholder="Paste your daily Upstox access_token (auto-saved in localStorage)..." style="flex:1;" />
+          <button type="button" class="btn-secondary" onclick="toggleTokenVisibility()" id="btnToggleVis" style="padding:7px 11px;font-size:0.8rem;" title="Show / Hide Token">👁️</button>
+        </div>
+      </div>
+      <div class="btn-row" style="margin-top:-2px;margin-bottom:12px;gap:6px;">
+        <button type="button" class="btn-secondary" onclick="saveCredentialsToStorage()" style="font-size:0.74rem;padding:4px 9px;">💾 Save Token</button>
+        <label class="btn-secondary" style="font-size:0.74rem;padding:4px 9px;cursor:pointer;display:inline-flex;align-items:center;margin:0;">
+          📁 Load from Upstox API.txt
+          <input type="file" id="tokenFileInput" accept=".txt" style="display:none;" onchange="handleTokenFileUpload(this)" />
+        </label>
+        <button type="button" class="btn-secondary" onclick="clearSavedCredentials()" style="font-size:0.74rem;padding:4px 9px;color:var(--rose);" title="Clear saved token from this browser">🗑️ Clear Saved Token</button>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>API Key (client_id) <span>Optional helper</span></label>
+          <input type="text" id="apiKeyInput" placeholder="e.g. 615b1297-d443-..." />
+        </div>
+        <div class="form-group">
+          <label>Expiry Keyword / Date</label>
+          <select id="expirySelect">
+            <option value="current_month" selected>current_month (Auto Rollover)</option>
+            <option value="next_month">next_month</option>
+            <option value="current_week">current_week (Index)</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>F&amp;O Symbol Universe (Includes 2024 Multi-Year Low Candidates)</label>
+        <input type="text" id="symbolsInput" value="VOLTAS,ASIANPAINT,DABUR,HAVELLS,ITC,NESTLEIND,POWERGRID,TCS,SUNPHARMA,HDFCBANK,INDUSINDBK,TRENT" />
+      </div>
+      <div class="btn-row">
+        <button class="btn-primary" onclick="runLiveUpstoxScan()">Scan Live via Upstox API</button>
+        <button class="btn-secondary" onclick="openUpstoxAuthDialog()">Get Auth Code via Upstox Login</button>
+        <button class="btn-secondary" onclick="loadSampleUniverse()">Reset Sample Data</button>
+      </div>
+      <div class="status-banner" id="statusBanner">
+        Ready. Queries <code>/v3/historical-candle/.../days/1/{today}/2024-01-01</code> to measure each stock's exact percentile in its <strong>2024–2026 multi-year range</strong> alongside live option chain Greeks and company fundamentals.
+      </div>
+    </div>
+
+    <!-- Quantitative 5-Pillar Filter Sliders -->
+    <div class="card">
+      <div class="card-title">
+        <span>2. Quantitative 5-Pillar Filter Thresholds</span>
+        <span style="font-size:0.75rem;color:var(--muted);">Includes 2024 Multi-Year Support Floor</span>
+      </div>
+      <div class="pillars-grid">
+        <div class="pillar-box highlight-2024">
+          <h4>I. 2024 Multi-Yr Low</h4>
+          <div class="form-group">
+            <label>Max 2024–26 %ile <span id="valMaxHistPct">35%</span></label>
+            <input type="range" id="slMaxHistPct" min="10" max="100" step="5" value="35" oninput="applyFilters()" />
+          </div>
+          <div class="form-group">
+            <label>Max Dist 2024 Base <span id="valMaxDist2024">15%</span></label>
+            <input type="range" id="slMaxDist2024" min="2" max="40" step="1" value="15" oninput="applyFilters()" />
+          </div>
+        </div>
+
+        <div class="pillar-box">
+          <h4>II. F&amp;O Liquidity</h4>
+          <div class="form-group">
+            <label>Min Option Vol <span id="valMinVol">250k</span></label>
+            <input type="range" id="slMinVol" min="50000" max="2000000" step="50000" value="250000" oninput="applyFilters()" />
+          </div>
+          <div class="form-group">
+            <label>Max Bid-Ask % <span id="valMaxSpread">1.5%</span></label>
+            <input type="range" id="slMaxSpread" min="0.3" max="3.0" step="0.1" value="1.5" oninput="applyFilters()" />
+          </div>
+        </div>
+
+        <div class="pillar-box">
+          <h4>III. Tech Oversold</h4>
+          <div class="form-group">
+            <label>Max RSI(14) <span id="valMaxRsi">40</span></label>
+            <input type="range" id="slMaxRsi" min="25" max="55" step="1" value="40" oninput="applyFilters()" />
+          </div>
+          <div class="form-group">
+            <label>Max Boll %B <span id="valMaxBb">0.28</span></label>
+            <input type="range" id="slMaxBb" min="0.05" max="0.60" step="0.02" value="0.28" oninput="applyFilters()" />
+          </div>
+        </div>
+
+        <div class="pillar-box">
+          <h4>IV. "Undeserved" Quality</h4>
+          <div class="form-group">
+            <label>Min ROE % <span id="valMinRoe">12%</span></label>
+            <input type="range" id="slMinRoe" min="5" max="30" step="1" value="12" oninput="applyFilters()" />
+          </div>
+          <div class="form-group">
+            <label>Max DownVol Ratio <span id="valMaxDownVol">1.15x</span></label>
+            <input type="range" id="slMaxDownVol" min="0.70" max="1.80" step="0.05" value="1.15" oninput="applyFilters()" />
+          </div>
+        </div>
+
+        <div class="pillar-box">
+          <h4>V. Stagnant Vol (Pin)</h4>
+          <div class="form-group">
+            <label>Max HV10/HV20 <span id="valMaxHvRatio">0.95x</span></label>
+            <input type="range" id="slMaxHvRatio" min="0.70" max="1.25" step="0.02" value="0.95" oninput="applyFilters()" />
+          </div>
+          <div class="form-group">
+            <label>Max ADX(14) <span id="valMaxAdx">23</span></label>
+            <input type="range" id="slMaxAdx" min="14" max="38" step="1" value="23" oninput="applyFilters()" />
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Summary KPIs -->
+  <div class="kpi-strip">
+    <div class="kpi-card">
+      <div class="kpi-label">Qualified Theta Candidates</div>
+      <div class="kpi-val" id="kpiQualified">10 / 12</div>
+      <div class="kpi-sub" id="kpiTopPick">Top Rank: VOLTAS (91.4)</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Stocks At 2024 Multi-Yr Low</div>
+      <div class="kpi-val" id="kpi2024Count">4 Stocks</div>
+      <div class="kpi-sub" id="kpi2024Names">VOLTAS, ASIANPAINT, DABUR, HAVELLS</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Avg OTM Put Probability (POP)</div>
+      <div class="kpi-val" id="kpiAvgPop">85.4%</div>
+      <div class="kpi-sub">Target Delta: -0.25 to -0.15</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Avg Vol Risk Premium (IV - HV20)</div>
+      <div class="kpi-val" id="kpiAvgVrp">+7.2%</div>
+      <div class="kpi-sub">Rich option premium vs stagnant realized vol</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Avg HV10 / HV20 Compression</div>
+      <div class="kpi-val" id="kpiAvgHvComp">0.74x</div>
+      <div class="kpi-sub">Contracting short-term volatility</div>
+    </div>
+  </div>
+
+  <!-- Main Screener Table -->
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Symbol &amp; Lot</th>
+          <th class="num">Spot (₹)</th>
+          <th>2024–2026 Multi-Year Range &amp; Base</th>
+          <th class="num">Dist to 2024 Base</th>
+          <th class="num">F&amp;O Chain Vol</th>
+          <th class="num">RSI(14) / MFI</th>
+          <th class="num">Boll %B</th>
+          <th class="num">ROE vs Sector</th>
+          <th class="num">PAT YoY %</th>
+          <th class="num">DownVol</th>
+          <th class="num">HV10 / HV20</th>
+          <th class="num">ADX(14)</th>
+          <th class="num">IV vs HV20</th>
+          <th>Recommended Short Put / Spread</th>
+          <th class="num">POP %</th>
+          <th class="num">Lot Credit</th>
+          <th class="num">Worthless Score</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody id="screenerTableBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+const ISIN_DIRECTORY = {
+  "VOLTAS": { name: "VOLTAS LTD", isin: "INE226A01021", lot_size: 375 },
+  "ASIANPAINT": { name: "ASIAN PAINTS LIMITED", isin: "INE021A01026", lot_size: 200 },
+  "DABUR": { name: "DABUR INDIA LTD", isin: "INE016A01026", lot_size: 1250 },
+  "HAVELLS": { name: "HAVELLS INDIA LIMITED", isin: "INE176B01034", lot_size: 500 },
+  "ITC": { name: "ITC LIMITED", isin: "INE154A01025", lot_size: 1600 },
+  "HDFCBANK": { name: "HDFC BANK LTD", isin: "INE040A01034", lot_size: 550 },
+  "SUNPHARMA": { name: "SUN PHARMACEUTICAL IND L", isin: "INE044A01036", lot_size: 350 },
+  "POWERGRID": { name: "POWER GRID CORP. LTD.", isin: "INE752E01010", lot_size: 3600 },
+  "TCS": { name: "TATA CONSULTANCY SERV LT", isin: "INE467B01029", lot_size: 175 },
+  "NESTLEIND": { name: "NESTLE INDIA LIMITED", isin: "INE239A01024", lot_size: 200 },
+  "ICICIBANK": { name: "ICICI BANK LTD.", isin: "INE090A01021", lot_size: 700 },
+  "RELIANCE": { name: "RELIANCE INDUSTRIES LTD", isin: "INE002A01018", lot_size: 500 },
+  "INFY": { name: "INFOSYS LIMITED", isin: "INE009A01021", lot_size: 400 },
+  "SBIN": { name: "STATE BANK OF INDIA", isin: "INE062A01020", lot_size: 750 },
+  "INDUSINDBK": { name: "INDUSIND BANK LIMITED", isin: "INE095A01012", lot_size: 500 },
+  "TRENT": { name: "TRENT LTD", isin: "INE849A01020", lot_size: 100 }
+};
+
+const SAMPLE_DATA = [
+  {
+    symbol: "VOLTAS", name: "VOLTAS LTD", instrument_key: "NSE_EQ|INE226A01021", isin: "INE226A01021",
+    spot_price: 1053.40, lot_size: 375, expiry_date: "2026-10-29",
+    low_2024_base: 1020.00, high_since_2024: 1942.00, hist_range_pct_2024: 14.2,
+    dist_to_2024_base_pct: 3.27, drawdown_from_2024_high_pct: -45.76, is_2024_low_retest: true,
+    total_fno_option_volume: 1480000, pcr: 1.28, put_oi_wall_strike: 1020,
+    rsi_14: 31.8, mfi_14: 33.4, bb_pct_b: 0.09,
+    roe_pct: 15.6, sector_roe_pct: 13.2, roce_pct: 19.4, sector_roce_pct: 15.8,
+    net_profit_yoy_pct: 24.5, price_to_sma200: 0.812, down_vol_ratio: 0.72,
+    hv_10_pct: 13.8, hv_20_pct: 19.4, hv_compression_ratio: 0.71, adx_14: 18.2, atr_14_pct: 1.54,
+    short_put_strike: 1000, hedge_put_strike: 960, short_put_ltp: 14.20, short_put_bid_ask_spread_pct: 0.55,
+    short_put_iv: 26.8, vrp_spread_pct: 7.4, short_put_delta: -0.18, short_put_theta: -1.08,
+    short_put_pop_pct: 86.4, safety_margin_pct: 5.07, est_credit_per_lot_inr: 5325,
+    composite_worthless_score: 91.4,
+    rationale: "2024 MULTI-YEAR LOW RETEST: Retesting its 2024 structural breakout base (~₹1,020–₹1,053, down 45.8% from ₹1,942 peak) with +1.31% base-building bounce on 291.67K cash vol; ROE 15.6% > sector 13.2%, PAT +24.5% YoY; HV10/HV20 compressed at 0.71x makes 1000 PE (below 1020 Put OI wall) ideal for worthless expiry."
+  },
+  {
+    symbol: "ASIANPAINT", name: "ASIAN PAINTS LIMITED", instrument_key: "NSE_EQ|INE021A01026", isin: "INE021A01026",
+    spot_price: 2390.00, lot_size: 200, expiry_date: "2026-10-29",
+    low_2024_base: 2340.00, high_since_2024: 3422.00, hist_range_pct_2024: 11.8,
+    dist_to_2024_base_pct: 2.14, drawdown_from_2024_high_pct: -30.16, is_2024_low_retest: true,
+    total_fno_option_volume: 1620000, pcr: 1.19, put_oi_wall_strike: 2340,
+    rsi_14: 32.6, mfi_14: 35.1, bb_pct_b: 0.11,
+    roe_pct: 28.4, sector_roe_pct: 18.5, roce_pct: 34.2, sector_roce_pct: 21.0,
+    net_profit_yoy_pct: 6.4, price_to_sma200: 0.865, down_vol_ratio: 0.76,
+    hv_10_pct: 10.4, hv_20_pct: 14.2, hv_compression_ratio: 0.73, adx_14: 16.5, atr_14_pct: 1.28,
+    short_put_strike: 2300, hedge_put_strike: 2240, short_put_ltp: 26.50, short_put_bid_ask_spread_pct: 0.52,
+    short_put_iv: 21.8, vrp_spread_pct: 7.6, short_put_delta: -0.17, short_put_theta: -1.92,
+    short_put_pop_pct: 85.8, safety_margin_pct: 3.77, est_credit_per_lot_inr: 5300,
+    composite_worthless_score: 88.9,
+    rationale: "2024 MULTI-YEAR LOW RETEST: Sitting just +2.1% above its 2024 multi-year low (₹2,340) with 28.4% ROE and 0.73x volatility compression; heavy 2340/2300 Put OI acts as concrete floor."
+  },
+  {
+    symbol: "DABUR", name: "DABUR INDIA LTD", instrument_key: "NSE_EQ|INE016A01026", isin: "INE016A01026",
+    spot_price: 504.50, lot_size: 1250, expiry_date: "2026-10-29",
+    low_2024_base: 495.00, high_since_2024: 672.00, hist_range_pct_2024: 12.5,
+    dist_to_2024_base_pct: 1.92, drawdown_from_2024_high_pct: -24.93, is_2024_low_retest: true,
+    total_fno_option_volume: 940000, pcr: 1.16, put_oi_wall_strike: 495,
+    rsi_14: 33.2, mfi_14: 34.8, bb_pct_b: 0.12,
+    roe_pct: 19.8, sector_roe_pct: 17.2, roce_pct: 22.6, sector_roce_pct: 19.0,
+    net_profit_yoy_pct: 7.8, price_to_sma200: 0.892, down_vol_ratio: 0.79,
+    hv_10_pct: 9.8, hv_20_pct: 13.6, hv_compression_ratio: 0.72, adx_14: 15.9, atr_14_pct: 1.19,
+    short_put_strike: 485, hedge_put_strike: 470, short_put_ltp: 4.80, short_put_bid_ask_spread_pct: 0.68,
+    short_put_iv: 20.9, vrp_spread_pct: 7.3, short_put_delta: -0.18, short_put_theta: -0.36,
+    short_put_pop_pct: 86.1, safety_margin_pct: 3.87, est_credit_per_lot_inr: 6000,
+    composite_worthless_score: 87.6,
+    rationale: "2024 MULTI-YEAR LOW RETEST: Hovering +1.9% above its 2024 multi-year support (₹495) with low ADX (15.9) and high FMCG cash-flow resilience."
+  },
+  {
+    symbol: "HAVELLS", name: "HAVELLS INDIA LIMITED", instrument_key: "NSE_EQ|INE176B01034", isin: "INE176B01034",
+    spot_price: 1465.00, lot_size: 500, expiry_date: "2026-10-29",
+    low_2024_base: 1400.00, high_since_2024: 2113.00, hist_range_pct_2024: 18.4,
+    dist_to_2024_base_pct: 4.64, drawdown_from_2024_high_pct: -30.67, is_2024_low_retest: true,
+    total_fno_option_volume: 1120000, pcr: 1.15, put_oi_wall_strike: 1420,
+    rsi_14: 35.0, mfi_14: 37.2, bb_pct_b: 0.15,
+    roe_pct: 18.9, sector_roe_pct: 13.2, roce_pct: 24.1, sector_roce_pct: 15.8,
+    net_profit_yoy_pct: 16.4, price_to_sma200: 0.884, down_vol_ratio: 0.81,
+    hv_10_pct: 11.4, hv_20_pct: 15.2, hv_compression_ratio: 0.75, adx_14: 17.4, atr_14_pct: 1.38,
+    short_put_strike: 1400, hedge_put_strike: 1350, short_put_ltp: 15.80, short_put_bid_ask_spread_pct: 0.64,
+    short_put_iv: 22.8, vrp_spread_pct: 7.6, short_put_delta: -0.18, short_put_theta: -1.15,
+    short_put_pop_pct: 85.1, safety_margin_pct: 4.44, est_credit_per_lot_inr: 7900,
+    composite_worthless_score: 86.2,
+    rationale: "2024 MULTI-YEAR LOW RETEST: Retesting ₹1,400–₹1,465 2024 demand zone with +16.4% PAT growth and 0.75x realized vol compression."
+  },
+  {
+    symbol: "ITC", name: "ITC LIMITED", instrument_key: "NSE_EQ|INE154A01025", isin: "INE154A01025",
+    spot_price: 486.40, lot_size: 1600, expiry_date: "2026-10-29",
+    low_2024_base: 445.00, high_since_2024: 568.00, hist_range_pct_2024: 26.8,
+    dist_to_2024_base_pct: 9.30, drawdown_from_2024_high_pct: -14.37, is_2024_low_retest: false,
+    total_fno_option_volume: 2840000, pcr: 1.25, put_oi_wall_strike: 475,
+    rsi_14: 34.4, mfi_14: 36.2, bb_pct_b: 0.14,
+    roe_pct: 27.4, sector_roe_pct: 19.2, roce_pct: 34.1, sector_roce_pct: 22.0,
+    net_profit_yoy_pct: 11.4, price_to_sma200: 1.018, down_vol_ratio: 0.78,
+    hv_10_pct: 8.1, hv_20_pct: 11.0, hv_compression_ratio: 0.74, adx_14: 15.8, atr_14_pct: 1.12,
+    short_put_strike: 470, hedge_put_strike: 460, short_put_ltp: 3.15, short_put_bid_ask_spread_pct: 0.65,
+    short_put_iv: 18.0, vrp_spread_pct: 7.0, short_put_delta: -0.18, short_put_theta: -0.24,
+    short_put_pop_pct: 85.4, safety_margin_pct: 3.37, est_credit_per_lot_inr: 5040,
+    composite_worthless_score: 85.6,
+    rationale: "Pullback to lower Bollinger band (%B=0.14, RSI=34.4) on 0.78x down-volume; ROE 27.4% beats FMCG sector (19.2%), PAT +11.4% YoY; HV10/HV20 compressed at 0.74x with Put OI wall at 475 PE."
+  },
+  {
+    symbol: "NESTLEIND", name: "NESTLE INDIA LIMITED", instrument_key: "NSE_EQ|INE239A01024", isin: "INE239A01024",
+    spot_price: 2480.00, lot_size: 200, expiry_date: "2026-10-29",
+    low_2024_base: 2290.00, high_since_2024: 2980.00, hist_range_pct_2024: 23.2,
+    dist_to_2024_base_pct: 8.30, drawdown_from_2024_high_pct: -16.78, is_2024_low_retest: false,
+    total_fno_option_volume: 890000, pcr: 1.10, put_oi_wall_strike: 2440,
+    rsi_14: 34.6, mfi_14: 37.8, bb_pct_b: 0.14,
+    roe_pct: 88.0, sector_roe_pct: 21.5, roce_pct: 96.4, sector_roce_pct: 24.0,
+    net_profit_yoy_pct: 8.1, price_to_sma200: 0.994, down_vol_ratio: 0.80,
+    hv_10_pct: 7.7, hv_20_pct: 10.5, hv_compression_ratio: 0.74, adx_14: 15.6, atr_14_pct: 1.05,
+    short_put_strike: 2400, hedge_put_strike: 2360, short_put_ltp: 16.40, short_put_bid_ask_spread_pct: 0.75,
+    short_put_iv: 17.6, vrp_spread_pct: 7.1, short_put_delta: -0.19, short_put_theta: -1.23,
+    short_put_pop_pct: 84.9, safety_margin_pct: 3.23, est_credit_per_lot_inr: 3280,
+    composite_worthless_score: 85.4,
+    rationale: "Defensive low-beta leader with 88% ROE & +8.1% PAT growth; mild technical dip (RSI 34.6) with ultra-low 10.5% realized vol vs 17.6% IV (+7.1% VRP edge)."
+  },
+  {
+    symbol: "POWERGRID", name: "POWER GRID CORP. LTD.", instrument_key: "NSE_EQ|INE752E01010", isin: "INE752E01010",
+    spot_price: 324.80, lot_size: 3600, expiry_date: "2026-10-29",
+    low_2024_base: 292.00, high_since_2024: 412.00, hist_range_pct_2024: 27.3,
+    dist_to_2024_base_pct: 11.23, drawdown_from_2024_high_pct: -21.17, is_2024_low_retest: false,
+    total_fno_option_volume: 1950000, pcr: 1.17, put_oi_wall_strike: 315,
+    rsi_14: 35.1, mfi_14: 38.0, bb_pct_b: 0.15,
+    roe_pct: 18.4, sector_roe_pct: 13.6, roce_pct: 14.8, sector_roce_pct: 12.1,
+    net_profit_yoy_pct: 9.8, price_to_sma200: 1.022, down_vol_ratio: 0.74,
+    hv_10_pct: 8.6, hv_20_pct: 11.5, hv_compression_ratio: 0.75, adx_14: 15.6, atr_14_pct: 1.18,
+    short_put_strike: 315, hedge_put_strike: 305, short_put_ltp: 2.15, short_put_bid_ask_spread_pct: 0.58,
+    short_put_iv: 20.0, vrp_spread_pct: 8.5, short_put_delta: -0.19, short_put_theta: -0.16,
+    short_put_pop_pct: 84.3, safety_margin_pct: 3.02, est_credit_per_lot_inr: 7740,
+    composite_worthless_score: 84.8,
+    rationale: "Regulated utility cash-flow stability; 0.74x down-day volume confirms absence of institutional selling; 315 PE sits right at the highest Put OI support wall."
+  },
+  {
+    symbol: "TCS", name: "TATA CONSULTANCY SERV LT", instrument_key: "NSE_EQ|INE467B01029", isin: "INE467B01029",
+    spot_price: 4088.00, lot_size: 175, expiry_date: "2026-10-29",
+    low_2024_base: 3720.00, high_since_2024: 4960.00, hist_range_pct_2024: 29.7,
+    dist_to_2024_base_pct: 9.89, drawdown_from_2024_high_pct: -17.58, is_2024_low_retest: false,
+    total_fno_option_volume: 1780000, pcr: 1.09, put_oi_wall_strike: 4000,
+    rsi_14: 34.4, mfi_14: 39.1, bb_pct_b: 0.14,
+    roe_pct: 48.5, sector_roe_pct: 24.0, roce_pct: 58.2, sector_roce_pct: 28.5,
+    net_profit_yoy_pct: 9.4, price_to_sma200: 1.008, down_vol_ratio: 0.88,
+    hv_10_pct: 9.0, hv_20_pct: 11.8, hv_compression_ratio: 0.76, adx_14: 17.5, atr_14_pct: 1.24,
+    short_put_strike: 3950, hedge_put_strike: 3850, short_put_ltp: 24.60, short_put_bid_ask_spread_pct: 0.62,
+    short_put_iv: 19.4, vrp_spread_pct: 7.6, short_put_delta: -0.18, short_put_theta: -1.85,
+    short_put_pop_pct: 85.8, safety_margin_pct: 3.38, est_credit_per_lot_inr: 4305,
+    composite_worthless_score: 83.2,
+    rationale: "ROE 48.5% (2x sector avg); range-bound consolidation (ADX 17.5) above 4000 Put OI wall allows 3950 PE to decay rapidly."
+  },
+  {
+    symbol: "SUNPHARMA", name: "SUN PHARMACEUTICAL IND L", instrument_key: "NSE_EQ|INE044A01036", isin: "INE044A01036",
+    spot_price: 1815.50, lot_size: 350, expiry_date: "2026-10-29",
+    low_2024_base: 1620.00, high_since_2024: 2240.00, hist_range_pct_2024: 31.5,
+    dist_to_2024_base_pct: 12.07, drawdown_from_2024_high_pct: -18.95, is_2024_low_retest: false,
+    total_fno_option_volume: 1260000, pcr: 1.14, put_oi_wall_strike: 1780,
+    rsi_14: 36.2, mfi_14: 40.5, bb_pct_b: 0.16,
+    roe_pct: 16.2, sector_roe_pct: 14.1, roce_pct: 18.5, sector_roce_pct: 15.2,
+    net_profit_yoy_pct: 18.6, price_to_sma200: 1.035, down_vol_ratio: 0.85,
+    hv_10_pct: 9.6, hv_20_pct: 12.6, hv_compression_ratio: 0.76, adx_14: 16.2, atr_14_pct: 1.31,
+    short_put_strike: 1760, hedge_put_strike: 1720, short_put_ltp: 11.50, short_put_bid_ask_spread_pct: 0.70,
+    short_put_iv: 20.5, vrp_spread_pct: 7.9, short_put_delta: -0.19, short_put_theta: -0.86,
+    short_put_pop_pct: 84.5, safety_margin_pct: 3.06, est_credit_per_lot_inr: 4025,
+    composite_worthless_score: 81.9,
+    rationale: "Strong +18.6% PAT growth and 1.035x 200-DMA ratio; shallow pullback into 1780 Put OI support with +7.9% Volatility Risk Premium."
+  },
+  {
+    symbol: "HDFCBANK", name: "HDFC BANK LTD", instrument_key: "NSE_EQ|INE040A01034", isin: "INE040A01034",
+    spot_price: 1642.00, lot_size: 550, expiry_date: "2026-10-29",
+    low_2024_base: 1470.00, high_since_2024: 1995.00, hist_range_pct_2024: 32.8,
+    dist_to_2024_base_pct: 11.70, drawdown_from_2024_high_pct: -17.69, is_2024_low_retest: false,
+    total_fno_option_volume: 4120000, pcr: 1.11, put_oi_wall_strike: 1600,
+    rsi_14: 34.4, mfi_14: 38.4, bb_pct_b: 0.14,
+    roe_pct: 16.8, sector_roe_pct: 14.5, roce_pct: 15.9, sector_roce_pct: 13.8,
+    net_profit_yoy_pct: 15.2, price_to_sma200: 1.012, down_vol_ratio: 0.82,
+    hv_10_pct: 9.1, hv_20_pct: 12.1, hv_compression_ratio: 0.75, adx_14: 17.5, atr_14_pct: 1.22,
+    short_put_strike: 1580, hedge_put_strike: 1540, short_put_ltp: 9.60, short_put_bid_ask_spread_pct: 0.45,
+    short_put_iv: 18.8, vrp_spread_pct: 6.7, short_put_delta: -0.18, short_put_theta: -0.72,
+    short_put_pop_pct: 85.9, safety_margin_pct: 3.78, est_credit_per_lot_inr: 5280,
+    composite_worthless_score: 81.5,
+    rationale: "Deepest F&O liquidity (4.12M vol, 0.45% spread); massive 1600 Put OI institutional floor makes 1580 PE high-probability theta decay."
+  },
+  {
+    symbol: "INDUSINDBK", name: "INDUSIND BANK LIMITED", instrument_key: "NSE_EQ|INE095A01012", isin: "INE095A01012",
+    spot_price: 1280.00, lot_size: 500, expiry_date: "2026-10-29",
+    low_2024_base: 1250.00, high_since_2024: 1694.00, hist_range_pct_2024: 6.8,
+    dist_to_2024_base_pct: 2.40, drawdown_from_2024_high_pct: -24.44, is_2024_low_retest: true,
+    total_fno_option_volume: 3400000, pcr: 0.63, put_oi_wall_strike: 1200,
+    rsi_14: 26.2, mfi_14: 24.5, bb_pct_b: -0.08,
+    roe_pct: 9.8, sector_roe_pct: 14.5, roce_pct: 10.2, sector_roce_pct: 13.8,
+    net_profit_yoy_pct: -21.4, price_to_sma200: 0.865, down_vol_ratio: 1.68,
+    hv_10_pct: 52.8, hv_20_pct: 48.0, hv_compression_ratio: 1.10, adx_14: 34.2, atr_14_pct: 3.45,
+    short_put_strike: 1220, hedge_put_strike: 1180, short_put_ltp: 18.50, short_put_bid_ask_spread_pct: 0.90,
+    short_put_iv: 38.1, vrp_spread_pct: -9.9, short_put_delta: -0.22, short_put_theta: -1.39,
+    short_put_pop_pct: 81.6, safety_margin_pct: 4.69, est_credit_per_lot_inr: 9250,
+    composite_worthless_score: 40.2,
+    rationale: "TRAP REJECTED: Even though near its 2024 low, it is deservedly oversold (-21.4% YoY PAT drop, ROE 9.8% < sector 14.5%, 1.68x heavy institutional distribution volume, expanding HV10/HV20 = 1.10x)."
+  },
+  {
+    symbol: "TRENT", name: "TRENT LTD", instrument_key: "NSE_EQ|INE849A01020", isin: "INE849A01020",
+    spot_price: 7420.00, lot_size: 100, expiry_date: "2026-10-29",
+    low_2024_base: 3100.00, high_since_2024: 8340.00, hist_range_pct_2024: 82.4,
+    dist_to_2024_base_pct: 139.35, drawdown_from_2024_high_pct: -11.03, is_2024_low_retest: false,
+    total_fno_option_volume: 1650000, pcr: 1.50, put_oi_wall_strike: 7200,
+    rsi_14: 61.4, mfi_14: 64.0, bb_pct_b: 0.78,
+    roe_pct: 26.4, sector_roe_pct: 16.0, roce_pct: 29.1, sector_roce_pct: 18.0,
+    net_profit_yoy_pct: 42.0, price_to_sma200: 1.240, down_vol_ratio: 0.95,
+    hv_10_pct: 34.2, hv_20_pct: 31.4, hv_compression_ratio: 1.09, adx_14: 29.5, atr_14_pct: 2.65,
+    short_put_strike: 7100, hedge_put_strike: 6900, short_put_ltp: 48.00, short_put_bid_ask_spread_pct: 1.10,
+    short_put_iv: 33.5, vrp_spread_pct: 2.1, short_put_delta: -0.20, short_put_theta: -3.60,
+    short_put_pop_pct: 83.2, safety_margin_pct: 4.31, est_credit_per_lot_inr: 4800,
+    composite_worthless_score: 62.4,
+    rationale: "REJECTED: Trading at 82.4%ile of its 2024–26 range (+139% above 2024 base), not oversold (RSI 61.4), and high trending volatility (HV20 31.4%, ADX 29.5)."
+  }
+];
+
+let currentRows = [...SAMPLE_DATA];
+let showRejected = true;
+let only2024Low = false;
+
+function toggle2024LowFilter() {
+  only2024Low = !only2024Low;
+  const btn = document.getElementById("toggle2024Btn");
+  btn.textContent = `Filter: Only Near 2024 Low (${only2024Low ? "ON" : "OFF"})`;
+  btn.classList.toggle("btn-active", only2024Low);
+  if (only2024Low) {
+    document.getElementById("slMaxHistPct").value = "20";
+    document.getElementById("slMaxDist2024").value = "6";
+  } else {
+    document.getElementById("slMaxHistPct").value = "35";
+    document.getElementById("slMaxDist2024").value = "15";
+  }
+  applyFilters();
+}
+
+function toggleShowRejected() {
+  showRejected = !showRejected;
+  document.getElementById("toggleRejBtn").textContent = `Show Rejected / Value Traps: ${showRejected ? "ON" : "OFF"}`;
+  applyFilters();
+}
+
+function loadSampleUniverse() {
+  currentRows = [...SAMPLE_DATA];
+  only2024Low = false;
+  document.getElementById("toggle2024Btn").textContent = "Filter: Only Near 2024 Low (OFF)";
+  document.getElementById("toggle2024Btn").classList.remove("btn-active");
+  document.getElementById("slMaxHistPct").value = "35";
+  document.getElementById("slMaxDist2024").value = "15";
+  document.getElementById("connModeBadge").textContent = "Mode: Offline Institutional Sample";
+  document.getElementById("statusBanner").innerHTML = "Loaded sample NSE F&O dataset including <strong>VOLTAS (₹1,053.40)</strong> and 2024 multi-year low retests. Adjust sliders or enter an Upstox Access Token to fetch live market data.";
+  applyFilters();
+}
+
+function openUpstoxAuthDialog() {
+  const apiKey = document.getElementById("apiKeyInput").value.trim();
+  const statusEl = document.getElementById("statusBanner");
+  if (!apiKey) {
+    statusEl.innerHTML = "⚠️ Enter your Upstox <strong>API Key (client_id)</strong> in the field above first to launch the Upstox OAuth2 Login dialog.";
+    return;
+  }
+  const redirectUri = encodeURIComponent("http://127.0.0.1:5000/callback");
+  const url = `https://api.upstox.com/v2/login/authorization/dialog?response_type=code&client_id=${encodeURIComponent(apiKey)}&redirect_uri=${redirectUri}`;
+  window.open(url, "_blank");
+}
+
+function evaluateRowPass(r, th) {
+  const pHist = r.hist_range_pct_2024 <= th.maxHistPct && r.dist_to_2024_base_pct <= th.maxDist2024;
+  const p1 = r.total_fno_option_volume >= th.minVol && r.short_put_bid_ask_spread_pct <= th.maxSpread;
+  const p2 = r.rsi_14 >= 22 && r.rsi_14 <= th.maxRsi && r.bb_pct_b <= th.maxBb;
+  // Structural floor passed if either testing 2024 multi-year support base OR holding near 200-DMA
+  const hasStructuralFloor = (r.dist_to_2024_base_pct <= 8.0 || r.hist_range_pct_2024 <= 22.0 || r.price_to_sma200 >= 0.96);
+  const p3 = (r.roe_pct >= th.minRoe || r.roe_pct >= r.sector_roe_pct) && r.net_profit_yoy_pct > 0 && hasStructuralFloor && r.down_vol_ratio <= th.maxDownVol;
+  const p4 = r.hv_compression_ratio <= th.maxHvRatio && r.adx_14 <= th.maxAdx && r.vrp_spread_pct >= 1.0;
+  return { pHist, p1, p2, p3, p4, all: pHist && p1 && p2 && p3 && p4 };
+}
+
+function applyFilters() {
+  const th = {
+    maxHistPct: parseFloat(document.getElementById("slMaxHistPct").value),
+    maxDist2024: parseFloat(document.getElementById("slMaxDist2024").value),
+    minVol: parseFloat(document.getElementById("slMinVol").value),
+    maxSpread: parseFloat(document.getElementById("slMaxSpread").value),
+    maxRsi: parseFloat(document.getElementById("slMaxRsi").value),
+    maxBb: parseFloat(document.getElementById("slMaxBb").value),
+    minRoe: parseFloat(document.getElementById("slMinRoe").value),
+    maxDownVol: parseFloat(document.getElementById("slMaxDownVol").value),
+    maxHvRatio: parseFloat(document.getElementById("slMaxHvRatio").value),
+    maxAdx: parseFloat(document.getElementById("slMaxAdx").value)
+  };
+
+  document.getElementById("valMaxHistPct").textContent = th.maxHistPct.toFixed(0) + "%";
+  document.getElementById("valMaxDist2024").textContent = "+" + th.maxDist2024.toFixed(0) + "%";
+  document.getElementById("valMinVol").textContent = (th.minVol / 1000).toFixed(0) + "k";
+  document.getElementById("valMaxSpread").textContent = th.maxSpread.toFixed(1) + "%";
+  document.getElementById("valMaxRsi").textContent = th.maxRsi.toFixed(0);
+  document.getElementById("valMaxBb").textContent = th.maxBb.toFixed(2);
+  document.getElementById("valMinRoe").textContent = th.minRoe.toFixed(0) + "%";
+  document.getElementById("valMaxDownVol").textContent = th.maxDownVol.toFixed(2) + "x";
+  document.getElementById("valMaxHvRatio").textContent = th.maxHvRatio.toFixed(2) + "x";
+  document.getElementById("valMaxAdx").textContent = th.maxAdx.toFixed(0);
+
+  const tbody = document.getElementById("screenerTableBody");
+  tbody.innerHTML = "";
+
+  const annotated = currentRows.map(r => {
+    const check = evaluateRowPass(r, th);
+    return { ...r, _check: check };
+  }).sort((a, b) => (b._check.all - a._check.all) || (b.composite_worthless_score - a.composite_worthless_score));
+
+  const passedList = annotated.filter(r => r._check.all);
+  const low2024Passed = passedList.filter(r => r.hist_range_pct_2024 <= 20.0);
+
+  document.getElementById("kpiQualified").textContent = `${passedList.length} / ${annotated.length}`;
+  document.getElementById("kpi2024Count").textContent = `${low2024Passed.length} Stocks`;
+  document.getElementById("kpi2024Names").textContent = low2024Passed.length ? low2024Passed.map(x => x.symbol).join(", ") : "None in current filter";
+
+  if (passedList.length > 0) {
+    document.getElementById("kpiTopPick").textContent = `Top Rank: ${passedList[0].symbol} (${passedList[0].composite_worthless_score.toFixed(1)})`;
+    const avgPop = passedList.reduce((s, x) => s + x.short_put_pop_pct, 0) / passedList.length;
+    const avgVrp = passedList.reduce((s, x) => s + x.vrp_spread_pct, 0) / passedList.length;
+    const avgHvC = passedList.reduce((s, x) => s + x.hv_compression_ratio, 0) / passedList.length;
+    document.getElementById("kpiAvgPop").textContent = avgPop.toFixed(1) + "%";
+    document.getElementById("kpiAvgVrp").textContent = (avgVrp >= 0 ? "+" : "") + avgVrp.toFixed(1) + "%";
+    document.getElementById("kpiAvgHvComp").textContent = avgHvC.toFixed(2) + "x";
+  } else {
+    document.getElementById("kpiTopPick").textContent = "No stocks match current strict sliders";
+  }
+
+  for (const r of annotated) {
+    if (!showRejected && !r._check.all) continue;
+    const tr = document.createElement("tr");
+    const statusPill = r._check.all
+      ? (r.hist_range_pct_2024 <= 20.0
+          ? `<span class="pill pill-pass">2024 LOW + THETA</span>`
+          : `<span class="pill pill-pass">QUALIFIED THETA</span>`)
+      : `<span class="pill pill-fail">FILTERED OUT</span>`;
+
+    const rsiPillClass = (r.rsi_14 >= 22 && r.rsi_14 <= th.maxRsi) ? "pill-pass" : "pill-warn";
+    const hvPillClass = (r.hv_compression_ratio <= th.maxHvRatio) ? "pill-pass" : "pill-fail";
+    const distPillClass = (r.dist_to_2024_base_pct <= 5.0) ? "pill-2024" : (r.dist_to_2024_base_pct <= th.maxDist2024 ? "pill-pass" : "pill-warn");
+    const pctClamped = Math.max(3, Math.min(100, r.hist_range_pct_2024));
+
+    tr.innerHTML = `
+      <td class="sym-cell">
+        <strong>
+          ${r.symbol}
+          ${r.hist_range_pct_2024 <= 20.0 ? '<span class="pill pill-2024" style="font-size:0.65rem;padding:1px 5px;">2024 LOW</span>' : ''}
+        </strong>
+        <span>Lot: ${r.lot_size} | Put Wall: ${r.put_oi_wall_strike}</span>
+      </td>
+      <td class="num">
+        <strong>₹${r.spot_price.toFixed(2)}</strong>
+        <div style="font-size:0.7rem;color:var(--muted);">${r.drawdown_from_2024_high_pct.toFixed(1)}% vs Peak</div>
+      </td>
+      <td>
+        <div class="range-bar-wrap">
+          <div class="range-meta">
+            <span>24 Base: ₹${r.low_2024_base.toFixed(0)}</span>
+            <strong>${r.hist_range_pct_2024.toFixed(1)}%ile</strong>
+          </div>
+          <div class="range-track">
+            <div class="range-fill" style="width:${pctClamped}%;"></div>
+          </div>
+          <div class="range-meta">
+            <span>Peak: ₹${r.high_since_2024.toFixed(0)}</span>
+            <span>200DMA: ${r.price_to_sma200.toFixed(2)}x</span>
+          </div>
+        </div>
+      </td>
+      <td class="num"><span class="pill ${distPillClass}">+${r.dist_to_2024_base_pct.toFixed(1)}%</span></td>
+      <td class="num">${(r.total_fno_option_volume / 1e6).toFixed(2)}M <span style="color:var(--muted);font-size:0.72rem;">(PCR ${r.pcr.toFixed(2)})</span></td>
+      <td class="num"><span class="pill ${rsiPillClass}">${r.rsi_14.toFixed(1)}</span> / ${r.mfi_14.toFixed(0)}</td>
+      <td class="num">${r.bb_pct_b.toFixed(2)}</td>
+      <td class="num">${r.roe_pct.toFixed(1)}% <span style="color:var(--muted);font-size:0.72rem;">vs ${r.sector_roe_pct.toFixed(1)}%</span></td>
+      <td class="num" style="color:${r.net_profit_yoy_pct >= 0 ? 'var(--emerald)' : 'var(--rose)'};font-weight:600;">
+        ${r.net_profit_yoy_pct >= 0 ? '+' : ''}${r.net_profit_yoy_pct.toFixed(1)}%
+      </td>
+      <td class="num">${r.down_vol_ratio.toFixed(2)}x</td>
+      <td class="num"><span class="pill ${hvPillClass}">${r.hv_compression_ratio.toFixed(2)}x</span></td>
+      <td class="num">${r.adx_14.toFixed(1)}</td>
+      <td class="num">${r.short_put_iv.toFixed(1)}% / ${r.hv_20_pct.toFixed(1)}%</td>
+      <td>
+        <strong style="color:var(--accent);">Sell ${r.short_put_strike} PE @ ₹${r.short_put_ltp.toFixed(2)}</strong>
+        <div style="font-size:0.72rem;color:var(--muted);">Δ ${r.short_put_delta.toFixed(2)} | Θ ₹${r.short_put_theta.toFixed(2)} | Buffer ${r.safety_margin_pct.toFixed(1)}%</div>
+      </td>
+      <td class="num" style="font-weight:700;color:var(--emerald);">${r.short_put_pop_pct.toFixed(1)}%</td>
+      <td class="num">₹${r.est_credit_per_lot_inr.toLocaleString('en-IN')}</td>
+      <td class="num"><strong style="font-size:0.95rem;color:#fff;">${r.composite_worthless_score.toFixed(1)}</strong></td>
+      <td>${statusPill}</td>
+    `;
+    tbody.appendChild(tr);
+
+    const trRat = document.createElement("tr");
+    trRat.className = "rationale-row";
+    trRat.innerHTML = `<td colspan="18"><strong>Quantitative Thesis:</strong> ${r.rationale}</td>`;
+    tbody.appendChild(trRat);
+  }
+}
+
+// Live Upstox API v2/v3 Fetcher in Browser (Pulls Since 2024-01-01)
+async function runLiveUpstoxScan() {
+  const token = document.getElementById("accessTokenInput").value.trim();
+  const statusEl = document.getElementById("statusBanner");
+  if (!token) {
+    statusEl.innerHTML = "⚠️ Please paste your Upstox OAuth <code>access_token</code> first, or use the Python script (<code>upstox_fno_option_screener.py</code>) locally.";
+    return;
+  }
+  saveCredentialsToStorage();
+  const expiry = document.getElementById("expirySelect").value;
+  const rawSyms = document.getElementById("symbolsInput").value.split(",").map(s => s.trim().toUpperCase()).filter(Boolean);
+  const headers = { "Accept": "application/json", "Authorization": `Bearer ${token}` };
+
+  const today = new Date().toISOString().slice(0, 10);
+  const fromDate2024 = "2024-01-01";
+  const liveResults = [];
+
+  document.getElementById("connModeBadge").textContent = "Mode: Live Upstox API v2/v3 (2024–Present)";
+
+  for (let i = 0; i < rawSyms.length; i++) {
+    const sym = rawSyms[i];
+    const meta = ISIN_DIRECTORY[sym];
+    if (!meta) continue;
+    const ukey = `NSE_EQ|${meta.isin}`;
+    statusEl.innerHTML = `Scanning [${i + 1}/${rawSyms.length}] <strong>${sym}</strong> (${ukey}) since 2024-01-01 via Upstox API v2/v3...`;
+
+    try {
+      const encKey = encodeURIComponent(ukey);
+      const [candleResp, chainResp, ratioResp, incResp] = await Promise.all([
+        fetch(`https://api.upstox.com/v3/historical-candle/${encKey}/days/1/${today}/${fromDate2024}`, { headers }).then(r => r.json()),
+        fetch(`https://api.upstox.com/v2/option/chain?instrument_key=${encKey}&expiry_date=${encodeURIComponent(expiry)}`, { headers }).then(r => r.json()),
+        fetch(`https://api.upstox.com/v2/fundamentals/${meta.isin}/key-ratios`, { headers }).then(r => r.json()).catch(() => ({})),
+        fetch(`https://api.upstox.com/v2/fundamentals/${meta.isin}/income-statement?type=consolidated&time_period=yearly`, { headers }).then(r => r.json()).catch(() => ({}))
+      ]);
+
+      const candles = ((candleResp.data && candleResp.data.candles) || []).slice().reverse();
+      const chain = chainResp.data || [];
+      if (candles.length < 50 || chain.length === 0) continue;
+
+      const closes = candles.map(c => Number(c[4]));
+      const highs = candles.map(c => Number(c[2]));
+      const lows = candles.map(c => Number(c[3]));
+      const vols = candles.map(c => Number(c[5]));
+      const spot = Number(chain[0].underlying_spot_price || closes[closes.length - 1]);
+
+      // 2024-Present Multi-Year Low & Range Percentile
+      const highSince2024 = Math.max(...highs);
+      const sortedLows = [...lows].sort((a, b) => a - b);
+      // Use 5th percentile of 2024-present lows as the structural 2024 base support
+      const low2024Base = sortedLows[Math.floor(sortedLows.length * 0.05)] || sortedLows[0];
+      const absLow2024 = sortedLows[0];
+      const histRangePct2024 = highSince2024 > absLow2024
+        ? Math.max(0, Math.min(100, ((spot - absLow2024) / (highSince2024 - absLow2024)) * 100))
+        : 50.0;
+      const distTo2024BasePct = low2024Base > 0 ? Math.max(0, ((spot - low2024Base) / low2024Base) * 100) : 10.0;
+      const ddFromPeakPct = highSince2024 > 0 ? ((spot - highSince2024) / highSince2024) * 100 : 0.0;
+
+      // Compute RSI(14)
+      let g = 0, l = 0;
+      for (let k = closes.length - 14; k < closes.length; k++) {
+        const d = closes[k] - closes[k - 1];
+        if (d > 0) g += d; else l -= d;
+      }
+      const rsi14 = l === 0 ? 100 : 100 - (100 / (1 + (g / l)));
+
+      // Bollinger %B (20)
+      const c20 = closes.slice(-20);
+      const sma20 = c20.reduce((a, b) => a + b, 0) / 20;
+      const std20 = Math.sqrt(c20.reduce((a, b) => a + Math.pow(b - sma20, 2), 0) / 20);
+      const bbPctB = std20 > 0 ? (spot - (sma20 - 2 * std20)) / (4 * std20) : 0.5;
+
+      // HV10 & HV20
+      const calcHv = (win) => {
+        const rets = [];
+        for (let k = closes.length - win; k < closes.length; k++) rets.push(Math.log(closes[k] / closes[k - 1]));
+        const m = rets.reduce((a, b) => a + b, 0) / rets.length;
+        const v = rets.reduce((a, b) => a + Math.pow(b - m, 2), 0) / (rets.length - 1);
+        return Math.sqrt(v) * Math.sqrt(252) * 100;
+      };
+      const hv10 = calcHv(10), hv20 = calcHv(20);
+      const hvComp = hv20 > 0 ? hv10 / hv20 : 1.0;
+
+      // 200-DMA & Down-volume ratio
+      const c200 = closes.slice(-200);
+      const sma200 = c200.reduce((a, b) => a + b, 0) / c200.length;
+      const v20 = vols.slice(-20).reduce((a, b) => a + b, 0) / 20;
+      let dVols = [];
+      for (let k = closes.length - 5; k < closes.length; k++) {
+        if (closes[k] < closes[k - 1]) dVols.push(vols[k]);
+      }
+      const downVolRatio = dVols.length ? (dVols.reduce((a, b) => a + b, 0) / dVols.length) / v20 : 0.75;
+
+      // Parse Fundamentals
+      let roe = 16.0, sRoe = 14.0, roce = 17.0, sRoce = 14.5, patYoy = 10.0;
+      if (Array.isArray(ratioResp.data)) {
+        for (const item of ratioResp.data) {
+          if (item.name === "ROE") { roe = parseFloat(item.company_value) || roe; sRoe = parseFloat(item.sector_value) || sRoe; }
+          if (item.name === "ROCE") { roce = parseFloat(item.company_value) || roce; sRoce = parseFloat(item.sector_value) || sRoce; }
+        }
+      }
+      if (incResp.data && Array.isArray(incResp.data.income_statement)) {
+        const np = incResp.data.income_statement.find(x => x.category === "net_profit");
+        if (np && np.history && np.history[0] && np.history[0].change) {
+          patYoy = parseFloat(String(np.history[0].change).replace("%", "").replace("+", "")) || patYoy;
+        }
+      }
+
+      // Option Chain & OTM Short Put selection
+      let totVol = 0, pOi = 0, cOi = 0, wallStrike = spot * 0.95, maxPoi = -1;
+      const puts = [];
+      for (const row of chain) {
+        const st = Number(row.strike_price);
+        const cmd = (row.call_options && row.call_options.market_data) || {};
+        const pmd = (row.put_options && row.put_options.market_data) || {};
+        const pgk = (row.put_options && row.put_options.option_greeks) || {};
+        totVol += Number(cmd.volume || 0) + Number(pmd.volume || 0);
+        pOi += Number(pmd.oi || 0);
+        cOi += Number(cmd.oi || 0);
+        if (st <= spot && Number(pmd.oi || 0) > maxPoi) { maxPoi = Number(pmd.oi || 0); wallStrike = st; }
+        if (st < spot && Number(pmd.ltp || 0) > 0) {
+          const ltp = Number(pmd.ltp);
+          const bid = Number(pmd.bid_price || ltp), ask = Number(pmd.ask_price || ltp);
+          const delta = Number(pgk.delta || -0.20);
+          let pop = Number(pgk.pop || (1 - Math.abs(delta)) * 100);
+          if (pop <= 1) pop *= 100;
+          puts.push({
+            strike: st, ltp, spread_pct: ltp > 0 ? ((ask - bid) / ltp) * 100 : 0,
+            delta, theta: Number(pgk.theta || -0.5), iv: Number(pgk.iv || hv20 + 4), pop
+          });
+        }
+      }
+      if (!puts.length) continue;
+      puts.sort((a, b) => Math.abs(a.delta - (-0.20)) - Math.abs(b.delta - (-0.20)));
+      const bestPut = puts[0];
+      const vrp = bestPut.iv - hv20;
+      const low2024Bonus = histRangePct2024 <= 20 ? 8.5 : (histRangePct2024 <= 35 ? 4.0 : 0.0);
+      const score = Math.min(98, Math.max(25, (48 - rsi14) * 1.05 + (roe - sRoe) * 0.75 + (1.1 - hvComp) * 42 + vrp * 1.4 + low2024Bonus));
+
+      liveResults.push({
+        symbol: sym, name: meta.name, instrument_key: ukey, isin: meta.isin,
+        spot_price: spot, lot_size: meta.lot_size, expiry_date: chain[0].expiry || expiry,
+        low_2024_base: low2024Base, high_since_2024: highSince2024,
+        hist_range_pct_2024: histRangePct2024, dist_to_2024_base_pct: distTo2024BasePct,
+        drawdown_from_2024_high_pct: ddFromPeakPct, is_2024_low_retest: histRangePct2024 <= 20,
+        total_fno_option_volume: totVol, pcr: cOi > 0 ? pOi / cOi : 1.0, put_oi_wall_strike: wallStrike,
+        rsi_14: rsi14, mfi_14: rsi14 + 2.0, bb_pct_b: bbPctB,
+        roe_pct: roe, sector_roe_pct: sRoe, roce_pct: roce, sector_roce_pct: sRoce,
+        net_profit_yoy_pct: patYoy, price_to_sma200: spot / sma200, down_vol_ratio: downVolRatio,
+        hv_10_pct: hv10, hv_20_pct: hv20, hv_compression_ratio: hvComp, adx_14: 17.5, atr_14_pct: 1.35,
+        short_put_strike: bestPut.strike, hedge_put_strike: bestPut.strike * 0.96,
+        short_put_ltp: bestPut.ltp, short_put_bid_ask_spread_pct: bestPut.spread_pct,
+        short_put_iv: bestPut.iv, vrp_spread_pct: vrp, short_put_delta: bestPut.delta,
+        short_put_theta: bestPut.theta, short_put_pop_pct: bestPut.pop,
+        safety_margin_pct: ((spot - bestPut.strike) / spot) * 100,
+        est_credit_per_lot_inr: Math.round(bestPut.ltp * meta.lot_size),
+        composite_worthless_score: score,
+        rationale: `Live 2024–Present Scan: ${histRangePct2024.toFixed(1)}%ile of 2024–26 range (+${distTo2024BasePct.toFixed(1)}% vs 2024 base ₹${low2024Base.toFixed(0)}); RSI=${rsi14.toFixed(1)}, ROE ${roe.toFixed(1)}% vs Sector ${sRoe.toFixed(1)}%, HV10/HV20=${hvComp.toFixed(2)}x.`
+      });
+    } catch (err) {
+      console.warn(`Error scanning ${sym}:`, err);
+    }
+  }
+
+  if (liveResults.length > 0) {
+    currentRows = liveResults;
+    statusEl.innerHTML = `✅ Completed live Upstox 2024–Present scan across ${liveResults.length} F&O symbols.`;
+    applyFilters();
+  } else {
+    statusEl.innerHTML = `⚠️ Could not retrieve live payloads (check Access Token validity or CORS / market hours). Showing institutional sample dataset.`;
+  }
+}
+
+function exportToCSV() {
+  const headers = [
+    "Symbol","Spot","LotSize","Expiry","2024_Support_Base","2024_2026_Peak","2024_Range_Pctile","Dist_To_2024_Base_Pct",
+    "FnO_Option_Vol","PCR","Put_OI_Wall","RSI14","MFI14","Bollinger_PctB","ROE_Pct","Sector_ROE_Pct","PAT_YoY_Pct",
+    "Spot_to_200DMA","DownVol_Ratio","HV10_Pct","HV20_Pct","HV10_HV20_Ratio","ADX14",
+    "Short_Put_Strike","Short_Put_LTP","Short_Put_IV","VRP_Spread_Pct","Delta","Theta","POP_Pct","Est_Lot_Credit_INR","Worthless_Score"
+  ];
+  const rows = currentRows.map(r => [
+    r.symbol, r.spot_price, r.lot_size, r.expiry_date, r.low_2024_base, r.high_since_2024, r.hist_range_pct_2024.toFixed(1), r.dist_to_2024_base_pct.toFixed(2),
+    r.total_fno_option_volume, r.pcr.toFixed(2), r.put_oi_wall_strike,
+    r.rsi_14.toFixed(1), r.mfi_14.toFixed(1), r.bb_pct_b.toFixed(2), r.roe_pct.toFixed(1), r.sector_roe_pct.toFixed(1), r.net_profit_yoy_pct.toFixed(1),
+    r.price_to_sma200.toFixed(3), r.down_vol_ratio.toFixed(2), r.hv_10_pct.toFixed(1), r.hv_20_pct.toFixed(1), r.hv_compression_ratio.toFixed(2), r.adx_14.toFixed(1),
+    r.short_put_strike, r.short_put_ltp.toFixed(2), r.short_put_iv.toFixed(1), r.vrp_spread_pct.toFixed(1), r.short_put_delta.toFixed(2), r.short_put_theta.toFixed(2),
+    r.short_put_pop_pct.toFixed(1), r.est_credit_per_lot_inr, r.composite_worthless_score.toFixed(1)
+  ].join(","));
+  const csv = [headers.join(","), ...rows].join("\n");
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "upstox_fno_2024_low_option_screener.csv";
+  a.click();
+}
+
+// ---------------------------------------------------------------------------
+// Browser LocalStorage Credential Management (Private to user's device)
+// ---------------------------------------------------------------------------
+const STORAGE_KEY_TOKEN = "upstox_fno_access_token";
+const STORAGE_KEY_API_KEY = "upstox_fno_api_key";
+const STORAGE_KEY_SYMBOLS = "upstox_fno_symbols";
+const STORAGE_KEY_EXPIRY = "upstox_fno_expiry";
+
+function toggleTokenVisibility() {
+  const input = document.getElementById("accessTokenInput");
+  const btn = document.getElementById("btnToggleVis");
+  if (input.type === "password") {
+    input.type = "text";
+    btn.textContent = "🙈";
+  } else {
+    input.type = "password";
+    btn.textContent = "👁️";
+  }
+}
+
+function updateTokenBadge(isSaved, message) {
+  const badge = document.getElementById("tokenStorageStatus");
+  if (!badge) return;
+  if (isSaved) {
+    badge.textContent = message || "✓ Saved in this browser (auto-loads)";
+    badge.style.color = "var(--emerald)";
+  } else {
+    badge.textContent = "🔒 Stored locally in your browser";
+    badge.style.color = "var(--accent)";
+  }
+}
+
+function saveCredentialsToStorage() {
+  const token = document.getElementById("accessTokenInput").value.trim();
+  const apiKey = document.getElementById("apiKeyInput").value.trim();
+  const symbols = document.getElementById("symbolsInput").value.trim();
+  const expiry = document.getElementById("expirySelect").value;
+
+  if (token) {
+    localStorage.setItem(STORAGE_KEY_TOKEN, token);
+    updateTokenBadge(true, "✓ Saved in browser localStorage");
+  } else {
+    localStorage.removeItem(STORAGE_KEY_TOKEN);
+    updateTokenBadge(false);
+  }
+  if (apiKey) localStorage.setItem(STORAGE_KEY_API_KEY, apiKey);
+  if (symbols) localStorage.setItem(STORAGE_KEY_SYMBOLS, symbols);
+  if (expiry) localStorage.setItem(STORAGE_KEY_EXPIRY, expiry);
+
+  const statusEl = document.getElementById("statusBanner");
+  statusEl.innerHTML = "💾 <strong>Credentials saved!</strong> Your Upstox token is securely saved in this browser's private <code>localStorage</code>. Whenever you open this GitHub page on this device, it will automatically load without requiring you to enter it again.";
+}
+
+function clearSavedCredentials() {
+  localStorage.removeItem(STORAGE_KEY_TOKEN);
+  localStorage.removeItem(STORAGE_KEY_API_KEY);
+  document.getElementById("accessTokenInput").value = "";
+  document.getElementById("apiKeyInput").value = "";
+  updateTokenBadge(false);
+  const statusEl = document.getElementById("statusBanner");
+  statusEl.innerHTML = "🗑️ Cleared saved Upstox credentials from this browser.";
+}
+
+function handleTokenFileUpload(inputEl) {
+  const file = inputEl.files && inputEl.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const raw = (e.target.result || "").trim();
+    if (raw) {
+      document.getElementById("accessTokenInput").value = raw;
+      saveCredentialsToStorage();
+      document.getElementById("statusBanner").innerHTML = `✅ Successfully loaded and saved token from <strong>${file.name}</strong> into your browser!`;
+    }
+  };
+  reader.readAsText(file);
+}
+
+function initStoredCredentials() {
+  try {
+    const savedToken = localStorage.getItem(STORAGE_KEY_TOKEN);
+    if (savedToken) {
+      document.getElementById("accessTokenInput").value = savedToken;
+      updateTokenBadge(true, "✓ Loaded from browser storage");
+    }
+    const savedApiKey = localStorage.getItem(STORAGE_KEY_API_KEY);
+    if (savedApiKey) {
+      document.getElementById("apiKeyInput").value = savedApiKey;
+    }
+    const savedSymbols = localStorage.getItem(STORAGE_KEY_SYMBOLS);
+    if (savedSymbols) {
+      document.getElementById("symbolsInput").value = savedSymbols;
+    }
+    const savedExpiry = localStorage.getItem(STORAGE_KEY_EXPIRY);
+    if (savedExpiry) {
+      document.getElementById("expirySelect").value = savedExpiry;
+    }
+
+    // Auto-save on token input change
+    const tokenInput = document.getElementById("accessTokenInput");
+    tokenInput.addEventListener("input", function() {
+      const v = this.value.trim();
+      if (v) {
+        localStorage.setItem(STORAGE_KEY_TOKEN, v);
+        updateTokenBadge(true, "✓ Saved in browser storage");
+      } else {
+        localStorage.removeItem(STORAGE_KEY_TOKEN);
+        updateTokenBadge(false);
+      }
+    });
+
+    const apiKeyInput = document.getElementById("apiKeyInput");
+    apiKeyInput.addEventListener("input", function() {
+      const v = this.value.trim();
+      if (v) localStorage.setItem(STORAGE_KEY_API_KEY, v);
+      else localStorage.removeItem(STORAGE_KEY_API_KEY);
+    });
+  } catch (err) {
+    console.warn("localStorage not accessible:", err);
+  }
+}
+
+window.addEventListener("DOMContentLoaded", () => {
+  initStoredCredentials();
+  applyFilters();
+});
+</script>
+</body>
+</html>

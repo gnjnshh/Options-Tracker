@@ -1,0 +1,30 @@
+# Local environment variables & secrets (CRITICAL: Never commit to public repo)
+.env
+.env.*
+!.env.example
+*.token
+*token*.txt
+Upstox*.txt
+*.key
+*.pem
+
+# Python artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+ENV/
+
+# Output reports & data
+*.csv
+
+# Operating System & IDE
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
