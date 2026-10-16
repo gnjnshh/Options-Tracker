@@ -1,8 +1,11 @@
-# 📈 Upstox F&O Option Selling Screener & Tracker
+# 📈 Upstox F&O Quant Screener & Options Tracker (v2.0 & v1.0)
 
-A quantitative options selling screener and probability engine powered by the **Upstox Developer API (v2 & v3)**. Designed for theta-decay strategies (OTM Short Puts, Bull Put Credit Spreads, Short Strangles) targeting high-probability candidates.
+Dual-engine quantitative options screener powered by the **Upstox Developer API (v2 & v3)**. Includes both:
+* 🚀 **Engine v2.0 (Active Default):** **Next-Month Rebound & VRP Harvester** (Yang-Zhang Volatility, Futures OI & Basis tracking, Institutional Cash Flow & Connors RSI-2).
+* 🏛️ **Engine v1.0:** **2024 Multi-Year Low & Stagnant Volatility** (Theta Decay, Bollinger %B, Put OI Walls).
 
 🌐 **Live Web Dashboard:** [https://gnjnshh.github.io/Options-Tracker/](https://gnjnshh.github.io/Options-Tracker/)
+*(Includes an in-browser tab switcher to toggle between Engine v2.0 and Engine v1.0 instantly!)*
 
 ---
 
@@ -80,19 +83,27 @@ UPSTOX_ACCESS_TOKEN=your_upstox_bearer_token_here
 *(The screener also automatically detects `Upstox API.txt` on your Desktop if `.env` is omitted.)*
 
 #### 3. Run the Screener
-- **Scan liquid F&O basket (Top 40):**
+
+##### 🚀 Run Engine v2.0 (Next-Month Rebound & VRP Harvester)
+- **Offline Simulation / Demo Mode (v2):**
+  ```bash
+  python upstox_fno_option_screener_v2.py --demo
+  ```
+- **Live Next-Month Expiry Rebound Scan (Liquid Basket):**
+  ```bash
+  python upstox_fno_option_screener_v2.py --expiry next_month
+  ```
+- **Live Next-Month Scan across ALL ~200+ NSE F&O Underlyings:**
+  ```bash
+  python upstox_fno_option_screener_v2.py --symbols all --max-symbols 250
+  ```
+
+##### 🏛️ Run Engine v1.0 (Current-Month 2024 Low & Stagnant Volatility)
+- **Run v1 Screener:**
   ```bash
   python upstox_fno_option_screener.py
   ```
-- **Scan ALL ~200+ NSE F&O equities across the entire market:**
-  ```bash
-  python upstox_fno_option_screener.py --symbols all --max-symbols 250
-  ```
-- **Scan specific tickers:**
-  ```bash
-  python upstox_fno_option_screener.py --symbols VOLTAS,ASIANPAINT,TCS,HDFCBANK --expiry current_month
-  ```
-- **Offline Simulation / Demo Mode (No API token required):**
+- **Offline Simulation (v1):**
   ```bash
   python upstox_fno_option_screener.py --demo
   ```
@@ -120,12 +131,13 @@ Saved full screener report to: upstox_option_selling_candidates.csv
 
 ```text
 Options-Tracker/
-├── .env.example                  # Safe configuration template (git-tracked)
-├── .env                          # Your private API token (git-ignored, never pushed)
-├── .gitignore                    # Ensures all secrets and tokens remain private
-├── index.html                    # Single-page dashboard with localStorage persistence
-├── upstox_fno_option_screener.py # Python CLI screener with automatic .env loader
-└── README.md                     # Documentation & usage instructions
+├── .env.example                     # Safe configuration template (git-tracked)
+├── .env                             # Your private API token (git-ignored, never pushed)
+├── .gitignore                       # Ensures all secrets and tokens remain private
+├── index.html                       # Dual-Engine Dashboard (v2.0 Active Default + v1.0 Tab)
+├── upstox_fno_option_screener.py    # Python CLI screener v1.0 (2024 Low & Stagnant Vol)
+├── upstox_fno_option_screener_v2.py # Python CLI screener v2.0 (Next-Month Rebound & VRP)
+└── README.md                        # Documentation & usage instructions
 ```
 
 ---
