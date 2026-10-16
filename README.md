@@ -1,7 +1,5 @@
 # 📈 Upstox F&O Option Selling Screener & Tracker
 
-[![Deploy to GitHub Pages](https://github.com/gnjnshh/Options-Tracker/actions/workflows/deploy.yml/badge.svg)](https://github.com/gnjnshh/Options-Tracker/actions/workflows/deploy.yml)
-
 A quantitative options selling screener and probability engine powered by the **Upstox Developer API (v2 & v3)**. Designed for theta-decay strategies (OTM Short Puts, Bull Put Credit Spreads, Short Strangles) targeting high-probability candidates.
 
 🌐 **Live Web Dashboard:** [https://gnjnshh.github.io/Options-Tracker/](https://gnjnshh.github.io/Options-Tracker/)
@@ -54,11 +52,11 @@ The screener filters out speculative traps and targets high-conviction theta dec
 3. Click **"Scan Live via Upstox API"**.
 4. Your token is now remembered on that browser—every time you revisit the link, your credentials are already loaded!
 
-> **Activating GitHub Pages on your repository:**
+> **Viewing on GitHub Pages (Zero build setup required):**
 > 1. Go to your repo: **[https://github.com/gnjnshh/Options-Tracker](https://github.com/gnjnshh/Options-Tracker)**
 > 2. Click **Settings** > **Pages** (in the left navigation).
-> 3. Under **Build and deployment** > **Source**, choose **GitHub Actions** (the included workflow will deploy automatically) or **Deploy from a branch** (`main` / root `/`).
-> 4. Click **Save**. Your page will be live in ~60 seconds!
+> 3. Under **Build and deployment** > **Source**, choose **Deploy from a branch** (`main` / root `/`).
+> 4. Click **Save**. Your page is immediately live at **[https://gnjnshh.github.io/Options-Tracker/](https://gnjnshh.github.io/Options-Tracker/)**!
 
 ---
 
@@ -118,9 +116,6 @@ Saved full screener report to: upstox_option_selling_candidates.csv
 
 ```text
 Options-Tracker/
-├── .github/
-│   └── workflows/
-│       └── deploy.yml            # Automated GitHub Pages CI/CD workflow
 ├── .env.example                  # Safe configuration template (git-tracked)
 ├── .env                          # Your private API token (git-ignored, never pushed)
 ├── .gitignore                    # Ensures all secrets and tokens remain private
