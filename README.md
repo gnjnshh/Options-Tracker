@@ -1,11 +1,11 @@
-# 📈 Upstox F&O Quant Screener & Options Tracker (v2.0 & v1.0)
+# 📈 Upstox F&O Quant Screener — Worthless Expiry & VRP Harvester (v2.5)
 
-Dual-engine quantitative options screener powered by the **Upstox Developer API (v2 & v3)**. Includes both:
-* 🚀 **Engine v2.0 (Active Default):** **Next-Month Rebound & VRP Harvester** (Yang-Zhang Volatility, Futures OI & Basis tracking, Institutional Cash Flow & Connors RSI-2).
-* 🏛️ **Engine v1.0:** **2024 Multi-Year Low & Stagnant Volatility** (Theta Decay, Bollinger %B, Put OI Walls).
+Institutional-grade quantitative options screener powered by the **Upstox Developer API (v2 & v3)**.
+Ranks liquid NSE F&O Short Puts and Bull Put Credit Spreads by **Empirical Probability of Expiring Worthless (POP% via Yang-Zhang Volatility)**, **True Volatility Risk Premium (VRP)**, and **Put OI Support Wall Cushion**.
 
 🌐 **Live Web Dashboard:** [https://gnjnshh.github.io/Options-Tracker/](https://gnjnshh.github.io/Options-Tracker/)
-*(Includes an in-browser tab switcher to toggle between Engine v2.0 and Engine v1.0 instantly!)*
+
+*(Note: The original v1.0 2024 Multi-Year Low screener is preserved on branch **[`v1`](https://github.com/gnjnshh/Options-Tracker/tree/v1)**).*
 
 ---
 
@@ -13,36 +13,37 @@ Dual-engine quantitative options screener powered by the **Upstox Developer API 
 
 This repository is **completely public**, but your personal Upstox API credentials remain **100% private and secure**:
 
-1. **Browser `localStorage` Persistence**:
+1. **Browser `localStorage` Client-Side Persistence**:
    - When you open the hosted GitHub Page ([https://gnjnshh.github.io/Options-Tracker/](https://gnjnshh.github.io/Options-Tracker/)), enter or load your Upstox Bearer token **once**.
    - The token is saved in your browser's isolated `localStorage` on your device.
    - **Whenever you reopen this GitHub page on your laptop or phone, it automatically retrieves your saved token so you don't have to input it every time!**
    - Because `localStorage` stays strictly within your client-side browser, your token is **never transmitted to GitHub or any third-party server**, and is never visible to anyone else visiting your public repository.
-   - You can also click **"📁 Load from Upstox API.txt"** to instantly import your token file with a single click.
+   - You can also click **"📁 Load API File"** to instantly import your token file (`Upstox API.txt` or `.env`) with a single click.
 
 2. **Local Python Execution via `.env`**:
-   - For running the Python CLI tool locally, your credentials are saved in `.env` (or automatically discovered from your desktop token file).
+   - For running the Python CLI tool locally, your credentials are saved in `.env` (or automatically discovered from your desktop token file `Upstox API.txt`).
    - `.gitignore` strictly prevents `.env`, `*.token`, `*.txt` credentials, and output datasets from ever being committed to git.
 
 ---
 
-## 🏛️ Quantitative Strategy Pillars
+## 🏛️ Calibrated Quantitative Pillars & Bug Fixes
 
-The screener filters out speculative traps and targets high-conviction theta decay opportunities:
+The v2.5 engine addresses and resolves common quantitative options screening pitfalls:
 
-1. **2024 Multi-Year Historical Low Base**:
-   - Compares spot prices against the multi-year support range since 2024-01-01 (e.g. VOLTAS near ₹1,053.40).
-   - Identifies structural demand zones and safe institutional floors.
-2. **Technically Oversold**:
-   - Pullback into oversold territory: Wilder's RSI(14) $\le 40$, Money Flow Index (14) $\le 45$, Bollinger %B(20, 2) $\le 0.28$.
-3. **Fundamental Quality ("Doesn't Deserve the Dip")**:
-   - Upstox Fundamentals API integration: Company ROE $\ge$ Sector ROE, ROCE $\ge$ Sector ROCE, positive YoY net profit growth, and low down-day distribution volume (DownVol $\le 1.15\times$).
-4. **Stagnant Volatility ("Expires Worthless")**:
-   - Realized Volatility Compression: $\text{HV}(10) / \text{HV}(20) \le 0.95$ and $\text{HV}(20) \le 28\%$.
-   - Non-trending consolidation regime: $\text{ADX}(14) \le 23$.
-   - Positive Volatility Risk Premium (VRP): Option $\text{IV} > \text{HV}(20)$.
-5. **High F&O Liquidity & OI Floor**:
-   - High option chain volume, tight bid-ask spreads ($\le 1.5\%$), and recommended short put strikes at or below the primary Put Open Interest (OI) support wall.
+1. **Reversed V3 Candle Chronology Fix**:
+   - Upstox `/v3/historical-candle` returns newest candles at index `0`. The engine reverses the candle series so that 5-day Z-scores ($Z_{5D}$) and momentum indicators have the correct sign.
+2. **Strict Listed NSE Strike Snapping**:
+   - Snaps short and hedge legs to actual listed NSE strike intervals (e.g. ₹10, ₹20, ₹50, ₹100). No fractional strikes (e.g. 1881.6 PE) and no negative RoR spreads.
+3. **Empirical Probability of Expiring Worthless ($P_{\text{worthless}}$)**:
+   - Evaluates exact lognormal survival probability $N(d_2)$ using 20-day **Yang-Zhang (2000) minimum-variance OHLC volatility ($\sigma_{\text{YZ}}$)**. Avoids inverted broker delta fields.
+4. **True Volatility Risk Premium (VRP)**:
+   - Requires $\text{Option IV} - \sigma_{\text{YZ}} \ge +2.0\%$ so you are statistically paid excess premium above realized market movement.
+5. **Calibrated 5-Pillar Regime Guard**:
+   - **Pillar I — Empirical POP & Safety Cushion:** Empirical $\text{POP} \ge 76\%$ and OTM cushion $\ge 5.0\%$ at or below Put OI Support Wall.
+   - **Pillar II — Structural Floor:** $\text{Spot} / 200\text{-DMA} \ge 0.92\text{x}$ (captures pullbacks in secular compounders).
+   - **Pillar III — Exhaustion / Non-Blowoff Regime:** $\text{RSI}(14) \le 60$ and $-2.60 \le Z_{5D} \le +1.10$ (rejects blowoffs and active crash waterfalls).
+   - **Pillar IV — Futures Flow Guard:** Rejects stocks with 5-day Futures OI surge $> +3.0\%$ during price drops (aggressive short buildup).
+   - **Pillar V — Positive VRP:** Excess premium harvest $\ge +2.0\%$.
 
 ---
 
@@ -51,15 +52,9 @@ The screener filters out speculative traps and targets high-conviction theta dec
 ### Option A: Use the Hosted Web Dashboard (GitHub Pages)
 
 1. Open **[https://gnjnshh.github.io/Options-Tracker/](https://gnjnshh.github.io/Options-Tracker/)**.
-2. Paste your Upstox Bearer token (or click **"📁 Load from Upstox API.txt"**).
-3. Click **"Scan Live via Upstox API"**.
+2. Paste your Upstox Bearer token (or click **"📁 Load API File"**).
+3. Click **"🚀 Scan Live via Upstox API"**.
 4. Your token is now remembered on that browser—every time you revisit the link, your credentials are already loaded!
-
-> **Viewing on GitHub Pages (Zero build setup required):**
-> 1. Go to your repo: **[https://github.com/gnjnshh/Options-Tracker](https://github.com/gnjnshh/Options-Tracker)**
-> 2. Click **Settings** > **Pages** (in the left navigation).
-> 3. Under **Build and deployment** > **Source**, choose **Deploy from a branch** (`main` / root `/`).
-> 4. Click **Save**. Your page is immediately live at **[https://gnjnshh.github.io/Options-Tracker/](https://gnjnshh.github.io/Options-Tracker/)**!
 
 ---
 
@@ -84,45 +79,48 @@ UPSTOX_ACCESS_TOKEN=your_upstox_bearer_token_here
 
 #### 3. Run the Screener
 
-##### 🚀 Run Engine v2.0 (Next-Month Rebound & VRP Harvester)
-- **Offline Simulation / Demo Mode (v2):**
-  ```bash
-  python upstox_fno_option_screener_v2.py --demo
-  ```
-- **Live Next-Month Expiry Rebound Scan (Liquid Basket):**
-  ```bash
-  python upstox_fno_option_screener_v2.py --expiry next_month
-  ```
-- **Live Next-Month Scan across ALL ~200+ NSE F&O Underlyings:**
-  ```bash
-  python upstox_fno_option_screener_v2.py --symbols all --max-symbols 250
-  ```
-
-##### 🏛️ Run Engine v1.0 (Current-Month 2024 Low & Stagnant Volatility)
-- **Run v1 Screener:**
-  ```bash
-  python upstox_fno_option_screener.py
-  ```
-- **Offline Simulation (v1):**
+- **Offline Simulation / Verification Mode (Instant 41-symbol scan, no API token required):**
   ```bash
   python upstox_fno_option_screener.py --demo
   ```
 
+- **Live Next-Month Expiry Rebound Scan:**
+  ```bash
+  python upstox_fno_option_screener.py --expiry next_month
+  ```
+
+- **Show Both Qualified and Filtered Stocks:**
+  ```bash
+  python upstox_fno_option_screener.py --demo --show-rejected
+  ```
+
+- **Sort by Pure Empirical POP %:**
+  ```bash
+  python upstox_fno_option_screener.py --demo --sort pure_pop
+  ```
+
 ---
 
-## 📊 Sample Output Table
+## 📊 Sample Screener Output
 
 ```text
-======================================================================================================================
- UPSTOX F&O OPTION SELLING SCREENER — 'UNDESERVED OVERSOLD + STAGNANT VOLATILITY (THETA DECAY)'
-======================================================================================================================
-SYMBOL          SPOT  RSI14    %B   ROE/SEC  HV10/20   ADX   IV/HV20 RECOMMENDED SHORT PUT     POP%  SCORE
-----------------------------------------------------------------------------------------------------------------------
-VOLTAS       1053.40   34.0  0.03    16/13%    0.64x  15.5  26.3/8.3 1000 PE @ INR 5.1 (d-0.16)  87.1   89.0
-ASIANPAINT   2390.00   34.0  0.03    28/18%    0.64x  14.9  23.1/7.9 2300 PE @ INR 14.6 (d-0.22)  81.7   87.0
-----------------------------------------------------------------------------------------------------------------------
-Qualified Candidates: 2 / 10 screened F&O stocks.
-Saved full screener report to: upstox_option_selling_candidates.csv
+==============================================================================================================================================
+ UPSTOX F&O QUANT SCREENER v2.5 — WORTHLESS EXPIRY & VRP HARVESTER (CALIBRATED ENGINE)
+ Objective: Maximum Empirical Probability of Expiring Worthless (POP%) + Positive Volatility Risk Premium
+==============================================================================================================================================
+ Qualified Candidates: 16 / 41 (39.0% pass rate)
+ KPI Averages (Qualified): POP: 91.7% | Cushion: 5.8% | Spread RoR: 38.2% | True VRP: +6.5%
+----------------------------------------------------------------------------------------------------------------------------------------------
+RANK & SYMBOL  SPOT (INR) 200-DMA  RSI14/Z5D     FUT OI    IV/YZ        VRP     RECOMMENDED BULL PUT SPREAD    RoR%    POP%    CREDIT    SCORE  STATUS
+----------------------------------------------------------------------------------------------------------------------------------------------
+1. SIEMENS     3,624.0    1.03x    43.5/-0.95    -3.8%     22.9%/16.0%  +6.9%   Sell 3400P / Buy 3300P         35.4%   92.6%   INR 4,576 93.2   QUALIFIED
+   [THESIS] Strike 3400 PE sits -6.2% below spot (at/below Put Wall 3400) with 92.6% Empirical POP and +6.9% VRP.
+2. ABB         6,801.0    1.03x    41.2/-1.18    -2.9%     23.4%/16.2%  +7.2%   Sell 6400P / Buy 6200P         33.5%   91.4%   INR 6,268 92.9   QUALIFIED
+   [THESIS] Strike 6400 PE sits -5.9% below spot (at/below Put Wall 6300) with 91.4% Empirical POP and +7.2% VRP.
+3. DRREDDY     1,233.0    0.99x    38.4/-1.42    -3.4%     21.8%/14.9%  +6.9%   Sell 1160P / Buy 1120P         26.9%   93.3%   INR 5,294 91.8   QUALIFIED
+   [THESIS] Strike 1160 PE sits -5.9% below spot (at/below Put Wall 1140) with 93.3% Empirical POP and +6.9% VRP.
+----------------------------------------------------------------------------------------------------------------------------------------------
+Saved full quantitative screener report to: upstox_worthless_expiry_ranked_v2_5.csv
 ```
 
 ---
@@ -134,11 +132,18 @@ Options-Tracker/
 ├── .env.example                     # Safe configuration template (git-tracked)
 ├── .env                             # Your private API token (git-ignored, never pushed)
 ├── .gitignore                       # Ensures all secrets and tokens remain private
-├── index.html                       # Dual-Engine Dashboard (v2.0 Active Default + v1.0 Tab)
-├── upstox_fno_option_screener.py    # Python CLI screener v1.0 (2024 Low & Stagnant Vol)
-├── upstox_fno_option_screener_v2.py # Python CLI screener v2.0 (Next-Month Rebound & VRP)
-└── README.md                        # Documentation & usage instructions
+├── index.html                       # Web Dashboard v2.5 (Worthless Expiry & VRP Harvester)
+├── upstox_fno_option_screener.py    # Python CLI screener v2.5 (Reversed candles & listed strikes)
+├── upstox_fno_option_screener_v2.py # Entry point alias to latest screener
+└── README.md                        # Documentation & methodology guide
 ```
+
+---
+
+## 🗂️ Branches
+
+- **`main`**: Latest v2.5 Worthless Expiry & VRP Harvester (Dashboard & CLI).
+- **`v1`**: Original v1.0 2024 Multi-Year Low screener code.
 
 ---
 
