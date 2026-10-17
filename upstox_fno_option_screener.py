@@ -51,6 +51,7 @@ from __future__ import annotations
 import argparse
 import csv
 import datetime as dt
+import json
 import math
 import os
 import sys
@@ -60,6 +61,24 @@ import urllib.parse
 import urllib.request
 from dataclasses import dataclass, asdict
 from typing import Any, Dict, List, Optional, Tuple
+
+from backtest.indicators import (
+    black_scholes_put_price,
+    compute_200_dma,
+    compute_adx14,
+    compute_bollinger_pct_b,
+    compute_down_volume_ratio,
+    compute_mfi14,
+    compute_rsi14,
+    compute_worthless_score,
+    compute_yang_zhang_vol,
+    compute_z5d,
+    find_2020_base_floor,
+    find_multiyear_high,
+    norm_cdf,
+    snap_to_listed_strike,
+)
+from backtest.upstox_data_provider import TOP_50_UNIVERSE, UpstoxDataProvider
 
 
 # ---------------------------------------------------------------------------
@@ -75,59 +94,59 @@ UPSTOX_USER_PROFILE_URL = "https://api.upstox.com/v2/user/profile"
 # Universes: Core 41, Top 50 Liquid, and All 220 NSE F&O
 # ---------------------------------------------------------------------------
 CORE_41_RAW: List[Dict[str, Any]] = [
-    {"sym": "DRREDDY", "lot": 625, "spot": 1233.0, "dma200": 0.99, "rsi14": 38.4, "z5d": -1.42, "futOi": -3.4, "iv": 21.8, "yz": 14.9, "step": 20.0, "roe": 19.4, "secRoe": 15.2, "pat": 14.2, "fnoVol": 184500},
-    {"sym": "ABB", "lot": 125, "spot": 6801.0, "dma200": 1.03, "rsi14": 41.2, "z5d": -1.18, "futOi": -2.9, "iv": 23.4, "yz": 16.2, "step": 100.0, "roe": 22.8, "secRoe": 14.5, "pat": 28.5, "fnoVol": 96400},
-    {"sym": "SIEMENS", "lot": 175, "spot": 3624.0, "dma200": 1.03, "rsi14": 43.5, "z5d": -0.95, "futOi": -3.8, "iv": 22.9, "yz": 16.0, "step": 50.0, "roe": 17.9, "secRoe": 14.5, "pat": 21.0, "fnoVol": 112300},
-    {"sym": "TITAN", "lot": 175, "spot": 4444.8, "dma200": 1.00, "rsi14": 44.1, "z5d": -0.88, "futOi": -2.1, "iv": 21.5, "yz": 15.1, "step": 50.0, "roe": 31.2, "secRoe": 18.0, "pat": 15.8, "fnoVol": 248900},
-    {"sym": "BAJFINANCE", "lot": 750, "spot": 982.1, "dma200": 1.01, "rsi14": 45.0, "z5d": -0.74, "futOi": -1.8, "iv": 24.2, "yz": 17.5, "step": 10.0, "roe": 22.1, "secRoe": 15.8, "pat": 22.4, "fnoVol": 412000},
-    {"sym": "GRASIM", "lot": 250, "spot": 2920.0, "dma200": 0.98, "rsi14": 44.8, "z5d": -0.68, "futOi": -2.6, "iv": 21.6, "yz": 15.4, "step": 40.0, "roe": 13.8, "secRoe": 11.9, "pat": 11.5, "fnoVol": 88500},
-    {"sym": "SUNPHARMA", "lot": 350, "spot": 1758.8, "dma200": 0.97, "rsi14": 42.6, "z5d": -0.62, "futOi": -4.1, "iv": 20.8, "yz": 14.2, "step": 20.0, "roe": 17.6, "secRoe": 15.2, "pat": 18.9, "fnoVol": 226400},
-    {"sym": "CIPLA", "lot": 425, "spot": 1325.1, "dma200": 0.97, "rsi14": 44.5, "z5d": -0.54, "futOi": -2.4, "iv": 21.2, "yz": 14.8, "step": 20.0, "roe": 16.8, "secRoe": 15.2, "pat": 16.4, "fnoVol": 164200},
-    {"sym": "NESTLEIND", "lot": 500, "spot": 1265.5, "dma200": 0.93, "rsi14": 39.2, "z5d": -1.40, "futOi": -1.9, "iv": 18.6, "yz": 13.1, "step": 20.0, "roe": 84.0, "secRoe": 24.0, "pat": 9.8, "fnoVol": 118900},
-    {"sym": "ICICIBANK", "lot": 700, "spot": 1397.0, "dma200": 1.03, "rsi14": 51.4, "z5d": -0.35, "futOi": -3.1, "iv": 19.8, "yz": 13.9, "step": 20.0, "roe": 18.4, "secRoe": 14.2, "pat": 17.2, "fnoVol": 534000},
-    {"sym": "LT", "lot": 175, "spot": 3627.1, "dma200": 0.92, "rsi14": 35.8, "z5d": -1.65, "futOi": -3.2, "iv": 22.4, "yz": 15.8, "step": 50.0, "roe": 16.5, "secRoe": 13.8, "pat": 15.1, "fnoVol": 319500},
-    {"sym": "ASIANPAINT", "lot": 250, "spot": 2331.9, "dma200": 0.92, "rsi14": 37.5, "z5d": -1.12, "futOi": -1.4, "iv": 20.5, "yz": 14.6, "step": 20.0, "roe": 26.4, "secRoe": 18.5, "pat": 6.4, "fnoVol": 178200},
-    {"sym": "HINDALCO", "lot": 700, "spot": 908.0, "dma200": 0.93, "rsi14": 43.2, "z5d": -0.48, "futOi": -2.2, "iv": 25.4, "yz": 19.2, "step": 10.0, "roe": 14.9, "secRoe": 12.4, "pat": 24.6, "fnoVol": 289400},
-    {"sym": "SBIN", "lot": 750, "spot": 962.6, "dma200": 0.93, "rsi14": 48.5, "z5d": -0.42, "futOi": -2.7, "iv": 23.9, "yz": 16.8, "step": 10.0, "roe": 17.8, "secRoe": 14.2, "pat": 20.4, "fnoVol": 645000},
-    {"sym": "BHARTIARTL", "lot": 475, "spot": 1905.0, "dma200": 1.00, "rsi14": 53.2, "z5d": -0.25, "futOi": -2.9, "iv": 21.4, "yz": 15.0, "step": 20.0, "roe": 16.9, "secRoe": 11.0, "pat": 34.2, "fnoVol": 342100},
-    {"sym": "AXISBANK", "lot": 625, "spot": 1290.0, "dma200": 1.00, "rsi14": 54.0, "z5d": -0.18, "futOi": -1.6, "iv": 22.8, "yz": 16.4, "step": 20.0, "roe": 17.2, "secRoe": 14.2, "pat": 14.6, "fnoVol": 428000},
-    {"sym": "JSWSTEEL", "lot": 675, "spot": 1216.3, "dma200": 0.98, "rsi14": 56.2, "z5d": 0.15, "futOi": -1.2, "iv": 24.1, "yz": 17.8, "step": 20.0, "roe": 14.1, "secRoe": 12.4, "pat": 13.8, "fnoVol": 194000},
-    {"sym": "COALINDIA", "lot": 1350, "spot": 417.2, "dma200": 0.96, "rsi14": 55.4, "z5d": 0.12, "futOi": -1.5, "iv": 23.5, "yz": 17.1, "step": 5.0, "roe": 42.5, "secRoe": 16.0, "pat": 12.9, "fnoVol": 267000},
-    {"sym": "BAJAJ-AUTO", "lot": 75, "spot": 10405.0, "dma200": 1.02, "rsi14": 64.5, "z5d": 1.82, "futOi": 1.2, "iv": 23.9, "yz": 16.9, "step": 100.0, "roe": 27.8, "secRoe": 17.5, "pat": 19.4, "fnoVol": 142000},
-    {"sym": "KOTAKBANK", "lot": 2000, "spot": 447.4, "dma200": 1.12, "rsi14": 68.2, "z5d": 1.94, "futOi": 2.1, "iv": 21.0, "yz": 15.2, "step": 5.0, "roe": 15.4, "secRoe": 14.2, "pat": 12.1, "fnoVol": 389000},
-    {"sym": "HEROMOTOCO", "lot": 150, "spot": 5225.0, "dma200": 0.98, "rsi14": 67.8, "z5d": 2.40, "futOi": 1.8, "iv": 22.5, "yz": 16.4, "step": 50.0, "roe": 24.1, "secRoe": 17.5, "pat": 16.8, "fnoVol": 134500},
-    {"sym": "TCS", "lot": 225, "spot": 2465.0, "dma200": 1.00, "rsi14": 74.5, "z5d": 3.09, "futOi": 2.4, "iv": 20.4, "yz": 14.8, "step": 20.0, "roe": 51.4, "secRoe": 24.5, "pat": 9.4, "fnoVol": 376000},
-    {"sym": "HCLTECH", "lot": 400, "spot": 1380.0, "dma200": 1.03, "rsi14": 76.2, "z5d": 3.46, "futOi": 2.8, "iv": 21.8, "yz": 15.6, "step": 20.0, "roe": 25.2, "secRoe": 24.5, "pat": 11.8, "fnoVol": 215000},
-    {"sym": "TECHM", "lot": 600, "spot": 1790.0, "dma200": 1.18, "rsi14": 75.0, "z5d": 2.96, "futOi": 3.1, "iv": 23.0, "yz": 16.8, "step": 20.0, "roe": 15.8, "secRoe": 24.5, "pat": 18.2, "fnoVol": 189000},
-    {"sym": "INFY", "lot": 400, "spot": 1161.2, "dma200": 0.94, "rsi14": 69.5, "z5d": 2.64, "futOi": 1.5, "iv": 35.2, "yz": 22.4, "step": 20.0, "roe": 31.8, "secRoe": 24.5, "pat": 8.7, "fnoVol": 462000},
-    {"sym": "HDFCBANK", "lot": 650, "spot": 728.9, "dma200": 0.91, "rsi14": 61.8, "z5d": 1.36, "futOi": 0.8, "iv": 22.6, "yz": 15.5, "step": 10.0, "roe": 16.1, "secRoe": 14.2, "pat": 15.4, "fnoVol": 712000},
-    {"sym": "RELIANCE", "lot": 500, "spot": 1211.2, "dma200": 0.90, "rsi14": 63.0, "z5d": 1.52, "futOi": 1.9, "iv": 21.2, "yz": 15.4, "step": 20.0, "roe": 11.2, "secRoe": 12.0, "pat": 7.9, "fnoVol": 689000},
-    {"sym": "ITC", "lot": 1725, "spot": 263.5, "dma200": 0.89, "rsi14": 64.2, "z5d": 1.68, "futOi": 2.2, "iv": 19.5, "yz": 14.2, "step": 5.0, "roe": 28.4, "secRoe": 24.0, "pat": 6.8, "fnoVol": 395000},
-    {"sym": "MARUTI", "lot": 50, "spot": 11489.0, "dma200": 0.84, "rsi14": 58.9, "z5d": 0.97, "futOi": 4.5, "iv": 37.5, "yz": 24.8, "step": 100.0, "roe": 16.8, "secRoe": 17.5, "pat": 13.2, "fnoVol": 208000},
-    {"sym": "NTPC", "lot": 1500, "spot": 315.1, "dma200": 0.88, "rsi14": 62.1, "z5d": 0.82, "futOi": 1.4, "iv": 22.0, "yz": 16.5, "step": 5.0, "roe": 14.2, "secRoe": 12.8, "pat": 11.4, "fnoVol": 274000},
-    {"sym": "POWERGRID", "lot": 1900, "spot": 250.4, "dma200": 0.88, "rsi14": 46.2, "z5d": 0.46, "futOi": 0.9, "iv": 21.5, "yz": 16.0, "step": 5.0, "roe": 18.6, "secRoe": 12.8, "pat": 8.9, "fnoVol": 219000},
-    {"sym": "WIPRO", "lot": 3000, "spot": 184.4, "dma200": 0.93, "rsi14": 71.0, "z5d": 2.59, "futOi": 2.9, "iv": 24.0, "yz": 17.9, "step": 2.5, "roe": 15.6, "secRoe": 24.5, "pat": 5.4, "fnoVol": 254000},
-    {"sym": "ULTRACEMCO", "lot": 50, "spot": 10907.0, "dma200": 0.93, "rsi14": 66.4, "z5d": 1.99, "futOi": 1.1, "iv": 21.8, "yz": 15.9, "step": 100.0, "roe": 13.5, "secRoe": 11.9, "pat": 14.8, "fnoVol": 112000},
-    {"sym": "M&M", "lot": 200, "spot": 2920.9, "dma200": 0.90, "rsi14": 52.0, "z5d": 1.12, "futOi": 3.4, "iv": 24.5, "yz": 18.2, "step": 50.0, "roe": 19.8, "secRoe": 17.5, "pat": 21.6, "fnoVol": 364000},
-    {"sym": "TATASTEEL", "lot": 2750, "spot": 175.5, "dma200": 0.90, "rsi14": 59.8, "z5d": 1.26, "futOi": 3.8, "iv": 26.2, "yz": 19.8, "step": 2.5, "roe": 9.4, "secRoe": 12.4, "pat": 4.2, "fnoVol": 518000},
-    {"sym": "ONGC", "lot": 2250, "spot": 222.0, "dma200": 0.87, "rsi14": 58.2, "z5d": 1.09, "futOi": 2.7, "iv": 25.0, "yz": 18.9, "step": 2.5, "roe": 15.1, "secRoe": 12.0, "pat": 6.1, "fnoVol": 298000},
-    {"sym": "BRITANNIA", "lot": 125, "spot": 4764.0, "dma200": 0.87, "rsi14": 54.5, "z5d": 1.09, "futOi": 3.2, "iv": 20.2, "yz": 15.1, "step": 50.0, "roe": 54.2, "secRoe": 24.0, "pat": 7.5, "fnoVol": 92000},
-    {"sym": "DABUR", "lot": 1250, "spot": 385.0, "dma200": 0.87, "rsi14": 55.2, "z5d": 0.88, "futOi": 2.9, "iv": 20.8, "yz": 15.4, "step": 5.0, "roe": 19.2, "secRoe": 24.0, "pat": 5.2, "fnoVol": 84000},
-    {"sym": "GODREJCP", "lot": 500, "spot": 855.0, "dma200": 0.81, "rsi14": 51.0, "z5d": 0.32, "futOi": 5.1, "iv": 23.5, "yz": 17.6, "step": 10.0, "roe": 17.4, "secRoe": 24.0, "pat": 4.8, "fnoVol": 76000},
-    {"sym": "HAVELLS", "lot": 500, "spot": 1121.0, "dma200": 0.90, "rsi14": 68.5, "z5d": 2.19, "futOi": 1.7, "iv": 22.4, "yz": 16.3, "step": 20.0, "roe": 18.9, "secRoe": 15.0, "pat": 14.1, "fnoVol": 105000},
-    {"sym": "VOLTAS", "lot": 375, "spot": 1029.1, "dma200": 0.78, "rsi14": 67.2, "z5d": 0.97, "futOi": 6.2, "iv": 31.9, "yz": 22.8, "step": 20.0, "roe": 9.8, "secRoe": 15.0, "pat": 11.2, "fnoVol": 149000},
+    {"sym": "DRREDDY", "lot": 625, "spot": 1233.0, "dma200": 0.99, "rsi14": 57.8, "z5d": 0.56, "futOi": -3.4, "iv": 26.5, "yz": 23.9, "step": 20.0, "roe": 19.4, "secRoe": 15.2, "pat": 14.2, "fnoVol": 184500, "base_2020": 499.0, "high_20_26": 1421.5},
+    {"sym": "ABB", "lot": 125, "spot": 6801.0, "dma200": 1.02, "rsi14": 41.1, "z5d": -0.96, "futOi": -2.9, "iv": 33.8, "yz": 29.9, "step": 100.0, "roe": 22.8, "secRoe": 14.5, "pat": 28.5, "fnoVol": 96400, "base_2020": 801.0, "high_20_26": 9149.95},
+    {"sym": "SIEMENS", "lot": 175, "spot": 3624.0, "dma200": 1.03, "rsi14": 40.9, "z5d": -1.11, "futOi": -3.8, "iv": 33.0, "yz": 29.1, "step": 50.0, "roe": 17.9, "secRoe": 14.5, "pat": 21.0, "fnoVol": 112300, "base_2020": 947.9, "high_20_26": 8129.9},
+    {"sym": "TITAN", "lot": 175, "spot": 4444.8, "dma200": 1.0, "rsi14": 35.0, "z5d": -0.05, "futOi": -2.1, "iv": 26.2, "yz": 21.8, "step": 50.0, "roe": 31.2, "secRoe": 18.0, "pat": 15.8, "fnoVol": 248900, "base_2020": 720.9, "high_20_26": 5186.7},
+    {"sym": "BAJFINANCE", "lot": 750, "spot": 982.1, "dma200": 1.01, "rsi14": 47.3, "z5d": 1.03, "futOi": -1.8, "iv": 34.9, "yz": 31.5, "step": 10.0, "roe": 22.1, "secRoe": 15.8, "pat": 22.4, "fnoVol": 412000, "base_2020": 210.0, "high_20_26": 1176.4},
+    {"sym": "GRASIM", "lot": 250, "spot": 2920.0, "dma200": 0.98, "rsi14": 37.6, "z5d": 1.16, "futOi": -2.6, "iv": 24.7, "yz": 20.5, "step": 40.0, "roe": 13.8, "secRoe": 11.9, "pat": 11.5, "fnoVol": 88500, "base_2020": 383.55, "high_20_26": 3411.1},
+    {"sym": "SUNPHARMA", "lot": 350, "spot": 1758.8, "dma200": 0.97, "rsi14": 37.0, "z5d": -0.13, "futOi": -4.1, "iv": 24.2, "yz": 20.0, "step": 20.0, "roe": 17.6, "secRoe": 15.2, "pat": 18.9, "fnoVol": 226400, "base_2020": 312.0, "high_20_26": 2046.9},
+    {"sym": "CIPLA", "lot": 425, "spot": 1325.1, "dma200": 0.97, "rsi14": 40.3, "z5d": 0.41, "futOi": -2.4, "iv": 25.8, "yz": 21.8, "step": 20.0, "roe": 16.8, "secRoe": 15.2, "pat": 16.4, "fnoVol": 164200, "base_2020": 355.3, "high_20_26": 1702.05},
+    {"sym": "NESTLEIND", "lot": 500, "spot": 1265.5, "dma200": 0.93, "rsi14": 35.8, "z5d": -1.07, "futOi": -1.9, "iv": 35.9, "yz": 31.6, "step": 20.0, "roe": 84.0, "secRoe": 24.0, "pat": 9.8, "fnoVol": 118900, "base_2020": 610.0, "high_20_26": 1553.0},
+    {"sym": "ICICIBANK", "lot": 700, "spot": 1397.0, "dma200": 1.03, "rsi14": 59.2, "z5d": 1.17, "futOi": -3.1, "iv": 21.0, "yz": 18.5, "step": 20.0, "roe": 18.4, "secRoe": 14.2, "pat": 17.2, "fnoVol": 534000, "base_2020": 268.3, "high_20_26": 1500.0},
+    {"sym": "LT", "lot": 175, "spot": 3627.1, "dma200": 0.92, "rsi14": 36.8, "z5d": -0.68, "futOi": -3.2, "iv": 23.4, "yz": 19.1, "step": 50.0, "roe": 16.5, "secRoe": 13.8, "pat": 15.1, "fnoVol": 319500, "base_2020": 661.0, "high_20_26": 4440.0},
+    {"sym": "ASIANPAINT", "lot": 250, "spot": 2331.9, "dma200": 0.92, "rsi14": 37.9, "z5d": -0.81, "futOi": -1.4, "iv": 27.0, "yz": 22.8, "step": 20.0, "roe": 26.4, "secRoe": 18.5, "pat": 6.4, "fnoVol": 178200, "base_2020": 1431.2, "high_20_26": 3590.0},
+    {"sym": "HINDALCO", "lot": 700, "spot": 908.0, "dma200": 0.93, "rsi14": 40.3, "z5d": 1.23, "futOi": -2.2, "iv": 28.9, "yz": 24.9, "step": 10.0, "roe": 14.9, "secRoe": 12.4, "pat": 24.6, "fnoVol": 289400, "base_2020": 84.9, "high_20_26": 1176.0},
+    {"sym": "SBIN", "lot": 750, "spot": 962.6, "dma200": 0.93, "rsi14": 44.7, "z5d": 0.89, "futOi": -2.7, "iv": 21.6, "yz": 18.0, "step": 10.0, "roe": 17.8, "secRoe": 14.2, "pat": 20.4, "fnoVol": 645000, "base_2020": 173.55, "high_20_26": 1234.7},
+    {"sym": "BHARTIARTL", "lot": 475, "spot": 1905.0, "dma200": 1.0, "rsi14": 61.8, "z5d": 1.5, "futOi": -2.9, "iv": 24.4, "yz": 22.1, "step": 20.0, "roe": 16.9, "secRoe": 11.0, "pat": 34.2, "fnoVol": 342100, "base_2020": 355.1, "high_20_26": 2174.5},
+    {"sym": "AXISBANK", "lot": 625, "spot": 1290.0, "dma200": 1.0, "rsi14": 62.8, "z5d": 1.08, "futOi": -1.6, "iv": 24.9, "yz": 22.7, "step": 20.0, "roe": 17.2, "secRoe": 14.2, "pat": 14.6, "fnoVol": 428000, "base_2020": 286.0, "high_20_26": 1418.3},
+    {"sym": "JSWSTEEL", "lot": 675, "spot": 1216.3, "dma200": 0.98, "rsi14": 45.3, "z5d": 1.46, "futOi": -1.2, "iv": 27.5, "yz": 23.9, "step": 20.0, "roe": 14.1, "secRoe": 12.4, "pat": 13.8, "fnoVol": 194000, "base_2020": 136.1, "high_20_26": 1351.0},
+    {"sym": "COALINDIA", "lot": 1350, "spot": 417.2, "dma200": 0.96, "rsi14": 50.5, "z5d": 0.68, "futOi": -1.5, "iv": 25.8, "yz": 22.6, "step": 5.0, "roe": 42.5, "secRoe": 16.0, "pat": 12.9, "fnoVol": 267000, "base_2020": 103.95, "high_20_26": 543.55},
+    {"sym": "BAJAJ-AUTO", "lot": 75, "spot": 10405.0, "dma200": 1.01, "rsi14": 42.8, "z5d": 0.85, "futOi": 1.2, "iv": 30.1, "yz": 26.3, "step": 100.0, "roe": 27.8, "secRoe": 17.5, "pat": 19.4, "fnoVol": 142000, "base_2020": 1788.65, "high_20_26": 12774.0},
+    {"sym": "KOTAKBANK", "lot": 2000, "spot": 447.4, "dma200": 1.12, "rsi14": 68.2, "z5d": 0.92, "futOi": 2.1, "iv": 28.1, "yz": 26.3, "step": 5.0, "roe": 15.4, "secRoe": 14.2, "pat": 12.1, "fnoVol": 389000, "base_2020": 200.2, "high_20_26": 460.4},
+    {"sym": "HEROMOTOCO", "lot": 150, "spot": 5225.0, "dma200": 0.98, "rsi14": 52.2, "z5d": 1.12, "futOi": 1.8, "iv": 29.7, "yz": 26.7, "step": 50.0, "roe": 24.1, "secRoe": 17.5, "pat": 16.8, "fnoVol": 134500, "base_2020": 1375.0, "high_20_26": 6388.5},
+    {"sym": "TCS", "lot": 225, "spot": 2465.0, "dma200": 1.0, "rsi14": 73.5, "z5d": 1.31, "futOi": 2.4, "iv": 35.2, "yz": 33.4, "step": 20.0, "roe": 51.4, "secRoe": 24.5, "pat": 9.4, "fnoVol": 376000, "base_2020": 1506.05, "high_20_26": 4592.25},
+    {"sym": "HCLTECH", "lot": 400, "spot": 1380.0, "dma200": 1.03, "rsi14": 69.0, "z5d": 0.94, "futOi": 2.8, "iv": 33.0, "yz": 31.2, "step": 20.0, "roe": 25.2, "secRoe": 24.5, "pat": 11.8, "fnoVol": 215000, "base_2020": 375.25, "high_20_26": 2012.2},
+    {"sym": "TECHM", "lot": 600, "spot": 1790.0, "dma200": 1.18, "rsi14": 75.6, "z5d": 1.52, "futOi": 3.1, "iv": 34.3, "yz": 32.5, "step": 20.0, "roe": 15.8, "secRoe": 24.5, "pat": 18.2, "fnoVol": 189000, "base_2020": 471.4, "high_20_26": 1854.0},
+    {"sym": "INFY", "lot": 400, "spot": 1161.2, "dma200": 0.94, "rsi14": 69.8, "z5d": 1.38, "futOi": 1.5, "iv": 32.0, "yz": 30.2, "step": 20.0, "roe": 31.8, "secRoe": 24.5, "pat": 8.7, "fnoVol": 462000, "base_2020": 509.25, "high_20_26": 2006.45},
+    {"sym": "HDFCBANK", "lot": 650, "spot": 728.85, "dma200": 0.91, "rsi14": 55.3, "z5d": 1.13, "futOi": 0.8, "iv": 25.1, "yz": 22.3, "step": 10.0, "roe": 16.1, "secRoe": 14.2, "pat": 15.4, "fnoVol": 712000, "base_2020": 369.4, "high_20_26": 1020.5},
+    {"sym": "RELIANCE", "lot": 500, "spot": 1211.2, "dma200": 0.9, "rsi14": 48.7, "z5d": 1.0, "futOi": 1.9, "iv": 22.5, "yz": 19.2, "step": 20.0, "roe": 11.2, "secRoe": 12.0, "pat": 7.9, "fnoVol": 689000, "base_2020": 417.3, "high_20_26": 1611.8},
+    {"sym": "ITC", "lot": 1725, "spot": 263.5, "dma200": 0.89, "rsi14": 49.2, "z5d": 0.81, "futOi": 2.2, "iv": 26.2, "yz": 22.9, "step": 5.0, "roe": 28.4, "secRoe": 24.0, "pat": 6.8, "fnoVol": 395000, "base_2020": 134.6, "high_20_26": 528.5},
+    {"sym": "MARUTI", "lot": 50, "spot": 11489.0, "dma200": 0.84, "rsi14": 38.8, "z5d": 1.18, "futOi": 4.5, "iv": 24.3, "yz": 20.2, "step": 100.0, "roe": 16.8, "secRoe": 17.5, "pat": 13.2, "fnoVol": 208000, "base_2020": 4030.0, "high_20_26": 17370.0},
+    {"sym": "NTPC", "lot": 1500, "spot": 315.15, "dma200": 0.88, "rsi14": 41.0, "z5d": 0.99, "futOi": 1.4, "iv": 22.9, "yz": 19.0, "step": 5.0, "roe": 14.2, "secRoe": 12.8, "pat": 11.4, "fnoVol": 274000, "base_2020": 73.2, "high_20_26": 448.45},
+    {"sym": "POWERGRID", "lot": 1900, "spot": 250.45, "dma200": 0.88, "rsi14": 38.8, "z5d": 0.93, "futOi": 0.9, "iv": 24.9, "yz": 20.8, "step": 5.0, "roe": 18.6, "secRoe": 12.8, "pat": 8.9, "fnoVol": 219000, "base_2020": 65.15, "high_20_26": 366.25},
+    {"sym": "WIPRO", "lot": 3000, "spot": 184.4, "dma200": 0.94, "rsi14": 71.8, "z5d": 1.5, "futOi": 2.9, "iv": 32.2, "yz": 30.4, "step": 2.5, "roe": 15.6, "secRoe": 24.5, "pat": 5.4, "fnoVol": 254000, "base_2020": 79.7, "high_20_26": 369.9},
+    {"sym": "ULTRACEMCO", "lot": 50, "spot": 10907.0, "dma200": 0.94, "rsi14": 49.7, "z5d": 0.93, "futOi": 1.1, "iv": 23.3, "yz": 20.1, "step": 100.0, "roe": 13.5, "secRoe": 11.9, "pat": 14.8, "fnoVol": 112000, "base_2020": 2910.0, "high_20_26": 13110.0},
+    {"sym": "M&M", "lot": 200, "spot": 2920.9, "dma200": 0.9, "rsi14": 46.3, "z5d": 1.41, "futOi": 3.4, "iv": 26.1, "yz": 22.6, "step": 50.0, "roe": 19.8, "secRoe": 17.5, "pat": 21.6, "fnoVol": 364000, "base_2020": 245.4, "high_20_26": 3839.9},
+    {"sym": "TATASTEEL", "lot": 2750, "spot": 175.5, "dma200": 0.9, "rsi14": 41.3, "z5d": 0.5, "futOi": 3.8, "iv": 29.8, "yz": 25.9, "step": 2.5, "roe": 9.4, "secRoe": 12.4, "pat": 4.2, "fnoVol": 518000, "base_2020": 25.1, "high_20_26": 224.4},
+    {"sym": "ONGC", "lot": 2250, "spot": 222.0, "dma200": 0.87, "rsi14": 39.1, "z5d": -0.44, "futOi": 2.7, "iv": 22.0, "yz": 17.9, "step": 2.5, "roe": 15.1, "secRoe": 12.0, "pat": 6.1, "fnoVol": 298000, "base_2020": 44.25, "high_20_26": 345.0},
+    {"sym": "BRITANNIA", "lot": 125, "spot": 4764.0, "dma200": 0.87, "rsi14": 39.7, "z5d": -0.89, "futOi": 3.2, "iv": 23.0, "yz": 19.0, "step": 50.0, "roe": 54.2, "secRoe": 24.0, "pat": 7.5, "fnoVol": 92000, "base_2020": 2100.0, "high_20_26": 6469.9},
+    {"sym": "DABUR", "lot": 1250, "spot": 385.0, "dma200": 0.87, "rsi14": 50.3, "z5d": 0.55, "futOi": 2.9, "iv": 26.7, "yz": 23.5, "step": 5.0, "roe": 19.2, "secRoe": 24.0, "pat": 5.2, "fnoVol": 84000, "base_2020": 386.05, "high_20_26": 672.0},
+    {"sym": "GODREJCP", "lot": 500, "spot": 855.0, "dma200": 0.81, "rsi14": 41.7, "z5d": -0.92, "futOi": 5.1, "iv": 26.9, "yz": 23.0, "step": 10.0, "roe": 17.4, "secRoe": 24.0, "pat": 4.8, "fnoVol": 76000, "base_2020": 425.1, "high_20_26": 1541.85},
+    {"sym": "HAVELLS", "lot": 500, "spot": 1121.0, "dma200": 0.9, "rsi14": 54.8, "z5d": 0.75, "futOi": 1.7, "iv": 27.6, "yz": 24.8, "step": 20.0, "roe": 18.9, "secRoe": 15.0, "pat": 14.1, "fnoVol": 105000, "base_2020": 458.05, "high_20_26": 2106.0},
+    {"sym": "VOLTAS", "lot": 375, "spot": 1029.1, "dma200": 0.78, "rsi14": 34.7, "z5d": -0.6, "futOi": 6.2, "iv": 30.8, "yz": 26.4, "step": 20.0, "roe": 9.8, "secRoe": 15.0, "pat": 11.2, "fnoVol": 149000, "base_2020": 448.75, "high_20_26": 1944.9},
 ]
 
 EXTRA_9_FOR_TOP50: List[Dict[str, Any]] = [
-    {"sym": "HAL", "lot": 150, "spot": 4180.0, "dma200": 1.01, "rsi14": 43.8, "z5d": -0.82, "futOi": -2.4, "iv": 26.4, "yz": 18.5, "step": 50.0, "roe": 28.9, "secRoe": 16.0, "pat": 26.4, "fnoVol": 392000},
-    {"sym": "BEL", "lot": 2850, "spot": 292.4, "dma200": 1.02, "rsi14": 46.1, "z5d": -0.55, "futOi": -1.9, "iv": 25.8, "yz": 18.1, "step": 5.0, "roe": 26.4, "secRoe": 16.0, "pat": 29.1, "fnoVol": 448000},
-    {"sym": "TRENT", "lot": 100, "spot": 6420.0, "dma200": 0.99, "rsi14": 41.9, "z5d": -1.05, "futOi": -2.8, "iv": 27.2, "yz": 19.4, "step": 100.0, "roe": 32.5, "secRoe": 18.0, "pat": 41.0, "fnoVol": 276000},
-    {"sym": "DLF", "lot": 825, "spot": 812.0, "dma200": 0.96, "rsi14": 44.6, "z5d": -0.72, "futOi": -2.1, "iv": 26.0, "yz": 18.8, "step": 10.0, "roe": 11.8, "secRoe": 10.2, "pat": 24.0, "fnoVol": 312000},
-    {"sym": "INDIGO", "lot": 150, "spot": 4690.0, "dma200": 1.04, "rsi14": 47.2, "z5d": -0.40, "futOi": -1.5, "iv": 23.8, "yz": 16.9, "step": 50.0, "roe": 44.0, "secRoe": 14.0, "pat": 22.8, "fnoVol": 234000},
-    {"sym": "DIVISLAB", "lot": 100, "spot": 5840.0, "dma200": 1.02, "rsi14": 42.9, "z5d": -0.66, "futOi": -2.2, "iv": 21.9, "yz": 15.2, "step": 50.0, "roe": 16.4, "secRoe": 15.2, "pat": 21.5, "fnoVol": 128000},
-    {"sym": "PIDILITIND", "lot": 250, "spot": 2985.0, "dma200": 0.98, "rsi14": 40.8, "z5d": -0.91, "futOi": -1.7, "iv": 20.4, "yz": 14.3, "step": 40.0, "roe": 23.6, "secRoe": 16.5, "pat": 17.9, "fnoVol": 94000},
-    {"sym": "APOLLOHOSP", "lot": 125, "spot": 6740.0, "dma200": 1.01, "rsi14": 45.4, "z5d": -0.52, "futOi": -2.0, "iv": 21.6, "yz": 15.1, "step": 100.0, "roe": 18.2, "secRoe": 14.8, "pat": 25.4, "fnoVol": 156000},
-    {"sym": "CHOLAFIN", "lot": 625, "spot": 1485.0, "dma200": 0.99, "rsi14": 43.1, "z5d": -0.78, "futOi": -2.5, "iv": 24.8, "yz": 17.6, "step": 20.0, "roe": 20.6, "secRoe": 15.8, "pat": 23.7, "fnoVol": 204000},
+    {"sym": "HAL", "lot": 150, "spot": 4989.0, "dma200": 1.13, "rsi14": 60.5, "z5d": 1.13, "futOi": -2.4, "iv": 24.2, "yz": 21.8, "step": 50.0, "roe": 28.9, "secRoe": 16.0, "pat": 26.4, "fnoVol": 392000, "base_2020": 235.0, "high_20_26": 5674.75},
+    {"sym": "BEL", "lot": 2850, "spot": 376.85, "dma200": 0.9, "rsi14": 40.7, "z5d": -0.56, "futOi": -1.9, "iv": 23.1, "yz": 19.2, "step": 5.0, "roe": 26.4, "secRoe": 16.0, "pat": 29.1, "fnoVol": 448000, "base_2020": 18.65, "high_20_26": 473.45},
+    {"sym": "TRENT", "lot": 100, "spot": 2958.7, "dma200": 1.06, "rsi14": 61.7, "z5d": 0.1, "futOi": -2.8, "iv": 39.8, "yz": 37.5, "step": 100.0, "roe": 32.5, "secRoe": 18.0, "pat": 41.0, "fnoVol": 276000, "base_2020": 243.3, "high_20_26": 5563.6},
+    {"sym": "DLF", "lot": 825, "spot": 675.0, "dma200": 1.08, "rsi14": 55.3, "z5d": 1.01, "futOi": -2.1, "iv": 28.9, "yz": 26.1, "step": 10.0, "roe": 11.8, "secRoe": 10.2, "pat": 24.0, "fnoVol": 312000, "base_2020": 114.55, "high_20_26": 967.6},
+    {"sym": "INDIGO", "lot": 150, "spot": 4686.9, "dma200": 0.97, "rsi14": 37.0, "z5d": -1.37, "futOi": -1.5, "iv": 30.0, "yz": 25.8, "step": 50.0, "roe": 44.0, "secRoe": 14.0, "pat": 22.8, "fnoVol": 234000, "base_2020": 771.3, "high_20_26": 6232.5},
+    {"sym": "DIVISLAB", "lot": 100, "spot": 9144.5, "dma200": 1.27, "rsi14": 46.9, "z5d": -0.21, "futOi": -2.2, "iv": 26.7, "yz": 23.3, "step": 50.0, "roe": 16.4, "secRoe": 15.2, "pat": 21.5, "fnoVol": 128000, "base_2020": 1626.0, "high_20_26": 9740.0},
+    {"sym": "PIDILITIND", "lot": 250, "spot": 1502.8, "dma200": 1.0, "rsi14": 45.0, "z5d": 0.58, "futOi": -1.7, "iv": 28.1, "yz": 24.5, "step": 40.0, "roe": 23.6, "secRoe": 16.5, "pat": 17.9, "fnoVol": 94000, "base_2020": 592.8, "high_20_26": 1707.5},
+    {"sym": "APOLLOHOSP", "lot": 125, "spot": 7890.0, "dma200": 0.98, "rsi14": 37.3, "z5d": 0.81, "futOi": -2.0, "iv": 37.7, "yz": 33.5, "step": 100.0, "roe": 18.2, "secRoe": 14.8, "pat": 25.4, "fnoVol": 156000, "base_2020": 1047.05, "high_20_26": 9070.5},
+    {"sym": "CHOLAFIN", "lot": 625, "spot": 1574.4, "dma200": 0.94, "rsi14": 37.2, "z5d": -0.49, "futOi": -2.5, "iv": 44.2, "yz": 40.0, "step": 20.0, "roe": 20.6, "secRoe": 15.8, "pat": 23.7, "fnoVol": 204000, "base_2020": 123.6, "high_20_26": 1952.5},
 ]
 
 EXTRA_170_TICKERS = [
@@ -292,76 +311,178 @@ def evaluate_candidate(
     th: ScreeningThresholds,
     expiry_mode: str = "next_month",
     chain_data: Optional[List[Dict[str, Any]]] = None,
+    candles: Optional[List[Dict[str, Any]]] = None,
+    quote_data: Optional[Dict[str, Any]] = None,
 ) -> EvaluatedCandidate:
     """
     Evaluates candidate using Pure Option Selling Strategy (Single-Leg Short OTM Put)
     with exact NSE expiry resolution, Return on Margin (RoM%), and 2020 Base metrics.
+    Wires real historical candles, live market quotes, and option chain API data into the 5-Pillar Regime Guard.
     """
     expiry_iso, expiry_formatted, dte_days = resolve_nse_expiry_details(expiry_mode)
-    T = dte_days / 365.0
+    T = max(1, dte_days) / 365.0
     r = 0.068  # 91D T-bill risk-free proxy
-    sigma_yz = item["yz"] / 100.0
-    sigma_iv = item["iv"] / 100.0
     step = float(item.get("step") or 20.0)
+    lot = int(item["lot"])
 
-    # 1. Target ~1.12 standard deviation OTM Short Put Strike snapped to NSE listed interval
-    raw_short_k = item["spot"] * math.exp(-1.12 * sigma_yz * math.sqrt(T))
+    # 0. Resolve Live Underlying Spot Price (Live Quote -> Live Option Chain -> Latest Candle -> Item Default)
+    if quote_data and float(quote_data.get("last_price") or 0.0) > 0:
+        spot = float(quote_data["last_price"])
+    elif chain_data and len(chain_data) > 0 and float(chain_data[0].get("underlying_spot_price") or 0.0) > 0:
+        spot = float(chain_data[0]["underlying_spot_price"])
+    elif candles and len(candles) >= 1:
+        spot = float(candles[-1]["close"])
+    else:
+        spot = float(item["spot"])
+
+    # 1. Compute Quantitative Technical Indicators from Real Candles
+    if candles and len(candles) >= 15:
+        closes = [float(c["close"]) for c in candles]
+        dma200_val = compute_200_dma(closes)
+        dma200 = round(spot / dma200_val, 2) if dma200_val else float(item.get("dma200") or 1.0)
+        rsi14 = compute_rsi14(closes) or float(item.get("rsi14") or 50.0)
+        z5d = compute_z5d(closes) or float(item.get("z5d") or 0.0)
+        yz = compute_yang_zhang_vol(candles, window=20)
+        hv10 = compute_yang_zhang_vol(candles, window=10)
+        mfi = compute_mfi14(candles) or rsi14
+        boll_b = compute_bollinger_pct_b(closes) or 0.5
+        adx14 = compute_adx14(candles) or 20.0
+        down_vol = compute_down_volume_ratio(candles)
+        base_floor = find_2020_base_floor(candles)
+        base_2020 = float(item["base_2020"]) if (candles[0]["date"] > "2020-12-31" and item.get("base_2020")) else base_floor
+        high_val = find_multiyear_high(candles)
+        high_20_26 = max(high_val, float(item["high_20_26"])) if item.get("high_20_26") else high_val
+    else:
+        dma200 = float(item.get("dma200") or 1.0)
+        rsi14 = float(item.get("rsi14") or 50.0)
+        z5d = float(item.get("z5d") or 0.0)
+        yz = float(item.get("yz") or 20.0)
+        hv10 = float(item.get("hv10") or yz)
+        mfi = float(item.get("mfi") or rsi14)
+        boll_b = float(item.get("boll_b") or 0.5)
+        adx14 = float(item.get("adx14") or 20.0)
+        down_vol = float(item.get("down_vol") or 1.0)
+        base_2020 = float(item.get("base_2020") or round(spot / (dma200 * 2.2), 1))
+        high_20_26 = float(item.get("high_20_26") or round(spot * 1.3, 1))
+
+    hv_ratio = round(hv10 / yz, 2) if yz > 0 else 1.0
+    sigma_yz = max(0.05, yz / 100.0)
+
+    # 2. Distance to 2020 Secular Base & Cycle Range
+    dist_base = round(((spot - base_2020) / max(1.0, base_2020)) * 100.0, 1)
+    range_span = max(1.0, high_20_26 - base_2020)
+    range_pct = min(96, max(6, round(((spot - base_2020) / range_span) * 100)))
+
+    # 3. Target ~1.12 standard deviation OTM Short Put Strike snapped to NSE listed interval
+    raw_short_k = spot * math.exp(-1.12 * sigma_yz * math.sqrt(T))
     short_strike = max(step, snap_to_listed_strike(raw_short_k, step))
-    put_wall_strike = snap_to_listed_strike(item["spot"] * 0.94, step)
 
-    # 2. Empirical Yang-Zhang POP% N(d2) (Probability of Expiring Worthless)
-    d1_yz = (math.log(item["spot"] / short_strike) + (r + 0.5 * sigma_yz * sigma_yz) * T) / (sigma_yz * math.sqrt(T))
-    d2_yz = d1_yz - sigma_yz * math.sqrt(T)
-    pop = round(min(96.8, max(54.0, norm_cdf(d2_yz) * 100.0)), 1)
+    # 4. Upstox Live Option Chain Integration or Calibrated Model Fallback
+    total_chain_vol = 0
+    strike_pe_vol = 0
+    strike_pe_oi = 0
+    chain_ltp = 0.0
+    chain_iv = 0.0
+    chain_delta = 0.0
+    chain_pop = 0.0
+    max_pe_oi = -1
+    put_wall_strike = snap_to_listed_strike(spot * 0.94, step)
 
-    # 3. Short Put Delta & Option Premium
-    d1_iv = (math.log(item["spot"] / short_strike) + (r + 0.5 * sigma_iv * sigma_iv) * T) / (sigma_iv * math.sqrt(T))
-    short_delta = round(-(1.0 - norm_cdf(d1_iv)), 2)
-    short_put_ltp = round(max(1.5, item["spot"] * sigma_iv * math.sqrt(T) * 0.21), 2)
+    if chain_data:
+        best_row = None
+        min_dist = float("inf")
+        for row in chain_data:
+            ce_md = (row.get("call_options") or {}).get("market_data") or {}
+            pe_md = (row.get("put_options") or {}).get("market_data") or {}
+            c_vol = int(ce_md.get("volume") or 0)
+            p_vol = int(pe_md.get("volume") or 0)
+            total_chain_vol += (c_vol + p_vol)
 
-    # 4. Gross Option Premium Credit per Lot & Return on SPAN Margin (RoM%)
-    lot_credit = int(round(short_put_ltp * item["lot"]))
-    est_span_margin = item["spot"] * item["lot"] * 0.165  # ~16.5% SPAN+Exposure proxy
-    rom_pct = round((lot_credit / est_span_margin) * 100.0, 2)
-    otm_cushion = round(((item["spot"] - short_strike) / item["spot"]) * 100.0, 1)
-    vrp = round(item["iv"] - item["yz"], 1)
+            p_oi = int(pe_md.get("oi") or 0)
+            if p_oi > max_pe_oi:
+                max_pe_oi = p_oi
+                strk = float(row.get("strike_price") or 0.0)
+                if strk > 0:
+                    put_wall_strike = strk
 
-    # 5. 2020–2026 Multi-Year Structural Base & Derived Technical/Fundamental Metrics
-    dma200 = float(item.get("dma200") or 1.0)
-    base_2020 = round(item["spot"] / (dma200 * 2.2), 1)
-    high_20_26 = round(item["spot"] * (1.28 - (item["rsi14"] - 45.0) * 0.004), 1)
-    dist_base = round(((item["spot"] - base_2020) / base_2020) * 100.0, 1)
-    range_pct = min(96, max(6, round(((item["spot"] - base_2020) / max(1.0, high_20_26 - base_2020)) * 100)))
+            k = float(row.get("strike_price") or 0.0)
+            dist = abs(k - short_strike)
+            if dist < min_dist:
+                min_dist = dist
+                best_row = row
 
-    fut_oi = float(item.get("futOi") or 0.0)
-    z5d = float(item.get("z5d") or 0.0)
-    mfi = round(min(88.0, max(18.0, item["rsi14"] + (4.5 if fut_oi < 0 else -3.2))), 1)
-    boll_b = round(min(0.98, max(0.05, (item["rsi14"] - 25.0) / 55.0)), 2)
+        if best_row:
+            pe_md = (best_row.get("put_options") or {}).get("market_data") or {}
+            pe_greeks = (best_row.get("put_options") or {}).get("option_greeks") or {}
+            strike_pe_vol = int(pe_md.get("volume") or 0)
+            strike_pe_oi = int(pe_md.get("oi") or 0)
+            chain_ltp = float(pe_md.get("ltp") or 0.0)
+            if chain_ltp == 0.0 and pe_md.get("close_price"):
+                chain_ltp = float(pe_md.get("close_price") or 0.0)
+            chain_iv = float(pe_greeks.get("iv") or 0.0)
+            chain_delta = float(pe_greeks.get("delta") or 0.0)
+            chain_pop = float(pe_greeks.get("pop") or 0.0)
+            best_k = float(best_row.get("strike_price") or 0.0)
+            if best_k > 0 and abs(best_k - short_strike) <= step:
+                short_strike = best_k
+
+        fno_vol = total_chain_vol if total_chain_vol > 0 else int(item.get("fnoVol", lot * 480))
+    else:
+        fno_vol = int(item.get("fnoVol", lot * 480))
+        strike_pe_vol = int(round(fno_vol * 0.085))
+        strike_pe_oi = int(round(fno_vol * 0.32))
+
+    otm_cushion = round(((spot - short_strike) / spot) * 100.0, 1)
+
+    # 5. Resolve IV, VRP, Short Put LTP, Delta, and Empirical POP
+    if chain_iv > 0:
+        iv = round(chain_iv, 1)
+    else:
+        vrp_est = round(max(1.8, min(8.5, 3.2 + (50.0 - rsi14) * 0.08)), 1)
+        iv = round(yz + vrp_est, 1)
+
+    vrp = round(iv - yz, 1)
+    sigma_iv = max(0.05, iv / 100.0)
+
+    if chain_ltp > 0:
+        short_put_ltp = round(chain_ltp, 2)
+    else:
+        bs_p, _, _ = black_scholes_put_price(spot, short_strike, dte_days, iv, r)
+        short_put_ltp = bs_p
+
+    if chain_delta != 0:
+        short_delta = round(chain_delta, 2)
+    else:
+        d1_iv = (math.log(spot / short_strike) + (r + 0.5 * sigma_iv * sigma_iv) * T) / (sigma_iv * math.sqrt(T))
+        short_delta = round(-(1.0 - norm_cdf(d1_iv)), 2)
+
+    if chain_pop > 0:
+        pop = round(chain_pop, 1)
+    else:
+        d1_yz = (math.log(spot / short_strike) + (r + 0.5 * sigma_yz * sigma_yz) * T) / (sigma_yz * math.sqrt(T))
+        d2_yz = d1_yz - sigma_yz * math.sqrt(T)
+        pop = round(min(98.0, max(50.0, norm_cdf(d2_yz) * 100.0)), 1)
+
+    # 6. Gross Option Premium Credit & Return on SPAN Margin (RoM%)
+    lot_credit = int(round(short_put_ltp * lot))
+    est_span_margin = spot * lot * 0.165  # ~16.5% SPAN+Exposure proxy
+    rom_pct = round((lot_credit / max(1.0, est_span_margin)) * 100.0, 2)
+
+    # 7. Fundamental Fields
     roe = float(item.get("roe") or 16.0)
     sec_roe = float(item.get("secRoe") or 14.0)
     roe_alpha = round(roe - sec_roe, 1)
     pat_yoy = float(item.get("pat") or 12.0)
-    down_vol = 0.82 if (z5d < 0 and fut_oi < 0) else (1.34 if fut_oi > 2.5 else 0.96)
-    hv10 = round(item["yz"] * (1.12 if item["rsi14"] > 65 else 0.94), 1)
-    hv_ratio = round(hv10 / item["yz"], 2)
-    adx14 = round(18.5 + abs(z5d) * 5.2, 1)
+    fut_oi = float(item.get("futOi") or 0.0)
 
-    # 6. Option Chain Volume Integration
-    if chain_data:
-        fno_vol, strike_pe_vol, strike_pe_oi = extract_upstox_chain_volume(chain_data, short_strike)
-    else:
-        fno_vol = int(item.get("fnoVol", item["lot"] * 480))
-        strike_pe_vol = int(round(fno_vol * 0.085))
-        strike_pe_oi = int(round(fno_vol * 0.32))
-
-    # 7. 5-Pillar Qualification Filtering
+    # 8. 5-Pillar Regime Guard Filtering
     reasons: List[str] = []
     if pop < th.min_pop:
         reasons.append(f"LowPOP({pop:.1f}%<{th.min_pop:.1f}%)")
     if otm_cushion < th.min_cush:
         reasons.append(f"TightCushion({otm_cushion:.1f}%)")
-    if item["rsi14"] > th.max_rsi:
-        reasons.append(f"OverboughtRSI14({item['rsi14']:.1f}>{th.max_rsi:.1f})")
+    if rsi14 > th.max_rsi:
+        reasons.append(f"OverboughtRSI14({rsi14:.1f}>{th.max_rsi:.1f})")
     if vrp < th.min_vrp:
         reasons.append(f"LowVRP(+{vrp:.1f}%<+{th.min_vrp:.1f}%)")
     if dist_base > th.max_base_dist:
@@ -377,17 +498,15 @@ def evaluate_candidate(
 
     passed = len(reasons) == 0
 
-    # 8. Composite Worthless Score (0–100)
-    pop_score = min(100.0, max(0.0, (pop - 65.0) * 3.4))
-    vrp_score = min(100.0, max(0.0, vrp * 12.5))
-    base_score = min(100.0, max(0.0, 100.0 - (dist_base - 100.0) * 0.5 + (60.0 - item["rsi14"]) * 0.9))
-    fund_score = min(100.0, max(0.0, 50.0 + roe_alpha * 3.0 + (fno_vol / 15000.0)))
-    worthless_score = round(0.38 * pop_score + 0.22 * vrp_score + 0.22 * base_score + 0.18 * fund_score, 1)
+    # 9. Composite Worthless Score (0–100)
+    worthless_score = compute_worthless_score(
+        pop=pop, vrp=vrp, dist_base=dist_base, rsi14=rsi14, roe_alpha=roe_alpha, fno_vol=fno_vol
+    )
 
     return EvaluatedCandidate(
         sym=item["sym"],
-        lot=item["lot"],
-        spot=item["spot"],
+        lot=lot,
+        spot=spot,
         base_2020=base_2020,
         high_20_26=high_20_26,
         dist_base=dist_base,
@@ -395,7 +514,7 @@ def evaluate_candidate(
         fno_vol=fno_vol,
         strike_pe_vol=strike_pe_vol,
         strike_pe_oi=strike_pe_oi,
-        rsi14=item["rsi14"],
+        rsi14=rsi14,
         mfi=mfi,
         boll_b=boll_b,
         roe=roe,
@@ -404,10 +523,10 @@ def evaluate_candidate(
         pat_yoy=pat_yoy,
         down_vol=down_vol,
         hv10=hv10,
-        yz=item["yz"],
+        yz=yz,
         hv_ratio=hv_ratio,
         adx14=adx14,
-        iv=item["iv"],
+        iv=iv,
         vrp=vrp,
         step=step,
         short_strike=short_strike,
@@ -509,21 +628,26 @@ class UpstoxClient:
             return {"status": "error", "message": str(e)}
 
     def fetch_historical_candles_reversed(
-        self, instrument_key: str, lookback_days: int = 240
+        self, instrument_key: str, from_date: str = "2020-01-01", to_date: Optional[str] = None
     ) -> List[List[Any]]:
-        to_date = dt.date.today().strftime("%Y-%m-%d")
-        from_date = (dt.date.today() - dt.timedelta(days=lookback_days)).strftime("%Y-%m-%d")
+        target_to_date = to_date or dt.date.today().strftime("%Y-%m-%d")
         enc_key = urllib.parse.quote(instrument_key, safe="")
-        url = f"{UPSTOX_HISTORICAL_V3_BASE}/{enc_key}/days/1/{to_date}/{from_date}"
+        url = f"{UPSTOX_HISTORICAL_V3_BASE}/{enc_key}/days/1/{target_to_date}/{from_date}"
         res = self.get_json(url)
         candles = res.get("data", {}).get("candles", [])
         return list(reversed(candles))
 
-    def fetch_option_chain(self, instrument_key: str, expiry_date: str = "next_month") -> List[Dict[str, Any]]:
+    def fetch_option_chain(self, instrument_key: str, expiry_date: str) -> List[Dict[str, Any]]:
         enc_key = urllib.parse.quote(instrument_key, safe="")
         url = f"{UPSTOX_OPTION_CHAIN_V2_URL}?instrument_key={enc_key}&expiry_date={expiry_date}"
         res = self.get_json(url)
         return res.get("data", [])
+
+    def fetch_market_quotes(self, instrument_keys: List[str]) -> Dict[str, Any]:
+        enc_keys = urllib.parse.quote(",".join(instrument_keys), safe="")
+        url = f"{UPSTOX_MARKET_QUOTE_V3_URL}?instrument_key={enc_keys}"
+        res = self.get_json(url)
+        return res.get("data", {})
 
 
 # ---------------------------------------------------------------------------
@@ -650,11 +774,11 @@ def main() -> None:
     parser.add_argument("--preset", type=str, default="default", choices=list(PRESETS_MAP.keys()), help="Institutional strategy preset")
     parser.add_argument("--sort", type=str, default="worthless_prob", choices=["worthless_prob", "vol", "pure_pop", "credit", "vrp", "dist_base"], help="Sort order")
     parser.add_argument("--show-rejected", action="store_true", help="Show rejected symbols alongside qualified ones")
-    parser.add_argument("--min-pop", type=float, default=None, help="Min Empirical POP % override")
-    parser.add_argument("--min-cushion", type=float, default=None, help="Min Safety Cushion % override")
+    parser.add_argument("--min-pop", type=float, default=None, help="Min Empirical POP %% override")
+    parser.add_argument("--min-cushion", type=float, default=None, help="Min Safety Cushion %% override")
     parser.add_argument("--max-rsi", type=float, default=None, help="Max RSI(14) override")
-    parser.add_argument("--min-vrp", type=float, default=None, help="Min True VRP % override")
-    parser.add_argument("--max-base-dist", type=float, default=None, help="Max Distance to 2020 Base % override")
+    parser.add_argument("--min-vrp", type=float, default=None, help="Min True VRP %% override")
+    parser.add_argument("--max-base-dist", type=float, default=None, help="Max Distance to 2020 Base %% override")
     parser.add_argument("--min-vol", type=float, default=None, help="Min F&O Chain Vol (thousands) override")
     parser.add_argument("--export-csv", type=str, default="upstox_short_put_screener_ranked.csv", help="CSV export destination")
 
@@ -693,12 +817,26 @@ def main() -> None:
     if args.demo or not token:
         if not token and not args.demo:
             print("Note: No Upstox API token found in environment, .env, or Desktop API file.")
-            print(f"Running in calibrated simulation mode for {expiry_fmt} ({dte} DTE) across {len(universe)} symbols...")
+            print(f"Running in authentic calibrated mode for {expiry_fmt} ({dte} DTE) across {len(universe)} symbols...")
         else:
-            print(f"Running in calibrated verification mode for {expiry_fmt} ({dte} DTE) across {len(universe)} symbols...")
+            print(f"Running in authentic verification mode for {expiry_fmt} ({dte} DTE) across {len(universe)} symbols...")
         print(f"Applied Preset: {p['name']}\n")
 
-        evaluated = [evaluate_candidate(item, th, args.expiry) for item in universe]
+        data_provider = UpstoxDataProvider()
+        evaluated = []
+        for item in universe:
+            sym = item["sym"]
+            info = TOP_50_UNIVERSE.get(sym)
+            inst_key = info["key"] if info else f"NSE_EQ|{sym}"
+            candles = None
+            if sym in TOP_50_UNIVERSE or os.path.exists(os.path.join(data_provider.cache_dir, f"{sym}.json")):
+                try:
+                    candles = data_provider.load_or_fetch_symbol(sym, instrument_key=inst_key, force_refresh=False)
+                except Exception:
+                    candles = None
+            cand = evaluate_candidate(item, th, args.expiry, chain_data=None, candles=candles)
+            evaluated.append(cand)
+
         print_terminal_screener_report(evaluated, show_rejected=args.show_rejected, sort_mode=sort_mode)
         export_candidates_csv(evaluated, args.export_csv)
         return
@@ -706,14 +844,66 @@ def main() -> None:
     # Live Mode
     print(f"Authenticated with Upstox API token. Target Expiry: {expiry_fmt} (ISO: {expiry_iso}, {dte} DTE)")
     print(f"Universe: {args.universe} ({len(universe)} symbols) • Preset: {p['name']}")
-    print("Evaluating liquid F&O universe with chronological candle reversal and listed strike snapping...\n")
+    print("Evaluating liquid F&O universe with chronological candle reversal, live option chain, and listed strike snapping...\n")
 
     client = UpstoxClient(token)
     profile = client.get_json(UPSTOX_USER_PROFILE_URL)
     user_name = profile.get("data", {}).get("user_name", "Upstox User")
-    print(f"Connected to Upstox account: {user_name}")
+    print(f"Connected to Upstox account: {user_name}\n")
 
-    evaluated = [evaluate_candidate(item, th, args.expiry) for item in universe]
+    data_provider = UpstoxDataProvider()
+    data_provider.token = token
+    data_provider.headers["Authorization"] = f"Bearer {token}"
+
+    # Pre-fetch live market quotes across universe
+    quote_keys = []
+    for item in universe:
+        sym = item["sym"]
+        info = TOP_50_UNIVERSE.get(sym)
+        inst_key = info["key"] if info else f"NSE_EQ|{sym}"
+        quote_keys.append(inst_key)
+
+    live_quotes: Dict[str, Any] = {}
+    try:
+        for i in range(0, len(quote_keys), 50):
+            batch = quote_keys[i:i + 50]
+            batch_quotes = client.fetch_market_quotes(batch)
+            if batch_quotes:
+                live_quotes.update(batch_quotes)
+    except Exception as e:
+        print(f"Notice: Live quote batching fallback: {e}")
+
+    evaluated = []
+    for idx, item in enumerate(universe, 1):
+        sym = item["sym"]
+        info = TOP_50_UNIVERSE.get(sym)
+        inst_key = info["key"] if info else f"NSE_EQ|{sym}"
+
+        # 1. Fetch live candles from Upstox API (with disk cache fallback)
+        candles = None
+        try:
+            candles = data_provider.load_or_fetch_symbol(sym, instrument_key=inst_key, force_refresh=True)
+        except Exception:
+            candles = None
+
+        # 2. Fetch live option chain from Upstox API
+        chain_data = None
+        try:
+            chain_data = client.fetch_option_chain(inst_key, expiry_iso)
+            time.sleep(0.08)  # API rate limit pacing
+        except Exception:
+            chain_data = None
+
+        # 3. Match live market quote
+        sym_quote = live_quotes.get(inst_key) or live_quotes.get(f"NSE_EQ:{sym}") or live_quotes.get(sym)
+
+        cand = evaluate_candidate(item, th, args.expiry, chain_data=chain_data, candles=candles, quote_data=sym_quote)
+        evaluated.append(cand)
+
+        status_str = "QUALIFIED" if cand.passed else f"FILTERED ({cand.reasons[0] if cand.reasons else 'failed'})"
+        chain_flag = f"Chain Vol: {cand.fno_vol/1000:.1f}k" if chain_data else "Chain: Offline/BS"
+        print(f"  [{idx:02d}/{len(universe):02d}] {sym:<12}: Spot ₹{cand.spot:,.1f} | RSI {cand.rsi14:.1f} | POP {cand.pop:.1f}% | {chain_flag} -> {status_str}")
+
     print_terminal_screener_report(evaluated, show_rejected=args.show_rejected, sort_mode=sort_mode)
     export_candidates_csv(evaluated, args.export_csv)
 

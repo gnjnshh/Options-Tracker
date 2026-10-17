@@ -133,6 +133,47 @@ cp .env.example .env
 
 ---
 
+## 🧪 Quantitative Backtesting Engine (2021–2026)
+
+The project includes an institutional-grade backtesting engine powered by **Upstox API v3 daily candle data** across **69 monthly expiry cycles (Jan 2021 – Sep 2026)** for the Top 50 liquid F&O universe.
+
+### 🏆 5L Capital Multi-Preset Performance Scorecard (Top 3 Picks)
+
+| Strategy Preset / Structure | Net Profit (INR) | Total Return % | CAGR % | Win Rate % | Max Drawdown % | Profit Factor |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **🔥 Oversold Dip (2.0x Stop-Loss)** | **+₹2,57,737** | **+51.55%** | **7.50%** | **89.0%** (137W / 17L) | **-2.54%** | **3.49** |
+| **Oversold Dip (Hold to Expiry)** | +₹2,25,310 | +45.06% | 6.68% | 93.5% (144W / 10L) | -7.00% | 2.45 |
+| **Defined-Risk Bull Put Spread** | +₹1,00,810 | +20.16% | 3.22% | 89.7% (157W / 18L) | -4.61% | 2.06 |
+| **Default Harvester (Naked)** | +₹80,451 | +16.09% | 2.61% | 90.7% (166W / 17L) | -20.69% | 1.29 |
+| **Fortress 84%+ POP (Naked)** | +₹22,998 | +4.60% | 0.79% | 91.0% (162W / 16L) | -19.27% | 1.08 |
+
+### Running the Backtester Locally:
+
+- **Run Multi-Preset Comparison (INR 5,00,000 Capital, Top 3 Picks):**
+  ```bash
+  python run_backtest.py --capital 500000 --top 3
+  ```
+
+- **Run Top Alpha Strategy with 2.0x Premium Stop-Loss:**
+  ```bash
+  python run_backtest.py --capital 500000 --top 3 --preset oversold_dip --stop-loss 2.0
+  ```
+
+- **Run with INR 2,00,000 Capital:**
+  ```bash
+  python run_backtest.py --capital 200000 --top 3 --preset oversold_dip --stop-loss 2.0
+  ```
+
+- **Run Automated Test Suite:**
+  ```bash
+  python test_backtest.py
+  ```
+
+### Interactive Web Dashboard with Variable Capital:
+Open **[`backtest_dashboard.html`](file:///c:/Options%20Tracker/backtest_dashboard.html)** in any browser. It allows adjusting Capital dynamically (e.g. ₹2L, ₹3L, ₹5L, ₹10L, custom) and instantly recalculates equity curves, monthly heatmaps, drawdowns, and trade logs!
+
+---
+
 ## 🛠️ Project Structure
 
 ```text
@@ -141,8 +182,17 @@ Options-Tracker/
 ├── .env                             # Your private API token (git-ignored, never pushed)
 ├── .gitignore                       # Ensures all secrets and tokens remain private
 ├── index.html                       # Web Dashboard v3.0 (Pure Short Put & Volume Harvester)
+├── backtest_dashboard.html          # Interactive Backtesting Dashboard with variable capital input
+├── backtest_data.js                 # Browser-bundled backtest dataset (zero-CORS)
 ├── upstox_fno_option_screener.py    # Python CLI screener v3.0 (Pure Option Selling Engine)
-├── upstox_fno_option_screener_v2.py # Entry point alias to latest screener
+├── run_backtest.py                  # CLI runner for quantitative backtesting engine
+├── test_backtest.py                 # Automated unit tests for math, indicators & simulator
+├── backtest/                        # Modular Backtesting Engine Package
+│   ├── upstox_data_provider.py      # Upstox API v3 daily candle client & cache
+│   ├── indicators.py                # 200-DMA, RSI, Z5D, Yang-Zhang vol & options pricing
+│   ├── strategy_screener.py         # Historical monthly expiry screener & 5-Pillar Regime
+│   ├── portfolio_simulator.py       # SPAN margin tracking, greedy allocation & settlement
+│   └── performance_metrics.py       # Institutional CAGR, Drawdown, Win Rate & exporters
 └── README.md                        # Documentation & methodology guide
 ```
 

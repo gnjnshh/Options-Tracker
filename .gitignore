@@ -21,6 +21,7 @@ ENV/
 
 # Output reports & data
 *.csv
+.data_cache/
 
 # Operating System & IDE
 .DS_Store

@@ -1,0 +1,1021 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Upstox F&O Strategy Backtest Dashboard (2021–2026)</title>
+  <style>
+    :root {
+      --bg: #070b14;
+      --panel: #0e1525;
+      --panel-alt: #131c31;
+      --border: #1e2d4a;
+      --border-focus: #38bdf8;
+      --text: #e2e8f0;
+      --muted: #8b9bb4;
+      --accent: #38bdf8;
+      --emerald: #10b981;
+      --emerald-bg: rgba(16, 185, 129, 0.14);
+      --amber: #f59e0b;
+      --amber-bg: rgba(245, 158, 11, 0.14);
+      --rose: #f43f5e;
+      --rose-bg: rgba(244, 63, 94, 0.14);
+      --violet: #a855f7;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 12px;
+      line-height: 1.4;
+      padding: 10px 14px;
+      margin: 0;
+      width: 100%;
+      overflow-x: hidden;
+    }
+
+    /* Top Header Bar */
+    .top-bar {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      background: linear-gradient(135deg, #0e172a 0%, #111f38 100%);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 16px;
+      margin-bottom: 10px;
+    }
+    .brand-title {
+      font-size: 16px;
+      font-weight: 800;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .badge-strategy {
+      background: var(--emerald-bg);
+      color: var(--emerald);
+      border: 1px solid rgba(16,185,129,0.4);
+      font-size: 10px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-weight: 700;
+    }
+    .badge-data {
+      background: rgba(56, 189, 248, 0.12);
+      border: 1px solid rgba(56, 189, 248, 0.4);
+      color: var(--accent);
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 10px;
+      font-weight: 700;
+    }
+    .nav-links {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    .nav-btn {
+      background: var(--panel-alt);
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 6px 12px;
+      border-radius: 6px;
+      text-decoration: none;
+      font-size: 11.5px;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.15s ease;
+    }
+    .nav-btn:hover {
+      background: var(--border);
+      color: #fff;
+      border-color: var(--accent);
+    }
+    .nav-btn.active {
+      background: rgba(56, 189, 248, 0.15);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    /* Variable Capital & Controls Card */
+    .controls-panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 16px;
+      margin-bottom: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .controls-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 12px;
+    }
+    .control-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .control-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--muted);
+      font-weight: 700;
+      display: flex;
+      justify-content: space-between;
+    }
+    .control-select, .control-input {
+      background: #080d1a;
+      border: 1px solid var(--border);
+      color: #fff;
+      padding: 7px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      outline: none;
+      transition: border 0.15s;
+    }
+    .control-select:focus, .control-input:focus {
+      border-color: var(--accent);
+    }
+
+    /* Variable Capital Quick Chips */
+    .chips-row {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-top: 2px;
+    }
+    .chip {
+      background: var(--panel-alt);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      padding: 3px 8px;
+      border-radius: 5px;
+      font-size: 11px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.15s;
+    }
+    .chip:hover {
+      border-color: var(--accent);
+      color: #fff;
+    }
+    .chip.active {
+      background: rgba(56, 189, 248, 0.18);
+      border-color: var(--accent);
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    /* Summary Metrics Banner Grid */
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+    .metric-card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+    .metric-label {
+      font-size: 10px;
+      text-transform: uppercase;
+      color: var(--muted);
+      letter-spacing: 0.5px;
+      font-weight: 700;
+    }
+    .metric-val {
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: -0.3px;
+    }
+    .metric-sub {
+      font-size: 10.5px;
+      color: var(--muted);
+      font-weight: 500;
+    }
+    .c-green { color: var(--emerald); }
+    .c-red { color: var(--rose); }
+    .c-cyan { color: var(--accent); }
+    .c-amber { color: var(--amber); }
+
+    /* Chart & Heatmap 2-Column Section */
+    .chart-section {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    @media (max-width: 980px) {
+      .chart-section { grid-template-columns: 1fr; }
+    }
+    .chart-card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .card-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: #fff;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .canvas-container {
+      width: 100%;
+      height: 240px;
+      position: relative;
+    }
+    canvas {
+      width: 100% !important;
+      height: 100% !important;
+    }
+
+    /* Monthly Heatmap Table */
+    .heatmap-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 10.5px;
+      text-align: center;
+    }
+    .heatmap-table th, .heatmap-table td {
+      padding: 4px 3px;
+      border: 1px solid rgba(255,255,255,0.05);
+    }
+    .heatmap-table th {
+      background: #090e1b;
+      color: var(--muted);
+      font-weight: 700;
+    }
+    .cell-pos { background: rgba(16, 185, 129, 0.22); color: #34d399; font-weight: 700; }
+    .cell-neg { background: rgba(244, 63, 94, 0.22); color: #fb7185; font-weight: 700; }
+    .cell-zero { background: rgba(255, 255, 255, 0.02); color: var(--muted); }
+
+    /* Interactive Trades Table */
+    .table-card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px;
+      margin-bottom: 16px;
+    }
+    .table-toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 8px;
+    }
+    .search-input {
+      background: #080d1a;
+      border: 1px solid var(--border);
+      color: #fff;
+      padding: 5px 10px;
+      border-radius: 6px;
+      font-size: 11px;
+      width: 180px;
+    }
+    .table-scroll {
+      overflow-x: auto;
+      max-height: 480px;
+    }
+    table.trades-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 11px;
+      text-align: left;
+    }
+    table.trades-table th {
+      background: #090e1b;
+      color: var(--muted);
+      font-weight: 700;
+      padding: 8px 10px;
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 2;
+    }
+    table.trades-table td {
+      padding: 6px 10px;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      white-space: nowrap;
+    }
+    table.trades-table tr:hover {
+      background: var(--panel-alt);
+    }
+    .badge-win {
+      background: var(--emerald-bg);
+      color: var(--emerald);
+      border: 1px solid rgba(16,185,129,0.3);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 700;
+    }
+    .badge-loss {
+      background: var(--rose-bg);
+      color: var(--rose);
+      border: 1px solid rgba(244,63,94,0.3);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 700;
+    }
+  </style>
+  <script src="backtest_data.js"></script>
+</head>
+<body>
+
+  <!-- Top Navigation & Branding Bar -->
+  <div class="top-bar">
+    <div class="brand-title">
+      <span>📈 Upstox F&O Quant Strategy Backtester</span>
+      <span class="badge-strategy">Worthless Expiry Harvester</span>
+      <span class="badge-data">2021 – 2026 Authentic Upstox API Data</span>
+    </div>
+    <div class="nav-links">
+      <a href="index.html" class="nav-btn">📊 Live Screener</a>
+      <a href="thesis.html" class="nav-btn">📖 Quantitative Thesis</a>
+      <a href="#" class="nav-btn active">⚡ Backtest Engine</a>
+    </div>
+  </div>
+
+  <!-- Dynamic Controls Panel (Variable Capital Input) -->
+  <div class="controls-panel">
+    <div class="controls-grid">
+      
+      <!-- Capital Variable Input -->
+      <div class="control-group">
+        <div class="control-label">
+          <span>Initial Capital (INR)</span>
+          <span id="display-capital-label" style="color:var(--accent); font-weight:800;">₹5,00,000</span>
+        </div>
+        <input type="number" id="capital-input" class="control-input" value="500000" min="50000" step="50000" oninput="onCapitalChanged()" />
+        <div class="chips-row">
+          <span class="chip" onclick="setCapital(200000)">₹2L</span>
+          <span class="chip" onclick="setCapital(300000)">₹3L</span>
+          <span class="chip active" onclick="setCapital(500000)">₹5L</span>
+          <span class="chip" onclick="setCapital(1000000)">₹10L</span>
+          <span class="chip" onclick="setCapital(2500000)">₹25L</span>
+        </div>
+      </div>
+
+      <!-- Strategy Preset -->
+      <div class="control-group">
+        <div class="control-label">Strategy Preset</div>
+        <select id="preset-select" class="control-select" onchange="runSimulation()">
+          <option value="oversold_dip" selected>🔥 Oversold Mean-Reversion Dip (Alpha Leader)</option>
+          <option value="default">🏛️ Institutional Harvester (Default: POP≥76%)</option>
+          <option value="fortress">🛡️ Ultra-Safe 84%+ POP Fortress</option>
+          <option value="vrp_crush">⚡ High VRP Volatility Crush (VRP≥5%)</option>
+        </select>
+        <span style="font-size:10px; color:var(--muted); margin-top:2px;">Calibrated 5-Pillar Regime ranking engine</span>
+      </div>
+
+      <!-- Candidates per Cycle -->
+      <div class="control-group">
+        <div class="control-label">Picks per Cycle</div>
+        <select id="top-n-select" class="control-select" onchange="runSimulation()">
+          <option value="1">Top 1 High-Conviction Pick</option>
+          <option value="2">Top 2 Candidates</option>
+          <option value="3" selected>Top 3 Diversified Candidates</option>
+        </select>
+        <span style="font-size:10px; color:var(--muted); margin-top:2px;">Greedy SPAN margin allocation</span>
+      </div>
+
+      <!-- Execution Mode -->
+      <div class="control-group">
+        <div class="control-label">Strategy Structure</div>
+        <select id="mode-select" class="control-select" onchange="runSimulation()">
+          <option value="naked" selected>Pure Single-Leg Short OTM Put</option>
+          <option value="spread">Defined-Risk Bull Put Spread (Hedging Long Put)</option>
+        </select>
+        <span style="font-size:10px; color:var(--muted); margin-top:2px;">Spread drops margin to ~₹35k-45k/lot</span>
+      </div>
+
+      <!-- Risk Management / Stop-Loss -->
+      <div class="control-group">
+        <div class="control-label">Risk Management (Stop-Loss)</div>
+        <select id="stop-loss-select" class="control-select" onchange="runSimulation()">
+          <option value="none">Hold to Expiry (Worthless Harvester)</option>
+          <option value="2.0" selected>2.0x Premium Stop-Loss (Recommended)</option>
+          <option value="3.0">3.0x Premium Stop-Loss</option>
+        </select>
+        <span style="font-size:10px; color:var(--muted); margin-top:2px;">Cuts catastrophic waterfall drawdowns</span>
+      </div>
+
+      <!-- Compounding -->
+      <div class="control-group">
+        <div class="control-label">Reinvestment</div>
+        <select id="compounding-select" class="control-select" onchange="runSimulation()">
+          <option value="compounding" selected>Compounded Account (Reinvest Profits)</option>
+          <option value="fixed">Fixed Baseline Capital</option>
+        </select>
+        <span style="font-size:10px; color:var(--muted); margin-top:2px;">Reinvested capital unlocks more lots over time</span>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Key Metric Summary Cards -->
+  <div class="metrics-grid">
+    <div class="metric-card">
+      <span class="metric-label">Total Net Profit</span>
+      <span id="m-net-pnl" class="metric-val c-green">+₹2,57,737</span>
+      <span id="m-total-ret" class="metric-sub c-green">+51.55% Total Return</span>
+    </div>
+    <div class="metric-card">
+      <span class="metric-label">Annualized Return</span>
+      <span id="m-cagr" class="metric-val c-cyan">7.50%</span>
+      <span class="metric-sub">Compounded Annual Growth (CAGR)</span>
+    </div>
+    <div class="metric-card">
+      <span class="metric-label">Trade Win Rate</span>
+      <span id="m-win-rate" class="metric-val c-green">89.0%</span>
+      <span id="m-win-counts" class="metric-sub">137 Wins / 154 Trades</span>
+    </div>
+    <div class="metric-card">
+      <span class="metric-label">Max Portfolio Drawdown</span>
+      <span id="m-max-dd" class="metric-val c-red">-2.54%</span>
+      <span id="m-max-dd-inr" class="metric-sub">-₹17,745 Peak-to-Trough</span>
+    </div>
+    <div class="metric-card">
+      <span class="metric-label">Profit Factor</span>
+      <span id="m-profit-factor" class="metric-val c-cyan">3.49</span>
+      <span id="m-win-loss-ratio" class="metric-sub">Gross Profit / Gross Loss</span>
+    </div>
+    <div class="metric-card">
+      <span class="metric-label">Monthly Cycle Win Rate</span>
+      <span id="m-cycle-win-rate" class="metric-val c-green">76.8%</span>
+      <span id="m-cycle-counts" class="metric-sub">53 / 69 Cycles Profitable</span>
+    </div>
+    <div class="metric-card">
+      <span class="metric-label">Avg Margin Utilization</span>
+      <span id="m-margin-util" class="metric-val c-amber">41.3%</span>
+      <span class="metric-sub">Average Capital Deployed</span>
+    </div>
+  </div>
+
+  <!-- Chart & Monthly Matrix Grid -->
+  <div class="chart-section">
+    <!-- Equity Curve & Underwater Drawdown -->
+    <div class="chart-card">
+      <div class="card-title">
+        <span>📈 Portfolio Equity Curve & Underwater Drawdown (2021 – 2026)</span>
+        <span id="chart-ending-equity" style="color:var(--accent); font-weight:800;">Ending: ₹7,57,737</span>
+      </div>
+      <div class="canvas-container">
+        <canvas id="equityCanvas"></canvas>
+      </div>
+    </div>
+
+    <!-- Monthly Performance Heatmap Matrix -->
+    <div class="chart-card">
+      <div class="card-title">
+        <span>🗓️ Monthly Returns Heatmap (% Return on Capital)</span>
+      </div>
+      <div style="overflow-x:auto;">
+        <table class="heatmap-table" id="heatmap-table">
+          <thead>
+            <tr>
+              <th>Year</th>
+              <th>J</th><th>F</th><th>M</th><th>A</th><th>M</th><th>J</th><th>J</th><th>A</th><th>S</th><th>O</th><th>N</th><th>D</th>
+              <th>Total</th>
+            </tr>
+          </thead>
+          <tbody id="heatmap-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Detailed Interactive Trades Log -->
+  <div class="table-card">
+    <div class="table-toolbar">
+      <div class="card-title">
+        <span>📑 Historical Trade Execution Log (<span id="trades-count-label">0</span> Trades Executed)</span>
+      </div>
+      <div style="display:flex; gap:8px;">
+        <input type="text" id="symbol-search" class="search-input" placeholder="🔍 Search symbol..." oninput="filterTradesTable()" />
+        <select id="trade-filter-select" class="control-select" style="padding:4px 8px; font-size:11px;" onchange="filterTradesTable()">
+          <option value="all">All Trades</option>
+          <option value="win">Winning Trades (Worthless Expired)</option>
+          <option value="loss">Losing Trades / Stopped Out</option>
+        </select>
+      </div>
+    </div>
+    <div class="table-scroll">
+      <table class="trades-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>CYCLE</th>
+            <th>SYMBOL</th>
+            <th>ENTRY DATE</th>
+            <th>EXIT DATE</th>
+            <th>SPOT</th>
+            <th>SHORT STRIKE</th>
+            <th>CUSHION</th>
+            <th>LOT</th>
+            <th>PREMIUM</th>
+            <th>MARGIN REQ</th>
+            <th>EXIT SPOT</th>
+            <th>EXIT REASON</th>
+            <th>NET PnL (INR)</th>
+            <th>RoM %</th>
+            <th>STATUS</th>
+          </tr>
+        </thead>
+        <tbody id="trades-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Client-Side Real-Time Simulation Script -->
+  <script>
+    let globalSimulationResults = null;
+
+    function setCapital(amount) {
+      document.getElementById("capital-input").value = amount;
+      document.querySelectorAll(".chip").forEach(c => {
+        c.classList.toggle("active", c.textContent.includes(amount >= 100000 ? (amount/100000) + "L" : amount));
+      });
+      onCapitalChanged();
+    }
+
+    function onCapitalChanged() {
+      const cap = Number(document.getElementById("capital-input").value) || 500000;
+      document.getElementById("display-capital-label").textContent = "₹" + cap.toLocaleString("en-IN");
+      runSimulation();
+    }
+
+    // Standard Normal CDF for browser
+    function normCdf(x) {
+      const a1 =  0.254829592, a2 = -0.284496736, a3 =  1.421413741;
+      const a4 = -1.453152027, a5 =  1.061405429, p  =  0.3275911;
+      const sign = (x < 0) ? -1 : 1;
+      x = Math.abs(x) / Math.sqrt(2.0);
+      const t = 1.0 / (1.0 + p * x);
+      const erf = 1.0 - (((((a5 * t + a4) * t) + a3) * t + a2) * t + a1) * t * Math.exp(-x * x);
+      return 0.5 * (1.0 + sign * erf);
+    }
+
+    function blackScholesPut(spot, strike, dteDays, ivPct, r = 0.068) {
+      const T = Math.max(1, dteDays) / 365.0;
+      const sigma = Math.max(0.05, ivPct / 100.0);
+      const d1 = (Math.log(spot / strike) + (r + 0.5 * sigma * sigma) * T) / (sigma * Math.sqrt(T));
+      const d2 = d1 - sigma * Math.sqrt(T);
+      const put = strike * Math.exp(-r * T) * normCdf(-d2) - spot * normCdf(-d1);
+      return Math.max(0.5, Math.round(put * 100) / 100);
+    }
+
+    function runSimulation() {
+      if (!window.BACKTEST_DATA) {
+        console.error("Backtest data bundle not found!");
+        return;
+      }
+
+      const initialCapital = Number(document.getElementById("capital-input").value) || 500000;
+      const preset = document.getElementById("preset-select").value;
+      const topN = Number(document.getElementById("top-n-select").value) || 3;
+      const useSpread = document.getElementById("mode-select").value === "spread";
+      const stopLossVal = document.getElementById("stop-loss-select").value;
+      const stopLossMult = stopLossVal === "none" ? null : Number(stopLossVal);
+      const isCompounding = document.getElementById("compounding-select").value === "compounding";
+
+      const cycles = window.BACKTEST_DATA.cycles;
+      let capital = initialCapital;
+      let peakCapital = initialCapital;
+      let maxDdInr = 0;
+      let maxDdPct = 0;
+
+      const cyclePerformances = [];
+      const allTrades = [];
+      const friction = 120; // ₹120 round-trip taxes/fees
+
+      for (let i = 0; i < cycles.length; i++) {
+        const c = cycles[i];
+        const cycleStartCapital = capital;
+        let availableCash = capital;
+        let totalCycleMargin = 0;
+        const candidates = (c.candidates_by_preset[preset] || []).filter(x => x.passed).slice(0, topN);
+
+        const cycleTrades = [];
+
+        for (let r = 0; r < candidates.length; r++) {
+          const cand = candidates[r];
+          let requiredMargin = 0;
+          let netCredit = 0;
+          let longStrike = null;
+
+          if (useSpread) {
+            const spreadWidth = 2.0 * cand.step;
+            longStrike = Math.max(cand.step, cand.short_strike - spreadWidth);
+            const longPutPrice = blackScholesPut(cand.spot_entry, longStrike, c.dte, cand.iv_pct);
+            const netPremium = Math.max(0.2, cand.put_premium - longPutPrice);
+            netCredit = Math.round(netPremium * cand.lot * 100) / 100;
+            requiredMargin = Math.round((cand.short_strike - longStrike) * cand.lot);
+          } else {
+            netCredit = cand.lot_credit;
+            requiredMargin = cand.span_margin;
+          }
+
+          // Check if capital suffices
+          if (requiredMargin > availableCash) {
+            continue; // Cannot enter
+          }
+
+          availableCash -= requiredMargin;
+          totalCycleMargin += requiredMargin;
+
+          // Holding data
+          const spotInfo = c.holding_spots[cand.sym];
+          let finalSpot = spotInfo ? spotInfo.exit_spot : cand.spot_entry;
+          let exitDate = spotInfo ? spotInfo.exit_date : c.expiry_date;
+          let exitReason = "WORTHLESS_EXPIRY";
+          let exitPrice = 0;
+          let isStoppedOut = false;
+
+          // Stop loss check
+          if (stopLossMult && spotInfo && spotInfo.daily_closes) {
+            const stopThresh = cand.put_premium * stopLossMult;
+            for (let d = 1; d < spotInfo.daily_closes.length - 1; d++) {
+              const dSpot = spotInfo.daily_closes[d];
+              const dDate = spotInfo.daily_dates[d];
+              const daysLeft = Math.max(1, Math.round((new Date(c.expiry_date) - new Date(dDate)) / (1000*3600*24)));
+              const currPut = blackScholesPut(dSpot, cand.short_strike, daysLeft, cand.iv_pct);
+              if (currPut >= stopThresh) {
+                isStoppedOut = true;
+                exitReason = "STOP_LOSS";
+                exitDate = dDate;
+                finalSpot = dSpot;
+                exitPrice = currPut;
+                break;
+              }
+            }
+          }
+
+          let pnl = 0;
+          if (isStoppedOut) {
+            pnl = (cand.put_premium - exitPrice) * cand.lot - friction;
+          } else if (useSpread) {
+            if (finalSpot >= cand.short_strike) {
+              exitReason = "WORTHLESS_EXPIRY";
+              exitPrice = 0;
+              pnl = netCredit - friction;
+            } else if (finalSpot <= longStrike) {
+              exitReason = "MAX_SPREAD_LOSS";
+              const spreadLoss = (cand.short_strike - longStrike) * cand.lot;
+              pnl = (netCredit - spreadLoss) - friction;
+              exitPrice = cand.short_strike - finalSpot;
+            } else {
+              exitReason = "PARTIAL_ITM_LOSS";
+              const shortIntrinsic = (cand.short_strike - finalSpot) * cand.lot;
+              pnl = (netCredit - shortIntrinsic) - friction;
+              exitPrice = cand.short_strike - finalSpot;
+            }
+          } else {
+            if (finalSpot >= cand.short_strike) {
+              exitReason = "WORTHLESS_EXPIRY";
+              exitPrice = 0;
+              pnl = cand.lot_credit - friction;
+            } else {
+              exitReason = "ITM_EXPIRY";
+              const intrinsicLoss = (cand.short_strike - finalSpot) * cand.lot;
+              pnl = (cand.lot_credit - intrinsicLoss) - friction;
+              exitPrice = cand.short_strike - finalSpot;
+            }
+          }
+
+          const isWin = pnl > 0;
+          const romPct = Math.round((pnl / Math.max(1, requiredMargin)) * 10000) / 100;
+
+          const trade = {
+            id: allTrades.length + 1,
+            cycleLabel: c.label,
+            year: c.year,
+            month: c.month,
+            sym: cand.sym,
+            rank: r + 1,
+            entryDate: c.entry_date,
+            exitDate: exitDate,
+            dte: c.dte,
+            lot: cand.lot,
+            spotEntry: cand.spot_entry,
+            shortStrike: cand.short_strike,
+            longStrike: longStrike,
+            otmCushion: cand.otm_cushion,
+            putPremium: cand.put_premium,
+            netCredit: netCredit,
+            marginReq: requiredMargin,
+            spotExit: finalSpot,
+            exitReason: exitReason,
+            exitPrice: Math.round(exitPrice * 100) / 100,
+            pnl: Math.round(pnl * 100) / 100,
+            romPct: romPct,
+            isWin: isWin
+          };
+
+          cycleTrades.push(trade);
+          allTrades.push(trade);
+        }
+
+        const cyclePnl = cycleTrades.reduce((sum, t) => sum + t.pnl, 0);
+        const cycleRet = (cyclePnl / cycleStartCapital) * 100;
+        if (isCompounding) {
+          capital += cyclePnl;
+        }
+
+        if (capital > peakCapital) peakCapital = capital;
+        const ddInr = peakCapital - capital;
+        const ddPct = (ddInr / peakCapital) * 100;
+        if (ddInr > maxDdInr) maxDdInr = ddInr;
+        if (ddPct > maxDdPct) maxDdPct = ddPct;
+
+        cyclePerformances.push({
+          cycleLabel: c.label,
+          year: c.year,
+          month: c.month,
+          entryDate: c.entry_date,
+          expiryDate: c.expiry_date,
+          startCapital: cycleStartCapital,
+          marginUsed: totalCycleMargin,
+          marginUtilPct: (totalCycleMargin / cycleStartCapital) * 100,
+          pnl: cyclePnl,
+          returnPct: cycleRet,
+          endingCapital: capital,
+          trades: cycleTrades
+        });
+      }
+
+      // Summary
+      const totalNetPnl = capital - initialCapital;
+      const totalReturnPct = (totalNetPnl / initialCapital) * 100;
+      const nYears = Math.max(0.5, cycles.length / 12.0);
+      const cagr = capital > 0 ? (Math.pow(capital / initialCapital, 1.0 / nYears) - 1.0) * 100 : -100;
+
+      const wins = allTrades.filter(t => t.isWin);
+      const losses = allTrades.filter(t => !t.isWin);
+      const tradeWinRate = allTrades.length > 0 ? (wins.length / allTrades.length) * 100 : 0;
+
+      const grossProfit = wins.reduce((sum, t) => sum + t.pnl, 0);
+      const grossLoss = Math.abs(losses.reduce((sum, t) => sum + t.pnl, 0));
+      const profitFactor = grossLoss > 0 ? (grossProfit / grossLoss) : (grossProfit > 0 ? 99.9 : 0);
+
+      const profitableCycles = cyclePerformances.filter(c => c.pnl > 0).length;
+      const cycleWinRate = (profitableCycles / Math.max(1, cyclePerformances.length)) * 100;
+      const avgMarginUtil = cyclePerformances.reduce((sum, c) => sum + c.marginUtilPct, 0) / Math.max(1, cyclePerformances.length);
+
+      globalSimulationResults = {
+        initialCapital,
+        capital,
+        totalNetPnl,
+        totalReturnPct,
+        cagr,
+        tradeWinRate,
+        winsCount: wins.length,
+        totalTrades: allTrades.length,
+        maxDdPct,
+        maxDdInr,
+        profitFactor,
+        cycleWinRate,
+        profitableCycles,
+        totalCycles: cyclePerformances.length,
+        avgMarginUtil,
+        cyclePerformances,
+        allTrades
+      };
+
+      updateMetricCards(globalSimulationResults);
+      renderEquityChart(globalSimulationResults);
+      renderMonthlyHeatmap(globalSimulationResults);
+      filterTradesTable();
+    }
+
+    function updateMetricCards(res) {
+      const pnlSign = res.totalNetPnl >= 0 ? "+" : "-";
+      const pnlEl = document.getElementById("m-net-pnl");
+      pnlEl.textContent = `${pnlSign}₹${Math.abs(res.totalNetPnl).toLocaleString("en-IN", {maximumFractionDigits:0})}`;
+      pnlEl.className = "metric-val " + (res.totalNetPnl >= 0 ? "c-green" : "c-red");
+
+      const retEl = document.getElementById("m-total-ret");
+      retEl.textContent = `${res.totalReturnPct >= 0 ? "+" : ""}${res.totalReturnPct.toFixed(2)}% Total Return`;
+      retEl.className = "metric-sub " + (res.totalReturnPct >= 0 ? "c-green" : "c-red");
+
+      document.getElementById("m-cagr").textContent = `${res.cagr.toFixed(2)}%`;
+      document.getElementById("m-win-rate").textContent = `${res.tradeWinRate.toFixed(1)}%`;
+      document.getElementById("m-win-counts").textContent = `${res.winsCount} Wins / ${res.totalTrades} Trades`;
+
+      document.getElementById("m-max-dd").textContent = `-${res.maxDdPct.toFixed(2)}%`;
+      document.getElementById("m-max-dd-inr").textContent = `-₹${Math.round(res.maxDdInr).toLocaleString("en-IN")} Peak-to-Trough`;
+
+      document.getElementById("m-profit-factor").textContent = res.profitFactor.toFixed(2);
+      document.getElementById("m-cycle-win-rate").textContent = `${res.cycleWinRate.toFixed(1)}%`;
+      document.getElementById("m-cycle-counts").textContent = `${res.profitableCycles} / ${res.totalCycles} Cycles Profitable`;
+      document.getElementById("m-margin-util").textContent = `${res.avgMarginUtil.toFixed(1)}%`;
+      document.getElementById("chart-ending-equity").textContent = `Ending Equity: ₹${Math.round(res.capital).toLocaleString("en-IN")}`;
+    }
+
+    // High-Resolution Interactive Canvas Equity Curve
+    function renderEquityChart(res) {
+      const canvas = document.getElementById("equityCanvas");
+      const ctx = canvas.getContext("2d");
+      const dpr = window.devicePixelRatio || 1;
+      const rect = canvas.parentElement.getBoundingClientRect();
+
+      canvas.width = rect.width * dpr;
+      canvas.height = rect.height * dpr;
+      ctx.scale(dpr, dpr);
+
+      const w = rect.width;
+      const h = rect.height;
+
+      ctx.clearRect(0, 0, w, h);
+
+      const data = [{ cap: res.initialCapital, label: "Start" }].concat(
+        res.cyclePerformances.map(c => ({ cap: c.endingCapital, label: c.cycleLabel }))
+      );
+
+      const minVal = Math.min(...data.map(d => d.cap)) * 0.95;
+      const maxVal = Math.max(...data.map(d => d.cap)) * 1.05;
+
+      const padL = 60, padR = 20, padT = 20, padB = 30;
+      const plotW = w - padL - padR;
+      const plotH = h - padT - padB;
+
+      // Draw horizontal grid lines
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.08)";
+      ctx.lineWidth = 1;
+      ctx.fillStyle = "#8b9bb4";
+      ctx.font = "10px Inter, sans-serif";
+
+      const gridSteps = 4;
+      for (let s = 0; s <= gridSteps; s++) {
+        const val = minVal + (maxVal - minVal) * (s / gridSteps);
+        const y = padT + plotH - (s / gridSteps) * plotH;
+        ctx.beginPath();
+        ctx.moveTo(padL, y);
+        ctx.lineTo(w - padR, y);
+        ctx.stroke();
+        ctx.fillText("₹" + (val / 100000).toFixed(1) + "L", 10, y + 3);
+      }
+
+      // Initial capital baseline line
+      const baseRatio = (res.initialCapital - minVal) / (maxVal - minVal);
+      const baseY = padT + plotH - baseRatio * plotH;
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.2)";
+      ctx.setLineDash([4, 4]);
+      ctx.beginPath();
+      ctx.moveTo(padL, baseY);
+      ctx.lineTo(w - padR, baseY);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // Draw Gradient Area below Equity Line
+      const grad = ctx.createLinearGradient(0, padT, 0, padT + plotH);
+      grad.addColorStop(0, "rgba(16, 185, 129, 0.28)");
+      grad.addColorStop(1, "rgba(16, 185, 129, 0.0)");
+
+      ctx.beginPath();
+      for (let i = 0; i < data.length; i++) {
+        const x = padL + (i / (data.length - 1)) * plotW;
+        const ratio = (data[i].cap - minVal) / (maxVal - minVal);
+        const y = padT + plotH - ratio * plotH;
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.lineTo(padL + plotW, padT + plotH);
+      ctx.lineTo(padL, padT + plotH);
+      ctx.closePath();
+      ctx.fillStyle = grad;
+      ctx.fill();
+
+      // Draw Equity Line
+      ctx.beginPath();
+      ctx.strokeStyle = "#10b981";
+      ctx.lineWidth = 2;
+      for (let i = 0; i < data.length; i++) {
+        const x = padL + (i / (data.length - 1)) * plotW;
+        const ratio = (data[i].cap - minVal) / (maxVal - minVal);
+        const y = padT + plotH - ratio * plotH;
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+    }
+
+    // Monthly Heatmap Matrix (Year × Month)
+    function renderMonthlyHeatmap(res) {
+      const tbody = document.getElementById("heatmap-body");
+      tbody.innerHTML = "";
+
+      const yearMap = {};
+      res.cyclePerformances.forEach(c => {
+        if (!yearMap[c.year]) yearMap[c.year] = Array(12).fill(null);
+        yearMap[c.year][c.month - 1] = c.returnPct;
+      });
+
+      const years = Object.keys(yearMap).sort();
+      years.forEach(yr => {
+        const tr = document.createElement("tr");
+        let html = `<td style="font-weight:700; color:#fff; background:#0e1525;">${yr}</td>`;
+        let yearTotal = 0;
+
+        for (let m = 0; m < 12; m++) {
+          const val = yearMap[yr][m];
+          if (val === null || val === undefined) {
+            html += `<td class="cell-zero">-</td>`;
+          } else {
+            yearTotal += val;
+            const cls = val > 0 ? "cell-pos" : (val < 0 ? "cell-neg" : "cell-zero");
+            html += `<td class="${cls}">${val >= 0 ? "+" : ""}${val.toFixed(1)}%</td>`;
+          }
+        }
+        const totCls = yearTotal > 0 ? "cell-pos" : (yearTotal < 0 ? "cell-neg" : "cell-zero");
+        html += `<td class="${totCls}" style="font-weight:800;">${yearTotal >= 0 ? "+" : ""}${yearTotal.toFixed(1)}%</td>`;
+        tr.innerHTML = html;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // Trade Table Filter and Rendering
+    function filterTradesTable() {
+      if (!globalSimulationResults) return;
+
+      const query = document.getElementById("symbol-search").value.trim().toUpperCase();
+      const filterMode = document.getElementById("trade-filter-select").value;
+
+      let list = globalSimulationResults.allTrades;
+      if (query) {
+        list = list.filter(t => t.sym.includes(query) || t.cycleLabel.toUpperCase().includes(query));
+      }
+      if (filterMode === "win") {
+        list = list.filter(t => t.isWin);
+      } else if (filterMode === "loss") {
+        list = list.filter(t => !t.isWin);
+      }
+
+      document.getElementById("trades-count-label").textContent = list.length;
+      const tbody = document.getElementById("trades-body");
+      tbody.innerHTML = "";
+
+      list.slice(0, 150).forEach(t => {
+        const tr = document.createElement("tr");
+        const pnlCls = t.pnl >= 0 ? "c-green" : "c-red";
+        const badge = t.isWin ? `<span class="badge-win">WIN</span>` : `<span class="badge-loss">LOSS</span>`;
+        tr.innerHTML = `
+          <td style="color:var(--muted);">${t.id}</td>
+          <td><b>${t.cycleLabel}</b></td>
+          <td><span style="font-weight:800; color:#fff;">${t.sym}</span></td>
+          <td style="color:var(--muted);">${t.entryDate}</td>
+          <td style="color:var(--muted);">${t.exitDate}</td>
+          <td>₹${t.spotEntry.toFixed(1)}</td>
+          <td><span style="color:var(--accent); font-weight:700;">${t.shortStrike} PE</span></td>
+          <td>-${t.otmCushion.toFixed(1)}%</td>
+          <td>${t.lot}</td>
+          <td>₹${t.putPremium.toFixed(2)}</td>
+          <td>₹${Math.round(t.marginReq).toLocaleString("en-IN")}</td>
+          <td>₹${t.spotExit.toFixed(1)}</td>
+          <td style="font-size:10px; color:var(--muted);">${t.exitReason}</td>
+          <td class="${pnlCls}" style="font-weight:800;">${t.pnl >= 0 ? "+" : ""}₹${Math.round(t.pnl).toLocaleString("en-IN")}</td>
+          <td class="${pnlCls}">${t.romPct >= 0 ? "+" : ""}${t.romPct.toFixed(1)}%</td>
+          <td>${badge}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // Auto-initialize when page loads
+    window.addEventListener("DOMContentLoaded", () => {
+      runSimulation();
+      window.addEventListener("resize", () => {
+        if (globalSimulationResults) renderEquityChart(globalSimulationResults);
+      });
+    });
+  </script>
+</body>
+</html>
