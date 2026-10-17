@@ -343,14 +343,14 @@
     <!-- Search & Filter Controls -->
     <div class="filter-toolbar">
       <div class="search-row">
-        <input type="text" class="search-input" id="search-input" placeholder="🔍 Search any criterion, formula, symbol, or question (e.g. VRP, POP, 2024 Base, Yang-Zhang, RoM%, SPAN margin)..." oninput="filterFaqs()" />
+        <input type="text" class="search-input" id="search-input" placeholder="🔍 Search any criterion, formula, symbol, or question (e.g. VRP, POP, 2020 Base, TightCushion, Yang-Zhang, RoM%, SPAN margin)..." oninput="filterFaqs()" />
         <button class="btn-toggle-all" onclick="toggleAllCards()" id="btn-toggle-all">Expand All</button>
       </div>
       <div class="category-pills">
-        <button class="cat-btn active" data-cat="all" onclick="setCategory('all', this)">All Topics (12)</button>
+        <button class="cat-btn active" data-cat="all" onclick="setCategory('all', this)">All Topics (13)</button>
         <button class="cat-btn" data-cat="thesis" onclick="setCategory('thesis', this)">Executive Thesis (2)</button>
         <button class="cat-btn" data-cat="pillars" onclick="setCategory('pillars', this)">5 Structural Pillars (5)</button>
-        <button class="cat-btn" data-cat="math" onclick="setCategory('math', this)">Options Math (2)</button>
+        <button class="cat-btn" data-cat="math" onclick="setCategory('math', this)">Options Math &amp; Risk (3)</button>
         <button class="cat-btn" data-cat="faq" onclick="setCategory('faq', this)">Practical Trading FAQs (3)</button>
       </div>
     </div>
@@ -390,22 +390,22 @@
               <td>2</td>
               <td><strong>Spot (₹)</strong></td>
               <td>Upstox <code>/v3/market-quote/quotes</code> (last_price)</td>
-              <td>Above 2024 Base</td>
+              <td>Above 2020 Base</td>
               <td>Spot / 200-DMA &ge; 0.92x</td>
             </tr>
             <tr>
               <td>3</td>
-              <td><strong>2024–26 Base</strong></td>
-              <td>3-Year structural floor (2024 accumulation base) to 2026 peak</td>
-              <td>15% to 45% percentile of range</td>
+              <td><strong>2020–26 Base</strong></td>
+              <td>6-Year structural floor (March 2020 secular cycle low) to 2026 peak</td>
+              <td>Orderly expansion above 2020 foundation</td>
               <td>Prevents trading in structural breakdown regimes</td>
             </tr>
             <tr>
               <td>4</td>
               <td><strong>Base Dist</strong></td>
-              <td>((Spot - Base2024) / Base2024) &times; 100</td>
-              <td>+8% to +35% above base</td>
-              <td>Rejects &gt; 65% (Parabolic tops)</td>
+              <td>((Spot - Base2020) / Base2020) &times; 100</td>
+              <td>+80% to +220% above base</td>
+              <td>Rejects &gt; 220% (Parabolic tops)</td>
             </tr>
             <tr>
               <td>5</td>
@@ -523,7 +523,7 @@
           <div class="highlight-box">
             <strong>⚡ 100% Worthless Expiry Rule:</strong> When the underlying stock expires above the short put strike (S<sub>T</sub> ≥ K<sub>short</sub>), the option expires with ₹0 intrinsic value. The seller keeps <strong>100% of the upfront gross credit</strong> (Short Put LTP × Lot Size) as net realized profit.
           </div>
-          <p>Unlike 2-leg bull put spreads that sacrifice 40–60% of gross credit to purchase a redundant long put wing, selling single-leg OTM puts optimizes <strong>Return on SPAN Margin (RoM %)</strong> while relying on exchange Put OI support walls and the 2024 multi-year accumulation floor.</p>
+          <p>Unlike 2-leg bull put spreads that sacrifice 40–60% of gross credit to purchase a redundant long put wing, selling single-leg OTM puts optimizes <strong>Return on SPAN Margin (RoM %)</strong> while relying on exchange Put OI support walls and the 2020 multi-year accumulation floor.</p>
         `
       },
       {
@@ -543,14 +543,30 @@
       {
         cat: "pillars",
         tag: "Pillar I",
-        q: "Pillar I — 2024–2026 Structural Multi-Year Base Floor & 200-DMA Guard",
+        q: "Pillar I — 2020–2026 Structural Multi-Year Base Floor & 200-DMA Guard",
         a: `
-          <p>The 2024 multi-year base represents the long-term institutional accumulation floor established during the 2024 consolidation cycle. Stocks trading near or in orderly relation to this floor have institutional demand backing.</p>
+          <p>The 2020 multi-year base represents the long-term secular cycle low (March 2020 pandemic foundation) from which the entire 6-year multi-year bull structural cycle launched. Stocks trading in healthy, orderly expansion above this floor have institutional demand backing.</p>
           <div class="formula-box">
-            Distance to 2024 Base (%) = ((Spot - Base2024) / Base2024) × 100<br/>
+            Distance to 2020 Base (%) = ((Spot - Base2020) / Base2020) × 100<br/>
             Trend Guard: Spot / 200-DMA ≥ 0.92x
           </div>
-          <p><span class="rule-pill">Guardrail</span> Stocks with Distance to Base &gt; 65% are flagged as overextended parabolic tops. Stocks below 0.92x of their 200-DMA are eliminated to prevent selling puts into active secular downgrades.</p>
+          <p><span class="rule-pill">Guardrail</span> Stocks with Distance to Base &gt; 220% are flagged as overextended parabolic tops susceptible to severe multi-year valuation mean reversion. Stocks below 0.92x of their 200-DMA are eliminated to prevent selling puts into active secular downgrades.</p>
+        `
+      },
+      {
+        cat: "math",
+        tag: "Risk Guard",
+        q: "What does 'TightCushion' mean and why is it rejected?",
+        a: `
+          <p><strong>OTM Cushion (%)</strong> measures how far below current underlying Spot price the recommended Short Put strike (K<sub>short</sub>) sits:</p>
+          <div class="formula-box">
+            OTM Cushion (%) = ((Spot - K<sub>short</sub>) / Spot) × 100
+          </div>
+          <p>When the screener displays <span class="rule-pill" style="color:#f43f5e; border-color:#f43f5e;">TightCushion(X%)</span>, it means the calculated short put strike sits <strong>less than the required minimum safety buffer</strong> (default: &lt; 5.0% below Spot).</p>
+          <div class="highlight-box">
+            <strong>⚠️ The Negative Gamma (-Γ) Danger:</strong> When an option is sold with a tight cushion (e.g. 3.5%–4.5%), a normal 1-to-2 day intraday market dip can immediately put the option In-The-Money (ITM). Delta expands rapidly toward -0.50, and negative gamma accelerates losses exponentially.
+          </div>
+          <p>By enforcing a strict <strong>OTM Cushion &ge; 5.0%</strong> (and snapping at or below the institutional Put OI Wall), the screener ensures that normal routine market volatility will not breach your strike, maximizing the probability of a <strong>100% Worthless Expiry</strong>.</p>
         `
       },
       {
@@ -651,7 +667,7 @@
         a: `
           <p>The 5-Pillar model ensures multiple defensive cushions:</p>
           <ol>
-            <li><strong>Strike sits below Put Wall & 2024 Base:</strong> Large institutional buying typically steps in at these multi-year floors.</li>
+            <li><strong>Strike sits below Put Wall & 2020 Base:</strong> Large institutional buying typically steps in at these multi-year floors.</li>
             <li><strong>Roll Out and Down:</strong> Standard institutional procedure is to roll the short put to the next month's series at a lower strike for an additional net credit.</li>
             <li><strong>Physical Assignment:</strong> Because candidates are vetted for high ROE and solid earnings, taking delivery of the stock at a steep discount (Spot minus premium) represents an attractive institutional entry price.</li>
           </ol>
@@ -689,7 +705,7 @@
       });
 
       if (filtered.length === 0) {
-        container.innerHTML = `<div style="text-align:center;padding:40px;color:var(--muted);font-size:13px;background:var(--panel);border:1px solid var(--border);border-radius:8px;">No criteria matching "<strong>${searchQ}</strong>". Try searching "VRP", "POP", "2024 Base", or "Margin".</div>`;
+        container.innerHTML = `<div style="text-align:center;padding:40px;color:var(--muted);font-size:13px;background:var(--panel);border:1px solid var(--border);border-radius:8px;">No criteria matching "<strong>${searchQ}</strong>". Try searching "VRP", "POP", "2020 Base", or "Margin".</div>`;
         return;
       }
 

@@ -729,11 +729,9 @@
     <div>
       <div class="brand-title">
         <span>UPSTOX F&amp;O QUANT SCREENER v3.0</span>
-        <span class="badge-strategy">SHORT OTM PUT HARVESTER (100% WORTHLESS EXPIRY THESIS)</span>
-        <span class="expiry-banner" id="active-expiry-pill">Target Expiry: Nov Series • Mon, 23 Nov 2026 (37 DTE)</span>
       </div>
       <div class="subtitle">
-        2024–2026 Structural Multi-Year Base • Empirical Yang-Zhang POP% N(d2) • Upstox API V2/V3 Option Chain Volume &amp; VRP Harvester
+        2020–2026 Structural Multi-Year Base • Empirical Yang-Zhang POP% N(d2) • Upstox API V2/V3 Option Chain Volume &amp; VRP Harvester
       </div>
     </div>
     <div class="scan-cta-group">
@@ -747,6 +745,7 @@
       <button class="btn-faq-top" onclick="openFaqModal()" title="View Quantitative Thesis Definitions, Criteria & Terminology FAQs">
         📖 Thesis &amp; FAQs
       </button>
+      <a href="thesis.html" class="pill-btn" style="text-decoration:none; padding:5px 9px; font-weight:700; color:#e9d5ff; border-color:var(--violet); background:rgba(168,85,247,0.18);" title="Dedicated Full Page with Criteria Definitions & Terminology FAQs">↗ Dedicated FAQ Page</a>
     </div>
   </div>
 
@@ -784,14 +783,12 @@
 
     <div class="card">
       <div class="card-label">
-        <span>3. View Mode &amp; Knowledge Base</span>
+        <span>3. View Mode &amp; Export</span>
         <span id="api-status-text" style="color:var(--muted)">Mode: Calibrated Quant Engine</span>
       </div>
       <div class="btn-group">
         <button class="pill-btn active" id="btn-qualified-only" onclick="toggleShowRejected(false)">Qualified Only</button>
         <button class="pill-btn" id="btn-show-all" onclick="toggleShowRejected(true)">Show All</button>
-        <button class="pill-btn" onclick="openFaqModal()" style="border-color:var(--violet); color:#e9d5ff; background:rgba(168,85,247,0.14); font-weight:700;" title="Open Quantitative Thesis & FAQs">📖 Thesis &amp; FAQs</button>
-        <a href="thesis.html" class="pill-btn" style="text-decoration:none;" title="Dedicated Full Page with Criteria Definitions & Terminology FAQs">↗ Dedicated FAQ Page</a>
         <button class="pill-btn" onclick="exportToCSV()">⬇ Export CSV</button>
       </div>
     </div>
@@ -807,7 +804,7 @@
       <button class="preset-btn active" onclick="applyPreset('default', this)">1. Institutional Worthless Harvester (Default)</button>
       <button class="preset-btn" onclick="applyPreset('fortress', this)">2. Ultra-Safe 84%+ POP Fortress</button>
       <button class="preset-btn" onclick="applyPreset('high_vol', this)">3. High F&amp;O Volume Liquid Leaders</button>
-      <button class="preset-btn" onclick="applyPreset('base_value', this)">4. Near 2024 Multi-Year Base (&lt;25% Dist)</button>
+      <button class="preset-btn" onclick="applyPreset('base_value', this)">4. Near 2020 Multi-Year Base (&lt;140% Dist)</button>
       <button class="preset-btn" onclick="applyPreset('vrp_crush', this)">5. High VRP Volatility Crush (VRP ≥ +6%)</button>
       <button class="preset-btn" onclick="applyPreset('oversold_dip', this)">6. Oversold Mean-Reversion Dip (RSI ≤ 45)</button>
       <button class="preset-btn" onclick="applyPreset('compounders', this)">7. High ROE Fundamental Compounders</button>
@@ -834,8 +831,8 @@
       <input type="range" id="sl-vrp" min="0" max="10" step="0.5" value="2.0" oninput="updateFilters()" />
     </div>
     <div class="slider-item">
-      <label>Max Dist to 2024 Base <span id="val-base">65%</span></label>
-      <input type="range" id="sl-base" min="15" max="120" step="5" value="65" oninput="updateFilters()" />
+      <label>Max Dist to 2020 Base <span id="val-base">220%</span></label>
+      <input type="range" id="sl-base" min="80" max="350" step="10" value="220" oninput="updateFilters()" />
     </div>
     <div class="slider-item">
       <label>Min F&amp;O Chain Vol <span id="val-vol">0k</span></label>
@@ -918,7 +915,7 @@
       </div>
       <div class="modal-body">
         <div class="faq-search-bar">
-          <input type="text" class="faq-search-input" id="faq-search-input" placeholder="🔍 Search criteria, acronyms, or formulas (e.g. VRP, POP, 2024 Base, Yang-Zhang, RoM%)..." oninput="filterFaqItems()" />
+          <input type="text" class="faq-search-input" id="faq-search-input" placeholder="🔍 Search criteria, acronyms, or formulas (e.g. VRP, POP, 2020 Base, Yang-Zhang, RoM%)..." oninput="filterFaqItems()" />
         </div>
         <div class="faq-category-pills">
           <button class="faq-cat-btn active" data-cat="all" onclick="filterFaqCategory('all', this)">All Topics</button>
@@ -954,18 +951,18 @@ const COLUMNS = [
     ttIdeal: "Trading above or near long-term institutional support."
   },
   {
-    key: "range24_26",
-    label: "2024–26 Base",
-    ttTitle: "2024–2026 Structural Price Range & Institutional Base",
-    ttDesc: "Shows the 3-year structural floor (2024 multi-year accumulation base) to 2024–2026 peak range and where current Spot sits within that band.",
-    ttIdeal: "Lower-to-mid percentile of range with strong 2024 institutional floor."
+    key: "range20_26",
+    label: "2020–26 Base",
+    ttTitle: "2020–2026 Structural Price Range & Institutional Base",
+    ttDesc: "Shows the 6-year structural floor (March 2020 secular cycle low) to 2026 peak range and where current Spot sits within that band.",
+    ttIdeal: "Orderly multi-year accumulation band above the 2020 cycle foundation."
   },
   {
     key: "distBase",
     label: "Base Dist",
-    ttTitle: "Distance Above 2024 Structural Base (%)",
-    ttDesc: "Percentage cushion between current Spot and the 2024 multi-year institutional accumulation floor: ((Spot - Base2024) / Base2024) × 100.",
-    ttIdeal: "+8% to +45% above 2024 base (avoids overextended parabolic tops)."
+    ttTitle: "Distance Above 2020 Structural Base (%)",
+    ttDesc: "Percentage cushion between current Spot and the 2020 multi-year cycle accumulation low: ((Spot - Base2020) / Base2020) × 100.",
+    ttIdeal: "Healthy multi-year expansion (+80% to +220%) without parabolic blowoff."
   },
   {
     key: "fnoVol",
@@ -1055,7 +1052,7 @@ const COLUMNS = [
     key: "worthlessScore",
     label: "Score",
     ttTitle: "Composite Worthless Expiry Score (0–100)",
-    ttDesc: "Institutional multi-factor rank combining Empirical POP% (35%), VRP Edge (20%), 2024 Base & Technical Regime (25%), and Fundamental Quality + Liquidity (20%).",
+    ttDesc: "Institutional multi-factor rank combining Empirical POP% (35%), VRP Edge (20%), 2020 Base & Technical Regime (25%), and Fundamental Quality + Liquidity (20%).",
     ttIdeal: "Score ≥ 72 indicates prime risk-adjusted short put setup."
   },
   {
@@ -1247,11 +1244,11 @@ function evaluateCandidate(item, expCfg, thresholds) {
   const otmCushion = +(((item.spot - shortStrike) / item.spot) * 100).toFixed(1);
   const vrp = +(item.iv - item.yz).toFixed(1);
 
-  // 2024–2026 Multi-Year Structural Base & Technical/Fundamental Derived Metrics
-  const base2024 = +(item.spot / (item.dma200 * 1.24)).toFixed(1);
-  const high24_26 = +(item.spot * (1.28 - (item.rsi14 - 45) * 0.004)).toFixed(1);
-  const distBase = +(((item.spot - base2024) / base2024) * 100).toFixed(1);
-  const rangePct = Math.min(96, Math.max(6, Math.round(((item.spot - base2024) / Math.max(1, high24_26 - base2024)) * 100)));
+  // 2020–2026 Multi-Year Structural Base & Technical/Fundamental Derived Metrics
+  const base2020 = +(item.spot / (item.dma200 * 2.2)).toFixed(1);
+  const high20_26 = +(item.spot * (1.28 - (item.rsi14 - 45) * 0.004)).toFixed(1);
+  const distBase = +(((item.spot - base2020) / base2020) * 100).toFixed(1);
+  const rangePct = Math.min(96, Math.max(6, Math.round(((item.spot - base2020) / Math.max(1, high20_26 - base2020)) * 100)));
 
   const mfi = +Math.min(88, Math.max(18, item.rsi14 + (item.futOi < 0 ? 4.5 : -3.2))).toFixed(1);
   const bollB = +Math.min(0.98, Math.max(0.05, (item.rsi14 - 25) / 55)).toFixed(2);
@@ -1271,7 +1268,7 @@ function evaluateCandidate(item, expCfg, thresholds) {
   if (otmCushion < thresholds.minCush) reasons.push(`TightCushion(${otmCushion}%)`);
   if (item.rsi14 > thresholds.maxRsi) reasons.push(`RSI>${thresholds.maxRsi}`);
   if (vrp < thresholds.minVrp) reasons.push(`LowVRP(+${vrp}%)`);
-  if (distBase > thresholds.maxBaseDist) reasons.push(`FarFrom2024Base(+${distBase}%)`);
+  if (distBase > thresholds.maxBaseDist) reasons.push(`FarFrom2020Base(+${distBase}%)`);
   if (item.fnoVol < thresholds.minVol * 1000) reasons.push(`LowChainVol`);
   if (item.dma200 < 0.92) reasons.push(`Below200DMA(${item.dma200}x)`);
   if (item.z5d > 1.15) reasons.push(`ParabolicBlowoff(Z=${item.z5d})`);
@@ -1282,20 +1279,20 @@ function evaluateCandidate(item, expCfg, thresholds) {
   // Composite Worthless Score (0–100)
   const popScore = Math.min(100, Math.max(0, (pop - 65) * 3.4));
   const vrpScore = Math.min(100, Math.max(0, vrp * 12.5));
-  const baseScore = Math.min(100, Math.max(0, 100 - distBase * 1.1 + (60 - item.rsi14) * 0.9));
+  const baseScore = Math.min(100, Math.max(0, 100 - (distBase - 100) * 0.5 + (60 - item.rsi14) * 0.9));
   const fundScore = Math.min(100, Math.max(0, 50 + roeAlpha * 3.0 + (item.fnoVol / 15000)));
   const worthlessScore = +(0.38 * popScore + 0.22 * vrpScore + 0.22 * baseScore + 0.18 * fundScore).toFixed(1);
 
   return {
     ...item,
-    base2024,
-    high24_26,
+    base2020,
+    high20_26,
     distBase,
     rangePct,
     mfi,
     bollB,
     roeAlpha,
-     patYoy: item.pat,
+    patYoy: item.pat,
     downVol,
     hv10,
     hvRatio,
@@ -1405,8 +1402,10 @@ function setExpiryMode(mode) {
   document.querySelectorAll("#expiry-buttons .pill-btn").forEach(btn => {
     btn.classList.toggle("active", btn.getAttribute("data-exp") === mode);
   });
-  document.getElementById("active-expiry-pill").textContent =
-    `Target Expiry: ${cfg.seriesLabel} • ${cfg.dateDisplay} (${cfg.dte} DTE)`;
+  const expPill = document.getElementById("active-expiry-pill");
+  if (expPill) {
+    expPill.textContent = `Target Expiry: ${cfg.seriesLabel} • ${cfg.dateDisplay} (${cfg.dte} DTE)`;
+  }
   document.getElementById("dte-label").textContent =
     `${cfg.dateISO} • ${cfg.dte} Days to Expiry`;
   renderTable();
@@ -1444,14 +1443,14 @@ function applyPreset(presetKey, btnEl) {
   if (btnEl) btnEl.classList.add("active");
 
   const map = {
-    default:      { pop: 76, cush: 5.0, rsi: 60, vrp: 2.0, base: 65, vol: 0,   sort: "worthlessScore", name: "Institutional Worthless Harvester" },
-    fortress:     { pop: 84, cush: 6.5, rsi: 55, vrp: 2.0, base: 55, vol: 50,  sort: "pop",            name: "Ultra-Safe 84%+ POP Fortress" },
-    high_vol:     { pop: 75, cush: 5.0, rsi: 62, vrp: 2.0, base: 75, vol: 200, sort: "fnoVol",         name: "High F&O Volume Liquid Leaders" },
-    base_value:   { pop: 76, cush: 5.0, rsi: 55, vrp: 2.0, base: 28, vol: 50,  sort: "distBase",       name: "Near 2024 Multi-Year Base Value" },
-    vrp_crush:    { pop: 75, cush: 5.0, rsi: 62, vrp: 6.0, base: 75, vol: 50,  sort: "vrp",            name: "High VRP Volatility Crush" },
-    oversold_dip: { pop: 76, cush: 5.0, rsi: 45, vrp: 2.0, base: 55, vol: 50,  sort: "rsi14",          name: "Oversold Mean-Reversion Dip" },
-    compounders:  { pop: 76, cush: 5.0, rsi: 60, vrp: 2.0, base: 65, vol: 75,  sort: "roeAlpha",       name: "High ROE Fundamental Compounders" },
-    relaxed:      { pop: 65, cush: 3.0, rsi: 78, vrp: 0.5, base: 115,vol: 0,   sort: "worthlessScore", name: "Explorer (Relaxed Filters)" }
+    default:      { pop: 76, cush: 5.0, rsi: 60, vrp: 2.0, base: 220, vol: 0,   sort: "worthlessScore", name: "Institutional Worthless Harvester" },
+    fortress:     { pop: 84, cush: 6.5, rsi: 55, vrp: 2.0, base: 180, vol: 50,  sort: "pop",            name: "Ultra-Safe 84%+ POP Fortress" },
+    high_vol:     { pop: 75, cush: 5.0, rsi: 62, vrp: 2.0, base: 240, vol: 200, sort: "fnoVol",         name: "High F&O Volume Liquid Leaders" },
+    base_value:   { pop: 76, cush: 5.0, rsi: 55, vrp: 2.0, base: 140, vol: 50,  sort: "distBase",       name: "Near 2020 Multi-Year Base (<140% Dist)" },
+    vrp_crush:    { pop: 75, cush: 5.0, rsi: 62, vrp: 6.0, base: 240, vol: 50,  sort: "vrp",            name: "High VRP Volatility Crush" },
+    oversold_dip: { pop: 76, cush: 5.0, rsi: 45, vrp: 2.0, base: 190, vol: 50,  sort: "rsi14",          name: "Oversold Mean-Reversion Dip" },
+    compounders:  { pop: 76, cush: 5.0, rsi: 60, vrp: 2.0, base: 220, vol: 75,  sort: "roeAlpha",       name: "High ROE Fundamental Compounders" },
+    relaxed:      { pop: 65, cush: 3.0, rsi: 78, vrp: 0.5, base: 320, vol: 0,   sort: "worthlessScore", name: "Explorer (Relaxed Filters)" }
   };
   const p = map[presetKey] || map.default;
   document.getElementById("sl-pop").value = p.pop;
@@ -1463,6 +1462,37 @@ function applyPreset(presetKey, btnEl) {
   document.getElementById("active-preset-name").textContent = "Preset: " + p.name;
   setSort(p.sort, document.querySelector(`.sort-chip[data-sort="${p.sort}"]`));
   updateFilters();
+}
+
+function getReasonExplanation(reason) {
+  if (reason.startsWith("TightCushion")) {
+    return `${reason}: OTM safety cushion is below minimum threshold (< ${document.getElementById("sl-cush")?.value || 5.0}%). Selling puts too close to spot leaves inadequate room for intraday swings, risking rapid negative gamma breach.`;
+  }
+  if (reason.startsWith("LowPOP")) {
+    return `${reason}: Empirical N(d2) lognormal probability of expiring worthless is below target (< ${document.getElementById("sl-pop")?.value || 76}%).`;
+  }
+  if (reason.startsWith("FarFrom2020Base")) {
+    return `${reason}: Spot has expanded excessively far above the 2020 multi-year secular cycle floor, increasing mean-reversion crash risk.`;
+  }
+  if (reason.startsWith("LowVRP")) {
+    return `${reason}: Volatility Risk Premium (IV - HV20) is too narrow, offering insufficient premium cushion.`;
+  }
+  if (reason.startsWith("RSI>")) {
+    return `${reason}: Momentum is overbought (RSI > ${document.getElementById("sl-rsi")?.value || 60}), making put selling vulnerable to sudden corrective pullbacks.`;
+  }
+  if (reason.startsWith("Below200DMA")) {
+    return `${reason}: Price is trading below 0.92x of 200-DMA, indicating an active secular downtrend.`;
+  }
+  if (reason.startsWith("ParabolicBlowoff")) {
+    return `${reason}: 5-day Z-score indicates a vertical parabolic spike susceptible to severe gap-down risk.`;
+  }
+  if (reason.startsWith("FutShortBuildup")) {
+    return `${reason}: Derivatives data shows 5-day Futures OI surging while price falls, indicating aggressive institutional short creation.`;
+  }
+  if (reason.startsWith("LowChainVol")) {
+    return `${reason}: F&O option chain volume is below minimum threshold, which may lead to wide bid-ask slippage.`;
+  }
+  return reason;
 }
 
 function renderTable() {
@@ -1523,13 +1553,13 @@ function renderTable() {
         <span class="sub-muted">Z: ${r.z5d >= 0 ? '+' : ''}${r.z5d}σ</span>
       </td>
       <td>
-        <span style="font-size:10px;">₹${r.base2024}—${r.high24_26}</span>
+        <span style="font-size:10px;">₹${r.base2020}—${r.high20_26}</span>
         <div class="range-bar-wrap"><div class="range-bar-fill" style="width:${r.rangePct}%"></div></div>
-        <span class="sub-muted">Base ₹${r.base2024} (${r.rangePct}%)</span>
+        <span class="sub-muted">Base ₹${r.base2020} (${r.rangePct}%)</span>
       </td>
       <td>
-        <span class="${r.distBase <= 35 ? 'pos' : r.distBase <= 65 ? 'warn' : 'neg'}">+${r.distBase}%</span>
-        <span class="sub-muted">vs 2024</span>
+        <span class="${r.distBase <= 140 ? 'pos' : r.distBase <= 220 ? 'warn' : 'neg'}">+${r.distBase}%</span>
+        <span class="sub-muted">vs 2020</span>
       </td>
       <td>
         <strong>${(r.fnoVol / 1000).toFixed(0)}k</strong>
@@ -1587,8 +1617,8 @@ function renderTable() {
       </td>
       <td class="col-status">
         ${r.passed
-          ? `<span class="badge-pass">QUALIFIED</span>`
-          : `<span class="badge-fail" title="${r.reasons.join(', ')}">${r.reasons[0]}</span>`}
+          ? `<span class="badge-pass" title="All quantitative guards passed. 100% worthless expiry candidate.">QUALIFIED</span>`
+          : `<span class="badge-fail" title="${r.reasons.map(getReasonExplanation).join(' &#10;• ')}">${r.reasons[0]}</span>`}
       </td>
     </tr>
   `;
@@ -1608,7 +1638,7 @@ function buildCandidateThesis(r, expCfg) {
       romVal: `${r.romPct}%`,
       popVal: `${r.pop}%`,
       summary: `Listed Strike ₹${r.shortStrike} PE sits ${r.otmCushion}% below spot (at/below ₹${r.putWallStrike} Put OI Wall) with ${r.pop}% Empirical POP, +${r.vrp}% VRP edge, and ${r.strikePeOi.toLocaleString()} Put OI. 100% of the ₹${r.lotCredit.toLocaleString("en-IN")} upfront cash premium is retained on worthless expiry (${expCfg.dateDisplay}).`,
-      p1: `Spot ₹${r.spot.toLocaleString("en-IN", {minimumFractionDigits:1})} sits +${r.distBase}% above the 2024 institutional base (₹${r.base2024}) and at ${r.rangePct}%ile of its 2024–2026 range (₹${r.base2024} — ₹${r.high24_26}). Strong multi-year accumulation floor acts as institutional cushion.`,
+      p1: `Spot ₹${r.spot.toLocaleString("en-IN", {minimumFractionDigits:1})} sits +${r.distBase}% above the 2020 institutional secular cycle base (₹${r.base2020}) and at ${r.rangePct}%ile of its 2020–2026 range (₹${r.base2020} — ₹${r.high20_26}). Strong multi-year accumulation floor acts as institutional cushion.`,
       p2: `True VRP spread is +${r.vrp}% (IV ${r.iv}% vs Realized Vol ${r.yz}%). Options are overpriced relative to historical volatility, granting accelerated theta decay. HV10/HV20 ratio of ${r.hvRatio}x confirms volatility contraction.`,
       p3: `14D RSI is ${r.rsi14} with MFI ${r.mfi} and Bollinger %B ${r.bollB}. Down/Up volume ratio is ${r.downVol}x, confirming pullbacks are orderly retail profit-taking rather than institutional dumping. ADX(14) is ${r.adx14} (controlled trend).`,
       p4: `5D Futures OI is ${r.futOi >= 0 ? '+' : ''}${r.futOi}% with 5D Z-score ${r.z5d >= 0 ? '+' : ''}${r.z5d}σ. Clean futures flow with zero aggressive short buildup; trading healthy relative to 200-DMA (${r.dma200}x).`,
@@ -1623,7 +1653,7 @@ function buildCandidateThesis(r, expCfg) {
       romVal: `${r.romPct}%`,
       popVal: `${r.pop}%`,
       summary: `Filtered out by institutional risk filters: ${r.reasons.join(" • ")}. Excluded from short put allocation until regime normalizes.`,
-      p1: `Distance to 2024 Base: +${r.distBase}% (Base: ₹${r.base2024}). ${r.distBase > 65 ? '⚠️ Extended far from multi-year base.' : 'Base floor intact.'}`,
+      p1: `Distance to 2020 Base: +${r.distBase}% (Base: ₹${r.base2020}). ${r.distBase > 220 ? '⚠️ Extended far from multi-year base.' : 'Base floor intact.'}`,
       p2: `VRP Spread: +${r.vrp}% (IV ${r.iv}% vs Realized Vol ${r.yz}%). ${r.vrp < 2.0 ? '⚠️ Low volatility risk premium.' : 'VRP edge acceptable.'}`,
       p3: `RSI(14): ${r.rsi14}, DownVol: ${r.downVol}x. ${r.rsi14 > 60 ? '⚠️ Technical momentum overextended.' : 'Momentum within range.'}`,
       p4: `Futures OI 5D: ${r.futOi}%, 200DMA: ${r.dma200}x. ${r.dma200 < 0.92 ? '⚠️ Below 200-DMA guard.' : ''}`,
@@ -1645,20 +1675,36 @@ const FAQ_DATABASE = [
       <div class="faq-highlight-box">
         <strong>⚡ 100% Worthless Expiry Rule:</strong> When the underlying stock expires above the short put strike (S<sub>T</sub> ≥ K<sub>short</sub>), the option expires with ₹0 intrinsic value. The seller keeps <strong>100% of the upfront cash credit</strong> (Short Put LTP × Lot Size) as net realized profit.
       </div>
-      <p>Unlike 2-leg bull put spreads that sacrifice 40–60% of gross credit to buy an unnecessary protective long put wing, selling calibrated single-leg OTM puts optimizes <strong>Return on SPAN Margin (RoM %)</strong> while relying on institutional support walls and the 2024 multi-year accumulation floor.</p>
+      <p>Unlike 2-leg bull put spreads that sacrifice 40–60% of gross credit to buy an unnecessary protective long put wing, selling calibrated single-leg OTM puts optimizes <strong>Return on SPAN Margin (RoM %)</strong> while relying on institutional support walls and the 2020 multi-year accumulation floor.</p>
     `
   },
   {
     cat: "pillars",
     tag: "Pillar I",
-    q: "Pillar I — 2024–2026 Structural Base Floor & 200-DMA Guard",
+    q: "Pillar I — 2020–2026 Structural Multi-Year Base Floor & 200-DMA Guard",
     a: `
-      <p>The 2024 multi-year base represents the long-term institutional accumulation floor formed during the 2024 cyclical consolidation. Stocks that trade near or in orderly relation to this floor possess strong structural demand.</p>
+      <p>The 2020 multi-year base represents the secular cycle low (March 2020 pandemic foundation) from which the entire multi-year bull structural cycle launched. Stocks trading within healthy, orderly expansion above this floor have long-term institutional accumulation backing.</p>
       <div class="faq-formula-box">
-        Distance to 2024 Base (%) = ((Spot - Base2024) / Base2024) × 100<br/>
+        Distance to 2020 Base (%) = ((Spot - Base2020) / Base2020) × 100<br/>
         Trend Guard: Spot / 200-DMA ≥ 0.92x
       </div>
-      <p><strong>Screening Guard:</strong> Stocks with Distance to Base &gt; 65% are flagged as overextended parabolic tops. Stocks below 0.92x of their 200-DMA are eliminated to prevent catching falling knives in active secular downtrends.</p>
+      <p><strong>Screening Guard:</strong> Stocks with Distance to Base &gt; 220% are flagged as overextended parabolic tops susceptible to deep mean-reversion crashes. Stocks below 0.92x of their 200-DMA are eliminated to prevent selling puts into active secular downgrades.</p>
+    `
+  },
+  {
+    cat: "math",
+    tag: "Risk Guard",
+    q: "What does 'TightCushion' mean and why is it rejected?",
+    a: `
+      <p><strong>OTM Cushion (%)</strong> measures how far below current underlying Spot price the recommended Short Put strike (K<sub>short</sub>) sits:</p>
+      <div class="faq-formula-box">
+        OTM Cushion (%) = ((Spot - K<sub>short</sub>) / Spot) × 100
+      </div>
+      <p>When the screener displays <span class="badge-fail">TightCushion(X%)</span>, it means the calculated short put strike sits <strong>less than the required minimum safety buffer</strong> (e.g. &lt; 5.0% below Spot).</p>
+      <div class="faq-highlight-box">
+        <strong>⚠️ The Negative Gamma (-Γ) Danger:</strong> When an option is sold with a tight cushion (e.g. 3.5%–4.5%), a normal 1-to-2 day intraday market dip can immediately put the option In-The-Money (ITM). Delta expands rapidly toward -0.50, and negative gamma accelerates losses.
+      </div>
+      <p>By enforcing a strict <strong>OTM Cushion &ge; 5.0%</strong> (and snapping at or below the institutional Put OI Wall), the screener ensures that normal routine market volatility will not breach your strike, maximizing the probability of a <strong>100% Worthless Expiry</strong>.</p>
     `
   },
   {
@@ -1773,7 +1819,7 @@ const FAQ_DATABASE = [
     a: `
       <p>The 5-Pillar model ensures multiple defensive cushions:</p>
       <ol>
-        <li><strong>Strike sits below Put Wall & 2024 Base:</strong> Large institutional buying typically steps in at these multi-year floors.</li>
+        <li><strong>Strike sits below Put Wall & 2020 Base:</strong> Large institutional buying typically steps in at these multi-year floors.</li>
         <li><strong>Roll Out and Down:</strong> Standard institutional procedure is to roll the short put to the next month's series at a lower strike for an additional net credit.</li>
         <li><strong>Physical Assignment:</strong> Because candidates are vetted for high ROE and solid earnings, taking delivery of the stock at a steep discount (Spot minus premium) represents an attractive institutional entry price.</li>
       </ol>
@@ -1811,7 +1857,7 @@ function buildFaqAccordion() {
   });
 
   if (filtered.length === 0) {
-    container.innerHTML = `<div style="text-align:center;padding:25px;color:var(--muted);font-size:12px;">No criteria matching "<strong>${searchQ}</strong>". Try searching "VRP", "POP", "2024 Base", or "Margin".</div>`;
+    container.innerHTML = `<div style="text-align:center;padding:25px;color:var(--muted);font-size:12px;">No criteria matching "<strong>${searchQ}</strong>". Try searching "VRP", "POP", "2020 Base", or "Margin".</div>`;
     return;
   }
 
@@ -1918,7 +1964,10 @@ function syncExchangeExpiries(liveExpiries) {
   if (bFar) bFar.textContent = `Dec 2026 (${EXPIRY_CONFIG.far_month.dateDisplay} • ${EXPIRY_CONFIG.far_month.dte} DTE)`;
 
   const curCfg = EXPIRY_CONFIG[currentExpiryMode];
-  document.getElementById("active-expiry-pill").textContent = `Target Expiry: ${curCfg.seriesLabel.split(' ')[0]} Series • ${curCfg.dateDisplay} (${curCfg.dte} DTE)`;
+  const expPill = document.getElementById("active-expiry-pill");
+  if (expPill) {
+    expPill.textContent = `Target Expiry: ${curCfg.seriesLabel.split(' ')[0]} Series • ${curCfg.dateDisplay} (${curCfg.dte} DTE)`;
+  }
   document.getElementById("dte-label").textContent = `${curCfg.dte} Days to Expiry`;
 }
 
@@ -2078,7 +2127,7 @@ function exportToCSV() {
   const th = getThresholds();
   const rows = getActiveUniverseArray().map(item => evaluateCandidate(item, expCfg, th));
   const headers = [
-    "Symbol","Lot","Expiry_Date","DTE","Spot","Base2024","High24_26","DistToBase2024_Pct",
+    "Symbol","Lot","Expiry_Date","DTE","Spot","Base2020","High20_26","DistToBase2020_Pct",
     "FnO_Chain_Volume","Strike_PE_Volume","RSI14","MFI","Boll_PctB","ROE_Pct","ROE_Alpha_Pct",
     "PAT_YoY_Pct","DownVol","HV10","HV20","ADX14","IV","VRP","Recommended_Short_Put_Strike",
     "Short_Put_LTP","OTM_Cushion_Pct","Empirical_POP_Pct","Gross_Lot_Credit_INR","RoM_Pct","Worthless_Score","Status"
@@ -2086,7 +2135,7 @@ function exportToCSV() {
   const csvLines = [
     headers.join(","),
     ...rows.map(r => [
-      r.sym, r.lot, expCfg.dateISO, expCfg.dte, r.spot, r.base2024, r.high24_26, r.distBase,
+      r.sym, r.lot, expCfg.dateISO, expCfg.dte, r.spot, r.base2020, r.high20_26, r.distBase,
       r.fnoVol, r.strikePeVol, r.rsi14, r.mfi, r.bollB, r.roe, r.roeAlpha,
       r.patYoy, r.downVol, r.hv10, r.yz, r.adx14, r.iv, r.vrp, r.shortStrike,
       r.shortPutLtp, r.otmCushion, r.pop, r.lotCredit, r.romPct, r.worthlessScore,

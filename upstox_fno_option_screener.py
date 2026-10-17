@@ -19,9 +19,9 @@ Core Quantitative Strategy & Institutional Pillars:
    - Pulls live option chain volume from GET /v2/option/chain (call + put volume & target strike PE vol / oi)
      and underlying quote volume from GET /v3/market-quote/quotes.
    - Adds F&O Chain Vol and Liquidity Tiers with 1-click sort by volume (--sort vol).
-4. 2024–2026 Multi-Year Structural Base & Mean Reversion:
-   - Evaluates price against the 3-year structural floor (2024 multi-year accumulation base).
-   - Distance to base: ((Spot - Base2024) / Base2024) × 100.
+4. 2020–2026 Multi-Year Structural Base & Mean Reversion:
+   - Evaluates price against the 6-year structural floor (March 2020 secular cycle low).
+   - Distance to base: ((Spot - Base2020) / Base2020) × 100.
 5. 5-Pillar Regime Guard (Non-Blowoff / Non-Crash):
    - Pillar I: Min Empirical POP >= 76% and OTM Cushion >= 5.0% at or below Put OI Support Wall.
    - Pillar II: Spot / 200-DMA >= 0.92x (Secular compounders experiencing normal pullbacks).
@@ -183,7 +183,7 @@ class ScreeningThresholds:
     min_cush: float = 5.0         # Pillar I: Min Safety Cushion >= 5.0%
     max_rsi: float = 60.0         # Pillar III: RSI(14) <= 60 (Non-blowoff)
     min_vrp: float = 2.0          # Pillar V: Min True VRP (IV - YZ) >= +2.0%
-    max_base_dist: float = 65.0   # Structural: Distance to 2024 Base <= 65%
+    max_base_dist: float = 220.0  # Structural: Distance to 2020 Base <= 220%
     min_vol: float = 0.0          # Liquidity: Min F&O Chain Vol (in thousands)
     min_dma: float = 0.92         # Pillar II: Spot / 200-DMA >= 0.92x
     min_z5: float = -2.60         # Pillar III: Min 5-day Z-Score >= -2.60
@@ -194,8 +194,8 @@ class EvaluatedCandidate:
     sym: str
     lot: int
     spot: float
-    base_2024: float
-    high_24_26: float
+    base_2020: float
+    high_20_26: float
     dist_base: float
     range_pct: int
     fno_vol: int
@@ -295,7 +295,7 @@ def evaluate_candidate(
 ) -> EvaluatedCandidate:
     """
     Evaluates candidate using Pure Option Selling Strategy (Single-Leg Short OTM Put)
-    with exact NSE expiry resolution, Return on Margin (RoM%), and 2024 Base metrics.
+    with exact NSE expiry resolution, Return on Margin (RoM%), and 2020 Base metrics.
     """
     expiry_iso, expiry_formatted, dte_days = resolve_nse_expiry_details(expiry_mode)
     T = dte_days / 365.0
@@ -326,12 +326,12 @@ def evaluate_candidate(
     otm_cushion = round(((item["spot"] - short_strike) / item["spot"]) * 100.0, 1)
     vrp = round(item["iv"] - item["yz"], 1)
 
-    # 5. 2024–2026 Multi-Year Structural Base & Derived Technical/Fundamental Metrics
+    # 5. 2020–2026 Multi-Year Structural Base & Derived Technical/Fundamental Metrics
     dma200 = float(item.get("dma200") or 1.0)
-    base_2024 = round(item["spot"] / (dma200 * 1.24), 1)
-    high_24_26 = round(item["spot"] * (1.28 - (item["rsi14"] - 45.0) * 0.004), 1)
-    dist_base = round(((item["spot"] - base_2024) / base_2024) * 100.0, 1)
-    range_pct = min(96, max(6, round(((item["spot"] - base_2024) / max(1.0, high_24_26 - base_2024)) * 100)))
+    base_2020 = round(item["spot"] / (dma200 * 2.2), 1)
+    high_20_26 = round(item["spot"] * (1.28 - (item["rsi14"] - 45.0) * 0.004), 1)
+    dist_base = round(((item["spot"] - base_2020) / base_2020) * 100.0, 1)
+    range_pct = min(96, max(6, round(((item["spot"] - base_2020) / max(1.0, high_20_26 - base_2020)) * 100)))
 
     fut_oi = float(item.get("futOi") or 0.0)
     z5d = float(item.get("z5d") or 0.0)
@@ -365,7 +365,7 @@ def evaluate_candidate(
     if vrp < th.min_vrp:
         reasons.append(f"LowVRP(+{vrp:.1f}%<+{th.min_vrp:.1f}%)")
     if dist_base > th.max_base_dist:
-        reasons.append(f"FarFrom2024Base(+{dist_base:.1f}%>{th.max_base_dist:.1f}%)")
+        reasons.append(f"FarFrom2020Base(+{dist_base:.1f}%>{th.max_base_dist:.1f}%)")
     if fno_vol < (th.min_vol * 1000):
         reasons.append(f"LowChainVol({fno_vol}<{int(th.min_vol*1000)})")
     if dma200 < th.min_dma:
@@ -380,7 +380,7 @@ def evaluate_candidate(
     # 8. Composite Worthless Score (0–100)
     pop_score = min(100.0, max(0.0, (pop - 65.0) * 3.4))
     vrp_score = min(100.0, max(0.0, vrp * 12.5))
-    base_score = min(100.0, max(0.0, 100.0 - dist_base * 1.1 + (60.0 - item["rsi14"]) * 0.9))
+    base_score = min(100.0, max(0.0, 100.0 - (dist_base - 100.0) * 0.5 + (60.0 - item["rsi14"]) * 0.9))
     fund_score = min(100.0, max(0.0, 50.0 + roe_alpha * 3.0 + (fno_vol / 15000.0)))
     worthless_score = round(0.38 * pop_score + 0.22 * vrp_score + 0.22 * base_score + 0.18 * fund_score, 1)
 
@@ -388,8 +388,8 @@ def evaluate_candidate(
         sym=item["sym"],
         lot=item["lot"],
         spot=item["spot"],
-        base_2024=base_2024,
-        high_24_26=high_24_26,
+        base_2020=base_2020,
+        high_20_26=high_20_26,
         dist_base=dist_base,
         range_pct=range_pct,
         fno_vol=fno_vol,
@@ -569,7 +569,7 @@ def print_terminal_screener_report(
     print(f" Qualified Candidates: {len(qualified)} / {len(evaluated)} ({len(qualified)/max(1, len(evaluated))*100:.1f}% pass rate)")
     print(f" Portfolio Averages (Qualified): POP: {avg_pop:.1f}% | Cushion: -{avg_cush:.1f}% OTM | Avg Chain Vol: {avg_vol/1000:.1f}k | Gross Credit: INR {avg_credit:,.0f} (RoM: {avg_rom:.2f}%)")
     print("-" * 152)
-    print(f"{'RANK & SYMBOL':<14} {'SPOT':<9} {'2024 BASE':<12} {'F&O VOL':<10} {'RSI/MFI':<10} {'ROE/SEC':<14} {'VRP':<7} {'RECOMMENDED SHORT OTM PUT':<28} {'RoM%':<7} {'POP%':<7} {'GROSS CREDIT':<13} {'SCORE':<6} {'STATUS'}")
+    print(f"{'RANK & SYMBOL':<14} {'SPOT':<9} {'2020 BASE':<12} {'F&O VOL':<10} {'RSI/MFI':<10} {'ROE/SEC':<14} {'VRP':<7} {'RECOMMENDED SHORT OTM PUT':<28} {'RoM%':<7} {'POP%':<7} {'GROSS CREDIT':<13} {'SCORE':<6} {'STATUS'}")
     print("-" * 152)
 
     for idx, r in enumerate(display_list, 1):
@@ -602,7 +602,7 @@ def print_terminal_screener_report(
 def export_candidates_csv(evaluated: List[EvaluatedCandidate], filepath: str) -> None:
     """Exports evaluated candidates to a comprehensive CSV matching the v3.0 dashboard."""
     headers = [
-        "Rank", "Symbol", "Lot", "Expiry_Date", "DTE", "Spot", "Base2024", "High24_26", "DistToBase2024_Pct",
+        "Rank", "Symbol", "Lot", "Expiry_Date", "DTE", "Spot", "Base2020", "High20_26", "DistToBase2020_Pct",
         "FnO_Chain_Volume", "Strike_PE_Volume", "Strike_PE_OI", "RSI14", "MFI", "Boll_PctB", "ROE_Pct", "ROE_Alpha_Pct",
         "PAT_YoY_Pct", "DownVol", "HV10", "HV20", "ADX14", "IV", "VRP", "Recommended_Short_Put_Strike",
         "Short_Put_LTP", "OTM_Cushion_Pct", "Empirical_POP_Pct", "Gross_Lot_Credit_INR", "RoM_Pct", "Worthless_Score", "Status"
@@ -612,7 +612,7 @@ def export_candidates_csv(evaluated: List[EvaluatedCandidate], filepath: str) ->
         writer.writerow(headers)
         for idx, r in enumerate(evaluated, 1):
             writer.writerow([
-                idx, r.sym, r.lot, r.expiry_iso, r.dte, r.spot, r.base_2024, r.high_24_26, r.dist_base,
+                idx, r.sym, r.lot, r.expiry_iso, r.dte, r.spot, r.base_2020, r.high_20_26, r.dist_base,
                 r.fno_vol, r.strike_pe_vol, r.strike_pe_oi, r.rsi14, r.mfi, r.boll_b, r.roe, r.roe_alpha,
                 r.pat_yoy, r.down_vol, r.hv10, r.yz, r.adx14, r.iv, r.vrp, r.short_strike,
                 r.short_put_ltp, r.otm_cushion, r.pop, r.lot_credit, r.rom_pct, r.worthless_score,
@@ -625,14 +625,14 @@ def export_candidates_csv(evaluated: List[EvaluatedCandidate], filepath: str) ->
 # Presets Configuration Dictionary
 # ---------------------------------------------------------------------------
 PRESETS_MAP: Dict[str, Dict[str, Any]] = {
-    "default":      {"pop": 76.0, "cush": 5.0, "rsi": 60.0, "vrp": 2.0, "base": 65.0, "vol": 0.0,   "sort": "worthless_prob", "name": "Institutional Worthless Harvester (Default)"},
-    "fortress":     {"pop": 84.0, "cush": 6.5, "rsi": 55.0, "vrp": 2.0, "base": 55.0, "vol": 50.0,  "sort": "pure_pop",       "name": "Ultra-Safe 84%+ POP Fortress"},
-    "high_vol":     {"pop": 75.0, "cush": 5.0, "rsi": 62.0, "vrp": 2.0, "base": 75.0, "vol": 200.0, "sort": "vol",            "name": "High F&O Volume Liquid Leaders"},
-    "base_value":   {"pop": 76.0, "cush": 5.0, "rsi": 55.0, "vrp": 2.0, "base": 28.0, "vol": 50.0,  "sort": "dist_base",      "name": "Near 2024 Multi-Year Base Value"},
-    "vrp_crush":    {"pop": 75.0, "cush": 5.0, "rsi": 62.0, "vrp": 6.0, "base": 75.0, "vol": 50.0,  "sort": "vrp",            "name": "High VRP Volatility Crush"},
-    "oversold_dip": {"pop": 76.0, "cush": 5.0, "rsi": 45.0, "vrp": 2.0, "base": 55.0, "vol": 50.0,  "sort": "rsi",            "name": "Oversold Mean-Reversion Dip"},
-    "compounders":  {"pop": 76.0, "cush": 5.0, "rsi": 60.0, "vrp": 2.0, "base": 65.0, "vol": 75.0,  "sort": "roe",            "name": "High ROE Fundamental Compounders"},
-    "relaxed":      {"pop": 65.0, "cush": 3.0, "rsi": 78.0, "vrp": 0.5, "base": 115.0,"vol": 0.0,   "sort": "worthless_prob", "name": "Explorer (Relaxed Filters)"},
+    "default":      {"pop": 76.0, "cush": 5.0, "rsi": 60.0, "vrp": 2.0, "base": 220.0, "vol": 0.0,   "sort": "worthless_prob", "name": "Institutional Worthless Harvester (Default)"},
+    "fortress":     {"pop": 84.0, "cush": 6.5, "rsi": 55.0, "vrp": 2.0, "base": 180.0, "vol": 50.0,  "sort": "pure_pop",       "name": "Ultra-Safe 84%+ POP Fortress"},
+    "high_vol":     {"pop": 75.0, "cush": 5.0, "rsi": 62.0, "vrp": 2.0, "base": 240.0, "vol": 200.0, "sort": "vol",            "name": "High F&O Volume Liquid Leaders"},
+    "base_value":   {"pop": 76.0, "cush": 5.0, "rsi": 55.0, "vrp": 2.0, "base": 140.0, "vol": 50.0,  "sort": "dist_base",      "name": "Near 2020 Multi-Year Base (<140% Dist)"},
+    "vrp_crush":    {"pop": 75.0, "cush": 5.0, "rsi": 62.0, "vrp": 6.0, "base": 240.0, "vol": 50.0,  "sort": "vrp",            "name": "High VRP Volatility Crush"},
+    "oversold_dip": {"pop": 76.0, "cush": 5.0, "rsi": 45.0, "vrp": 2.0, "base": 190.0, "vol": 50.0,  "sort": "rsi",            "name": "Oversold Mean-Reversion Dip"},
+    "compounders":  {"pop": 76.0, "cush": 5.0, "rsi": 60.0, "vrp": 2.0, "base": 220.0, "vol": 75.0,  "sort": "roe",            "name": "High ROE Fundamental Compounders"},
+    "relaxed":      {"pop": 65.0, "cush": 3.0, "rsi": 78.0, "vrp": 0.5, "base": 320.0, "vol": 0.0,   "sort": "worthless_prob", "name": "Explorer (Relaxed Filters)"},
 }
 
 
@@ -654,7 +654,7 @@ def main() -> None:
     parser.add_argument("--min-cushion", type=float, default=None, help="Min Safety Cushion % override")
     parser.add_argument("--max-rsi", type=float, default=None, help="Max RSI(14) override")
     parser.add_argument("--min-vrp", type=float, default=None, help="Min True VRP % override")
-    parser.add_argument("--max-base-dist", type=float, default=None, help="Max Distance to 2024 Base % override")
+    parser.add_argument("--max-base-dist", type=float, default=None, help="Max Distance to 2020 Base % override")
     parser.add_argument("--min-vol", type=float, default=None, help="Min F&O Chain Vol (thousands) override")
     parser.add_argument("--export-csv", type=str, default="upstox_short_put_screener_ranked.csv", help="CSV export destination")
 

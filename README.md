@@ -34,7 +34,7 @@ Engineered specifically for **Pure Option Selling (Single-Leg Short OTM Puts)** 
      1. Institutional Worthless Harvester (Default)
      2. Ultra-Safe 84%+ POP Fortress
      3. High F&O Volume Liquid Leaders
-     4. Near 2024 Multi-Year Base (<25% Dist)
+     4. Near 2020 Multi-Year Base (<140% Dist)
      5. High VRP Volatility Crush (VRP ≥ +6%)
      6. Oversold Mean-Reversion Dip (RSI ≤ 45)
      7. High ROE Fundamental Compounders
@@ -71,7 +71,7 @@ This repository is **completely public**, but your personal Upstox API credentia
    - Requires $\text{Option IV} - \sigma_{\text{YZ}} \ge +2.0\%$ so you are statistically paid excess premium above realized market movement.
 5. **Calibrated 5-Pillar Regime Guard**:
    - **Pillar I — Empirical POP & Safety Cushion:** Empirical $\text{POP} \ge 76\%$ and OTM cushion $\ge 5.0\%$ at or below Put OI Support Wall.
-   - **Pillar II — Structural Floor:** $\text{Spot} / 200\text{-DMA} \ge 0.92\text{x}$ and 2024–2026 Base tracking.
+   - **Pillar II — Structural Floor:** $\text{Spot} / 200\text{-DMA} \ge 0.92\text{x}$ and 2020–2026 Base tracking.
    - **Pillar III — Exhaustion / Non-Blowoff Regime:** $\text{RSI}(14) \le 60$ and $-2.60 \le Z_{5D} \le +1.10$.
    - **Pillar IV — Futures Flow Guard:** Rejects stocks with 5-day Futures OI surge $> +3.0\%$ during price drops.
    - **Pillar V — Positive VRP:** Excess premium harvest $\ge +2.0\%$.
