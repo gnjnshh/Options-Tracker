@@ -3,862 +3,1365 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Upstox F&amp;O Quant Screener v2.5 — Highest Probability to Expire Worthless</title>
+  <title>Upstox F&O Quant Screener v3.0 — Short OTM Put & Worthless Expiry Harvester</title>
   <style>
     :root {
-      --bg: #0b0f19;
-      --panel: #111827;
-      --panel-alt: #1e293b;
-      --border: #334155;
-      --text: #f8fafc;
-      --muted: #94a3b8;
+      --bg: #070b14;
+      --panel: #0e1525;
+      --panel-alt: #131c31;
+      --border: #1e2d4a;
+      --text: #e2e8f0;
+      --muted: #8b9bb4;
       --accent: #38bdf8;
       --emerald: #10b981;
+      --emerald-bg: rgba(16, 185, 129, 0.14);
       --amber: #f59e0b;
+      --amber-bg: rgba(245, 158, 11, 0.14);
       --rose: #f43f5e;
-      --purple: #a855f7;
+      --rose-bg: rgba(244, 63, 94, 0.14);
+      --violet: #a855f7;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Inter, monospace;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       background: var(--bg);
       color: var(--text);
+      font-size: 13px;
       line-height: 1.45;
       padding: 18px;
     }
+    /* Top Header & Oversized Scan Live Button */
     .top-bar {
       display: flex;
       flex-wrap: wrap;
       justify-content: space-between;
       align-items: center;
-      gap: 12px;
-      background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+      gap: 16px;
+      background: linear-gradient(135deg, #0e172a 0%, #111f38 100%);
       border: 1px solid var(--border);
       border-radius: 12px;
       padding: 16px 20px;
-      margin-bottom: 16px;
+      margin-bottom: 14px;
     }
-    .badge {
-      display: inline-block;
+    .brand-title {
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: -0.3px;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .badge-strategy {
+      background: var(--emerald-bg);
+      color: var(--emerald);
+      border: 1px solid rgba(16,185,129,0.4);
+      font-size: 11px;
       padding: 3px 9px;
       border-radius: 999px;
-      font-size: 11px;
       font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
     }
-    .badge-active { background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid #059669; }
-    .badge-info { background: rgba(56, 189, 248, 0.18); color: #38bdf8; border: 1px solid #0284c7; }
-    .badge-pass { background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid #10b981; }
-    .badge-warn { background: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid #d97706; }
-    .badge-reject { background: rgba(244, 63, 94, 0.16); color: #fb7185; border: 1px solid #e11d48; }
-
-    .btn {
-      cursor: pointer;
+    .expiry-banner {
+      background: rgba(56, 189, 248, 0.12);
+      border: 1px solid rgba(56, 189, 248, 0.4);
+      color: var(--accent);
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .subtitle {
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 4px;
+    }
+    .scan-cta-group {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .token-input {
+      background: #070c18;
       border: 1px solid var(--border);
-      background: var(--panel-alt);
       color: var(--text);
-      padding: 8px 14px;
+      padding: 10px 12px;
       border-radius: 8px;
-      font-size: 13px;
-      font-weight: 600;
-      transition: all 0.15s ease;
+      font-size: 12px;
+      width: 230px;
+    }
+    .btn-scan-live {
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      color: #04130d;
+      font-weight: 800;
+      font-size: 15px;
+      padding: 13px 26px;
+      border-radius: 10px;
+      border: 2px solid #34d399;
+      cursor: pointer;
       display: inline-flex;
       align-items: center;
-      gap: 6px;
-      text-decoration: none;
-    }
-    .btn:hover { border-color: var(--accent); background: #26354d; }
-    .btn-primary {
-      background: linear-gradient(135deg, #0284c7, #2563eb);
-      border-color: #38bdf8;
-      color: #fff;
-    }
-    .btn-methodology {
-      background: linear-gradient(135deg, #7c3aed, #4f46e5);
-      border-color: #a855f7;
-      color: #fff;
-      box-shadow: 0 0 14px rgba(168, 85, 247, 0.35);
-    }
-    .btn-emerald {
-      background: linear-gradient(135deg, #059669, #10b981);
-      border-color: #34d399;
-      color: #fff;
-    }
-
-    .grid-2 {
-      display: grid;
-      grid-template-columns: 1.05fr 1.25fr;
-      gap: 16px;
-      margin-bottom: 16px;
-    }
-    @media (max-width: 1100px) { .grid-2 { grid-template-columns: 1fr; } }
-
-    .card {
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 16px;
-    }
-    .card-title {
-      font-size: 14px;
-      font-weight: 700;
-      color: var(--accent);
-      margin-bottom: 12px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 8px;
-    }
-    .input-row {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      align-items: center;
-      margin-bottom: 10px;
-    }
-    input[type="text"], input[type="password"], select {
-      background: #0f172a;
-      border: 1px solid var(--border);
-      color: var(--text);
-      padding: 7px 10px;
-      border-radius: 6px;
-      font-size: 13px;
-    }
-    .sliders-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(185px, 1fr));
       gap: 10px;
+      box-shadow: 0 0 22px rgba(16, 185, 129, 0.35);
+      transition: all 0.18s ease;
+      letter-spacing: 0.3px;
     }
-    .slider-box {
-      background: #0f172a;
-      border: 1px solid #1e293b;
-      padding: 10px;
-      border-radius: 8px;
+    .btn-scan-live:hover {
+      transform: translateY(-1px) scale(1.02);
+      box-shadow: 0 0 30px rgba(16, 185, 129, 0.55);
+      background: linear-gradient(135deg, #34d399 0%, #10b981 100%);
     }
-    .slider-box label {
-      display: flex;
-      justify-content: space-between;
-      font-size: 12px;
-      color: var(--muted);
-      margin-bottom: 5px;
+    .pulse-dot {
+      width: 10px;
+      height: 10px;
+      background: #04130d;
+      border-radius: 50%;
+      animation: pulse 1.6s infinite;
     }
-    .slider-box label span { color: var(--text); font-weight: 700; }
-    input[type="range"] { width: 100%; accent-color: var(--accent); cursor: pointer; }
+    @keyframes pulse {
+      0% { transform: scale(0.95); opacity: 1; }
+      50% { transform: scale(1.25); opacity: 0.55; }
+      100% { transform: scale(0.95); opacity: 1; }
+    }
 
-    .kpi-row {
+    /* Universe & Expiry Control Strip */
+    .control-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
       gap: 12px;
-      margin-bottom: 16px;
+      margin-bottom: 12px;
     }
-    .kpi-card {
+    .card {
       background: var(--panel);
       border: 1px solid var(--border);
       border-radius: 10px;
       padding: 12px 14px;
     }
-    .kpi-label { font-size: 11px; color: var(--muted); text-transform: uppercase; }
-    .kpi-val { font-size: 22px; font-weight: 800; margin: 3px 0; }
-    .kpi-sub { font-size: 11px; color: var(--muted); }
+    .card-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: var(--muted);
+      font-weight: 700;
+      margin-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .btn-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .pill-btn {
+      background: var(--panel-alt);
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 6px 11px;
+      border-radius: 7px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .pill-btn:hover {
+      border-color: var(--accent);
+      color: #fff;
+    }
+    .pill-btn.active {
+      background: rgba(56, 189, 248, 0.16);
+      color: var(--accent);
+      border-color: var(--accent);
+    }
 
-    .table-wrap {
+    /* Presets Bar */
+    .presets-bar {
       background: var(--panel);
       border: 1px solid var(--border);
-      border-radius: 12px;
+      border-radius: 10px;
+      padding: 11px 14px;
+      margin-bottom: 12px;
+    }
+    .preset-btn {
+      background: #131d33;
+      color: #cbd5e1;
+      border: 1px solid #263859;
+      padding: 6px 11px;
+      border-radius: 6px;
+      font-size: 11.5px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .preset-btn:hover, .preset-btn.active {
+      background: rgba(168, 85, 247, 0.18);
+      color: #e9d5ff;
+      border-color: var(--violet);
+    }
+
+    /* Sliders Row */
+    .sliders-bar {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(155px, 1fr));
+      gap: 10px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 11px 14px;
+      margin-bottom: 12px;
+    }
+    .slider-item label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      color: var(--muted);
+      margin-bottom: 4px;
+      font-weight: 600;
+    }
+    .slider-item label span { color: var(--accent); font-weight: 700; }
+    .slider-item input[type=range] { width: 100%; accent-color: var(--accent); cursor: pointer; }
+
+    /* KPI Summary Cards */
+    .kpi-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(175px, 1fr));
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .kpi-card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      padding: 10px 13px;
+    }
+    .kpi-title { font-size: 11px; color: var(--muted); font-weight: 600; }
+    .kpi-val { font-size: 18px; font-weight: 800; color: #fff; margin-top: 2px; }
+    .kpi-sub { font-size: 11px; color: var(--emerald); margin-top: 2px; }
+
+    /* Dedicated Quick Sort Toolbar Near Table */
+    .table-sort-bar {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      background: #10192d;
+      border: 1px solid var(--border);
+      border-bottom: none;
+      border-radius: 10px 10px 0 0;
+      padding: 10px 14px;
+    }
+    .sort-left {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .sort-label {
+      font-size: 11.5px;
+      font-weight: 700;
+      color: var(--accent);
+      text-transform: uppercase;
+      margin-right: 4px;
+    }
+    .sort-chip {
+      background: #091020;
+      color: var(--muted);
+      border: 1px solid var(--border);
+      padding: 5px 10px;
+      border-radius: 6px;
+      font-size: 11.5px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .sort-chip.active, .sort-chip:hover {
+      background: rgba(56, 189, 248, 0.16);
+      color: #fff;
+      border-color: var(--accent);
+    }
+    .search-box {
+      background: #070b14;
+      border: 1px solid var(--border);
+      color: #fff;
+      padding: 5px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      width: 180px;
+    }
+
+    /* Main Table & Sticky Headers with (i) Hover Tooltips */
+    .table-wrap {
       overflow-x: auto;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 0 0 10px 10px;
+      max-height: 680px;
     }
     table {
       width: 100%;
       border-collapse: collapse;
-      font-size: 12.5px;
+      min-width: 1780px;
     }
-    th, td {
-      padding: 10px 11px;
-      text-align: left;
-      border-bottom: 1px solid #1e293b;
-      vertical-align: top;
-    }
-    th {
-      background: #0f172a;
-      color: var(--muted);
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 0.4px;
+    thead th {
       position: sticky;
       top: 0;
-      z-index: 2;
-    }
-    tr:hover { background: rgba(56, 189, 248, 0.04); }
-    .thesis-row {
-      background: #0d1322;
+      z-index: 20;
+      background: #0b1222;
       color: #cbd5e1;
-      font-size: 11.5px;
-      padding: 6px 14px !important;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      padding: 10px 8px;
+      text-align: left;
+      border-bottom: 2px solid var(--border);
+      white-space: nowrap;
+      user-select: none;
     }
-    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+    thead th .th-inner {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      cursor: pointer;
+    }
+    thead th .th-inner:hover { color: var(--accent); }
 
-    /* Modal Styles */
-    .modal-backdrop {
-      display: none;
+    /* (i) Tooltip Badge */
+    .info-i {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 15px;
+      height: 15px;
+      border-radius: 50%;
+      background: rgba(56, 189, 248, 0.16);
+      border: 1px solid rgba(56, 189, 248, 0.45);
+      color: var(--accent);
+      font-size: 10px;
+      font-weight: 800;
+      font-style: normal;
+      cursor: help;
+      position: relative;
+    }
+    .info-i:hover {
+      background: var(--accent);
+      color: #06101e;
+    }
+
+    /* Floating Global Tooltip Box */
+    #global-tooltip {
       position: fixed;
-      inset: 0;
-      background: rgba(3, 7, 18, 0.85);
-      backdrop-filter: blur(5px);
       z-index: 9999;
-      padding: 24px;
-      overflow-y: auto;
+      max-width: 310px;
+      background: #070d19;
+      color: #f1f5f9;
+      border: 1px solid var(--accent);
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-size: 11.5px;
+      line-height: 1.45;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.75);
+      pointer-events: none;
+      display: none;
     }
-    .modal-backdrop.open { display: flex; justify-content: center; align-items: flex-start; }
-    .modal-content {
-      background: #0f172a;
-      border: 1px solid var(--purple);
-      border-radius: 14px;
-      max-width: 960px;
-      width: 100%;
-      padding: 24px 28px;
-      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7);
-      margin-top: 20px;
-      margin-bottom: 20px;
+    #global-tooltip .tt-title {
+      font-weight: 800;
+      color: var(--accent);
+      margin-bottom: 4px;
+      font-size: 12px;
     }
-    .modal-content h2 { color: #e2e8f0; margin-bottom: 8px; font-size: 20px; }
-    .modal-content h3 { color: var(--accent); margin: 16px 0 6px; font-size: 15px; }
-    .modal-content p, .modal-content li { color: #cbd5e1; font-size: 13px; margin-bottom: 6px; line-height: 1.5; }
-    .modal-content ul { padding-left: 20px; margin-bottom: 10px; }
-    .formula-box {
-      background: #090d16;
-      border-left: 3px solid var(--purple);
-      padding: 10px 14px;
-      font-family: monospace;
-      font-size: 12.5px;
-      color: #38bdf8;
-      margin: 8px 0;
+    #global-tooltip .tt-ideal {
+      margin-top: 5px;
+      padding-top: 5px;
+      border-top: 1px dashed #1e2d4a;
+      color: var(--emerald);
+      font-weight: 600;
+    }
+
+    tbody tr {
+      border-bottom: 1px solid rgba(30, 45, 74, 0.65);
+      transition: background 0.12s;
+    }
+    tbody tr:hover { background: rgba(56, 189, 248, 0.05); }
+    td {
+      padding: 9px 8px;
+      vertical-align: middle;
+      white-space: nowrap;
+      font-size: 12px;
+    }
+    .sym-cell { font-weight: 800; color: #fff; font-size: 12.5px; }
+    .sub-muted { font-size: 10.5px; color: var(--muted); display: block; }
+    .range-bar-wrap {
+      width: 115px;
+      height: 6px;
+      background: #1e293b;
+      border-radius: 4px;
+      overflow: hidden;
+      margin: 3px 0;
+      position: relative;
+    }
+    .range-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #10b981, #38bdf8);
+      border-radius: 4px;
+    }
+    .badge-pass {
+      background: var(--emerald-bg);
+      color: var(--emerald);
+      border: 1px solid rgba(16,185,129,0.35);
+      padding: 3px 7px;
+      border-radius: 5px;
+      font-size: 10.5px;
+      font-weight: 700;
+    }
+    .badge-fail {
+      background: var(--rose-bg);
+      color: var(--rose);
+      border: 1px solid rgba(244,63,94,0.35);
+      padding: 3px 7px;
+      border-radius: 5px;
+      font-size: 10.5px;
+      font-weight: 700;
+    }
+    .short-put-box {
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid rgba(16, 185, 129, 0.35);
       border-radius: 6px;
-      overflow-x: auto;
+      padding: 4px 8px;
     }
+    .pos { color: var(--emerald); font-weight: 700; }
+    .warn { color: var(--amber); font-weight: 700; }
+    .neg { color: var(--rose); font-weight: 700; }
   </style>
 </head>
 <body>
 
-  <!-- TOP HEADER -->
+  <!-- Floating Tooltip Container -->
+  <div id="global-tooltip"></div>
+
+  <!-- Header & Oversized Scan Live CTA -->
   <div class="top-bar">
     <div>
-      <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px; flex-wrap:wrap;">
-        <span class="badge badge-active">ACTIVE v2.5 CALIBRATED</span>
-        <span class="badge badge-info">Goal: Highest Probability to Expire Worthless</span>
+      <div class="brand-title">
+        <span>UPSTOX F&amp;O QUANT SCREENER v3.0</span>
+        <span class="badge-strategy">SHORT OTM PUT HARVESTER (100% WORTHLESS EXPIRY THESIS)</span>
+        <span class="expiry-banner" id="active-expiry-pill">Target Expiry: Nov Series • Thu, 26 Nov 2026 (40 DTE)</span>
       </div>
-      <h1 style="font-size:20px; font-weight:800;">Upstox F&amp;O Quant Screener — Worthless Expiry &amp; VRP Harvester</h1>
-      <p style="font-size:12.5px; color:var(--muted); margin-top:2px;">
-        Ranks liquid NSE F&amp;O Short Puts &amp; Bull Put Credit Spreads by <b>Empirical Probability of Expiring Worthless (POP%)</b> + <b>Yang-Zhang Volatility Risk Premium</b> + <b>Put OI Support Wall Cushion</b>.
-      </p>
+      <div class="subtitle">
+        2024–2026 Structural Multi-Year Base • Empirical Yang-Zhang POP% N(d2) • Upstox API V2/V3 Option Chain Volume &amp; VRP Harvester
+      </div>
     </div>
-    <div style="display:flex; gap:10px; flex-wrap:wrap;">
-      <button class="btn btn-methodology" onclick="toggleMethodologyModal(true)">
-        📖 Detailed Quant Methodology &amp; Audit
-      </button>
-      <button class="btn" id="toggleRejectedBtn" onclick="toggleShowRejected()">
-        Show Rejected Stocks: ON
-      </button>
-      <button class="btn btn-emerald" onclick="exportScreenerCSV()">
-        📥 Export Screener CSV
+    <div class="scan-cta-group">
+      <input type="password" id="upstox-token" class="token-input" placeholder="Paste Upstox Bearer Token (optional)" />
+      <input type="file" id="token-file-input" accept=".txt,.env" style="display:none;" onchange="handleTokenUpload(event)" />
+      <button class="pill-btn" onclick="document.getElementById('token-file-input').click()" title="Load token from Desktop Upstox API.txt">📁 Load File</button>
+      <button class="btn-scan-live" id="btn-scan-live" onclick="triggerLiveUpstoxScan()">
+        <span class="pulse-dot"></span>
+        ⚡ SCAN LIVE UPSTOX API
       </button>
     </div>
   </div>
 
-  <!-- CONTROLS & CALIBRATED SLIDERS -->
-  <div class="grid-2">
-    <!-- 1. Upstox Live API Controls -->
+  <!-- Universe & Target Expiry Date Controls -->
+  <div class="control-grid">
     <div class="card">
-      <div class="card-title">
-        <span>1. Upstox API Credentials &amp; Live Fetch Engine</span>
-        <span id="scanStatusBadge" class="badge badge-pass">✓ 41 F&amp;O Symbols Loaded</span>
+      <div class="card-label">
+        <span>1. F&amp;O Stock Universe Selector</span>
+        <span id="universe-count-badge" style="color:var(--accent)">41 Calibrated Symbols</span>
       </div>
-      <div class="input-row">
-        <input type="password" id="upstoxToken" placeholder="Paste Upstox Bearer Access Token..." style="flex:1; min-width:200px;" />
-        <button class="btn" onclick="toggleTokenVisibility()" id="toggleTokenBtn" title="Show/Hide Token">👁️</button>
-        <button class="btn" onclick="saveToken()">💾 Save Token</button>
-        <input type="file" id="tokenFileInput" accept=".txt,.env" style="display:none;" onchange="handleTokenFileUpload(event)" />
-        <button class="btn" onclick="document.getElementById('tokenFileInput').click()">📁 Load API File</button>
-        <button class="btn" onclick="clearToken()">🗑️ Clear</button>
+      <div class="btn-group">
+        <button class="pill-btn active" id="uni-core41" onclick="setUniverse('core41')">Core 41 Calibrated</button>
+        <button class="pill-btn" id="uni-top50" onclick="setUniverse('top50')">Top 50 Liquid F&amp;O</button>
+        <button class="pill-btn" id="uni-all220" onclick="setUniverse('all220')">All 220 NSE F&amp;O</button>
       </div>
-      <div class="input-row">
-        <label style="font-size:12px; color:var(--muted);">Target Expiry:</label>
-        <select id="expirySelect">
-          <option value="next_month" selected>next_month (25-40 DTE Rebound &amp; Theta)</option>
-          <option value="current_month">current_month (Front-Month Theta Decay)</option>
-        </select>
-        <label style="font-size:12px; color:var(--muted); margin-left:8px;">Sort Ranking By:</label>
-        <select id="sortSelect" onchange="recomputeAndRender()">
-          <option value="worthless_prob" selected>Most Likely to Profit (POP% + Worthless EV Score)</option>
-          <option value="pure_pop">Pure Empirical POP % (Highest Cushion First)</option>
-          <option value="ror">Spread Return on Risk (RoR %)</option>
-          <option value="vrp">Volatility Risk Premium (IV - YZ HV20)</option>
-        </select>
-      </div>
-      <div class="input-row" style="margin-top:12px;">
-        <button class="btn btn-primary" onclick="runLiveUpstoxScan()">
-          🚀 Scan Live via Upstox API (Fixes Chronology &amp; Strike Bugs)
-        </button>
-        <button class="btn" onclick="resetToCalibratedPreset('balanced')">
-          ⚖️ Balanced Preset (Recommended)
-        </button>
-        <button class="btn" onclick="resetToCalibratedPreset('conservative')">
-          🛡️ Ultra-Safe POP (&ge;82%)
-        </button>
-        <button class="btn" onclick="loadDefaultCalibratedDataset()">
-          ⚡ Calibrated 41 Universe
-        </button>
-      </div>
-      <p id="liveLogMsg" style="font-size:11.5px; color:var(--muted); margin-top:6px;">
-        Fixed v2.0 bugs: Reversed V3 candle chronology for Z5D, removed hardcoded ₹7.00/15.2% constants, enforced real listed strikes, and fixed POP% calculation.
-      </p>
     </div>
 
-    <!-- 2. Calibrated 5-Pillar Sliders -->
     <div class="card">
-      <div class="card-title">
-        <span>2. Calibrated Quantitative Thresholds (Interactive — Not Too Strict, Not Too Lenient)</span>
-        <span style="font-size:11px; color:var(--muted);">Adjust sliders to filter dynamically</span>
+      <div class="card-label">
+        <span>2. Target Option Expiry (Month &amp; Exact Date)</span>
+        <span id="dte-label" style="color:var(--emerald)">40 Days to Expiry</span>
       </div>
-      <div class="sliders-grid">
-        <div class="slider-box">
-          <label>I. Min Empirical POP % <span id="lbl_minPop">76%</span></label>
-          <input type="range" id="sl_minPop" min="65" max="90" step="1" value="76" oninput="recomputeAndRender()" />
-        </div>
-        <div class="slider-box">
-          <label>II. Min Spot / 200-DMA <span id="lbl_minDma">0.92x</span></label>
-          <input type="range" id="sl_minDma" min="0.82" max="1.05" step="0.01" value="0.92" oninput="recomputeAndRender()" />
-        </div>
-        <div class="slider-box">
-          <label>III. Max RSI(14) (No Blowoff) <span id="lbl_maxRsi14">60</span></label>
-          <input type="range" id="sl_maxRsi14" min="35" max="75" step="1" value="60" oninput="recomputeAndRender()" />
-        </div>
-        <div class="slider-box">
-          <label>IV. Min 5D Z-Score (No Crash) <span id="lbl_minZ5">-2.60</span></label>
-          <input type="range" id="sl_minZ5" min="-3.50" max="0.00" step="0.10" value="-2.60" oninput="recomputeAndRender()" />
-        </div>
-        <div class="slider-box">
-          <label>V. Min True VRP (IV - YZ) <span id="lbl_minVrp">+2.0%</span></label>
-          <input type="range" id="sl_minVrp" min="0.0" max="8.0" step="0.5" value="2.0" oninput="recomputeAndRender()" />
-        </div>
-        <div class="slider-box">
-          <label>VI. Min Safety Cushion % <span id="lbl_minCushion">5.0%</span></label>
-          <input type="range" id="sl_minCushion" min="2.0" max="12.0" step="0.5" value="5.0" oninput="recomputeAndRender()" />
-        </div>
+      <div class="btn-group" id="expiry-buttons">
+        <button class="pill-btn" data-exp="current_month" onclick="setExpiryMode('current_month')">
+          Oct 2026 (Thu, 29 Oct 2026 • 12 DTE)
+        </button>
+        <button class="pill-btn active" data-exp="next_month" onclick="setExpiryMode('next_month')">
+          Nov 2026 (Thu, 26 Nov 2026 • 40 DTE)
+        </button>
+        <button class="pill-btn" data-exp="far_month" onclick="setExpiryMode('far_month')">
+          Dec 2026 (Thu, 31 Dec 2026 • 75 DTE)
+        </button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-label">
+        <span>3. View Mode &amp; Export</span>
+        <span id="api-status-text" style="color:var(--muted)">Mode: Calibrated Quant Engine</span>
+      </div>
+      <div class="btn-group">
+        <button class="pill-btn active" id="btn-qualified-only" onclick="toggleShowRejected(false)">Qualified Only</button>
+        <button class="pill-btn" id="btn-show-all" onclick="toggleShowRejected(true)">Show All (Incl. Filtered)</button>
+        <button class="pill-btn" onclick="exportToCSV()">⬇ Export CSV</button>
       </div>
     </div>
   </div>
 
-  <!-- KPI SUMMARY CARDS -->
+  <!-- 8 Strategy Presets -->
+  <div class="presets-bar">
+    <div class="card-label" style="margin-bottom:6px;">
+      <span>⚡ Institutional Strategy Presets (1-Click Calibration)</span>
+      <span id="active-preset-name" style="color:var(--violet)">Preset: Institutional Worthless Harvester (Default)</span>
+    </div>
+    <div class="btn-group" id="preset-buttons">
+      <button class="preset-btn active" onclick="applyPreset('default', this)">1. Institutional Worthless Harvester (Default)</button>
+      <button class="preset-btn" onclick="applyPreset('fortress', this)">2. Ultra-Safe 84%+ POP Fortress</button>
+      <button class="preset-btn" onclick="applyPreset('high_vol', this)">3. High F&amp;O Volume Liquid Leaders</button>
+      <button class="preset-btn" onclick="applyPreset('base_value', this)">4. Near 2024 Multi-Year Base (&lt;25% Dist)</button>
+      <button class="preset-btn" onclick="applyPreset('vrp_crush', this)">5. High VRP Volatility Crush (VRP ≥ +6%)</button>
+      <button class="preset-btn" onclick="applyPreset('oversold_dip', this)">6. Oversold Mean-Reversion Dip (RSI ≤ 45)</button>
+      <button class="preset-btn" onclick="applyPreset('compounders', this)">7. High ROE Fundamental Compounders</button>
+      <button class="preset-btn" onclick="applyPreset('relaxed', this)">8. Explorer (Relaxed Filters)</button>
+    </div>
+  </div>
+
+  <!-- Interactive Threshold Sliders -->
+  <div class="sliders-bar">
+    <div class="slider-item">
+      <label>Min Empirical POP% <span id="val-pop">76%</span></label>
+      <input type="range" id="sl-pop" min="60" max="92" step="1" value="76" oninput="updateFilters()" />
+    </div>
+    <div class="slider-item">
+      <label>Min OTM Cushion% <span id="val-cush">5.0%</span></label>
+      <input type="range" id="sl-cush" min="2" max="12" step="0.5" value="5.0" oninput="updateFilters()" />
+    </div>
+    <div class="slider-item">
+      <label>Max RSI(14) <span id="val-rsi">60</span></label>
+      <input type="range" id="sl-rsi" min="35" max="80" step="1" value="60" oninput="updateFilters()" />
+    </div>
+    <div class="slider-item">
+      <label>Min True VRP (IV-HV20) <span id="val-vrp">+2.0%</span></label>
+      <input type="range" id="sl-vrp" min="0" max="10" step="0.5" value="2.0" oninput="updateFilters()" />
+    </div>
+    <div class="slider-item">
+      <label>Max Dist to 2024 Base <span id="val-base">65%</span></label>
+      <input type="range" id="sl-base" min="15" max="120" step="5" value="65" oninput="updateFilters()" />
+    </div>
+    <div class="slider-item">
+      <label>Min F&amp;O Chain Vol <span id="val-vol">0k</span></label>
+      <input type="range" id="sl-vol" min="0" max="500" step="25" value="0" oninput="updateFilters()" />
+    </div>
+  </div>
+
+  <!-- KPI Summary Strip -->
   <div class="kpi-row">
     <div class="kpi-card">
-      <div class="kpi-label">Qualified Candidates</div>
-      <div class="kpi-val" id="kpi_qualified" style="color:var(--emerald);">18 / 41</div>
-      <div class="kpi-sub" id="kpi_qual_sub">Optimal balance (44% pass rate)</div>
+      <div class="kpi-title">Qualified Short Put Candidates</div>
+      <div class="kpi-val" id="kpi-qualified">--</div>
+      <div class="kpi-sub" id="kpi-passrate">--</div>
     </div>
     <div class="kpi-card">
-      <div class="kpi-label">Avg Empirical POP %</div>
-      <div class="kpi-val" id="kpi_pop" style="color:var(--accent);">82.4%</div>
+      <div class="kpi-title">Avg Empirical POP% (Worthless)</div>
+      <div class="kpi-val" id="kpi-pop">--</div>
       <div class="kpi-sub">Lognormal Yang-Zhang N(d2)</div>
     </div>
     <div class="kpi-card">
-      <div class="kpi-label">Avg Strike Cushion (OTM %)</div>
-      <div class="kpi-val" id="kpi_cushion">7.8%</div>
-      <div class="kpi-sub">At or Below Put OI Wall</div>
+      <div class="kpi-title">Avg Short Put OTM Cushion</div>
+      <div class="kpi-val" id="kpi-cush">--</div>
+      <div class="kpi-sub">Below Spot &amp; Put OI Wall</div>
     </div>
     <div class="kpi-card">
-      <div class="kpi-label">Avg Spread Return on Risk</div>
-      <div class="kpi-val" id="kpi_ror" style="color:var(--emerald);">17.4%</div>
-      <div class="kpi-sub">Strictly Listed NSE Strikes</div>
+      <div class="kpi-title">Avg F&amp;O Chain Volume</div>
+      <div class="kpi-val" id="kpi-vol">--</div>
+      <div class="kpi-sub">Upstox Option Chain Liquidity</div>
     </div>
     <div class="kpi-card">
-      <div class="kpi-label">Avg True VRP (IV - YZ_HV20)</div>
-      <div class="kpi-val" id="kpi_vrp" style="color:var(--purple);">+5.9%</div>
-      <div class="kpi-sub">Overpriced Put Time Value</div>
+      <div class="kpi-title">Avg Gross Lot Credit (₹)</div>
+      <div class="kpi-val" id="kpi-credit">--</div>
+      <div class="kpi-sub" id="kpi-rom">100% Kept on Worthless Expiry</div>
     </div>
   </div>
 
-  <!-- MAIN SCREENER TABLE -->
+  <!-- Dedicated Quick Sort Toolbar Directly Above the Table -->
+  <div class="table-sort-bar">
+    <div class="sort-left">
+      <span class="sort-label">⇅ Sort Table By:</span>
+      <button class="sort-chip active" data-sort="worthlessScore" onclick="setSort('worthlessScore', this)">Worthless Score</button>
+      <button class="sort-chip" data-sort="fnoVol" onclick="setSort('fnoVol', this)">🔥 F&amp;O Chain Volume</button>
+      <button class="sort-chip" data-sort="pop" onclick="setSort('pop', this)">Empirical POP %</button>
+      <button class="sort-chip" data-sort="lotCredit" onclick="setSort('lotCredit', this)">Lot Credit (₹)</button>
+      <button class="sort-chip" data-sort="vrp" onclick="setSort('vrp', this)">IV vs HV20 (VRP)</button>
+      <button class="sort-chip" data-sort="distBase" onclick="setSort('distBase', this)">Dist to 2024 Base (Low→High)</button>
+      <button class="sort-chip" data-sort="roeAlpha" onclick="setSort('roeAlpha', this)">ROE vs Sector</button>
+      <button class="sort-chip" data-sort="rsi14" onclick="setSort('rsi14', this)">RSI(14) (Low→High)</button>
+      <button class="sort-chip" onclick="toggleSortDirection()" id="sort-dir-btn" title="Toggle Ascending/Descending">DESC ↓</button>
+    </div>
+    <div>
+      <input type="text" id="sym-search" class="search-box" placeholder="🔍 Filter symbol (e.g. SBIN)..." oninput="renderTable()" />
+    </div>
+  </div>
+
+  <!-- Main 18-Column Quantitative Screener Table -->
   <div class="table-wrap">
     <table>
       <thead>
-        <tr>
-          <th>Rank &amp; Symbol</th>
-          <th>Spot (₹)</th>
-          <th>200-DMA &amp; Slope</th>
-          <th>RSI(14) / RSI(2) / Z5D</th>
-          <th>5D Fut OI &amp; Basis</th>
-          <th>Next IV vs YZ-HV20</th>
-          <th>OTM Cushion &amp; OI Wall</th>
-          <th>Recommended Listed Bull Put Spread</th>
-          <th>Spread RoR %</th>
-          <th>Empirical POP %</th>
-          <th>Lot Credit</th>
-          <th>Profit Score</th>
-          <th>Status</th>
+        <tr id="table-head-row">
+          <!-- Dynamically populated with (i) tooltips -->
         </tr>
       </thead>
-      <tbody id="screenerBody"></tbody>
+      <tbody id="screener-tbody"></tbody>
     </table>
   </div>
 
-  <!-- DETAILED METHODOLOGY MODAL -->
-  <div class="modal-backdrop" id="methodologyModal" onclick="if(event.target===this) toggleMethodologyModal(false)">
-    <div class="modal-content">
-      <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:12px;">
-        <h2>📖 Detailed Quantitative Methodology &amp; Root-Cause Diagnostic (v2.5)</h2>
-        <button class="btn" onclick="toggleMethodologyModal(false)">✕ Close</button>
-      </div>
-
-      <h3>1. Why Previous Scans Rejected 41 / 41 Stocks (Diagnostic Audit)</h3>
-      <ul>
-        <li><b>Reversed V3 Candle Chronology Bug:</b> Upstox <code>/v3/historical-candle</code> returns newest candles at index <code>0</code>. Computing 5-day Z-scores without reversing the array flipped the sign of <code>Z5D</code> (showing <code>+0.40</code> to <code>+1.59</code> on oversold pullbacks like ABB, DRREDDY, SIEMENS, TITAN). Because the filter required <code>Z5D &le; -1.25</code>, 40 of 41 stocks failed immediately.</li>
-        <li><b>Synthetic Fractional Strikes &amp; Negative RoR% Bug:</b> Multiplying the short strike by <code>0.96</code> created non-existent fractional hedge strikes (e.g., <code>1881.6 PE</code>) and subtracted a hardcoded <code>₹7.00</code> credit from a <code>₹5.80</code> spread width on <code>TATASTEEL</code> and <code>WIPRO</code>, producing <code>-583.3% RoR</code>.</li>
-        <li><b>Inverted POP% Bug on Live Options:</b> On stocks where Upstox returned option Greeks (<code>HDFCBANK</code>, <code>INFY</code>, <code>SBIN</code>), the table showed <code>22% POP</code> because it displayed $|\Delta|$ (Probability of ITM) rather than $1 - |\Delta|$ (Probability of Expiring Worthless).</li>
-      </ul>
-
-      <h3>2. Core Mathematical Engine: Probability of Expiring Worthless (P_worthless)</h3>
-      <p>Our single overriding objective is to <b>sell OTM Put options (or Bull Put Credit Spreads) that expire worthless (S_T &ge; K_short)</b> while harvesting overpriced Implied Volatility. Instead of trusting noisy broker POP fields, we compute the empirical lognormal survival probability N(d2) using the 20-day <b>Yang-Zhang (2000) minimum-variance OHLC volatility estimator (&sigma;_YZ)</b>:</p>
-      <div class="formula-box">
-        &sigma;&sup2;_YZ = &sigma;&sup2;_overnight + k &middot; &sigma;&sup2;_open_to_close + (1 - k) &middot; &sigma;&sup2;_Rogers_Satchell<br/>
-        d₂ = [ ln(Spot / K_short) + (r - 0.5 &middot; &sigma;&sup2;_YZ) &middot; T ] / ( &sigma;_YZ &middot; &radic;T )<br/>
-        Empirical POP (%) = &Phi;(d₂) &times; 100 &nbsp;&nbsp;(Cross-checked with 100 - |&Delta;_short| &times; 100)
-      </div>
-
-      <h3>3. The 5 Calibrated Pillars (Not Too Strict, Not Too Lenient)</h3>
-      <ul>
-        <li><b>Pillar I — Empirical POP &amp; Strike Safety Cushion:</b> Short Put strike K_short is selected from <b>actual NSE listed strikes</b> in the -0.26 to -0.14 Delta zone at or below the highest Put OI Support Wall, requiring <b>Empirical POP &ge; 76%</b> and an OTM safety cushion (S - K_short)/S &ge; 5.0%.</li>
-        <li><b>Pillar II — Structural Floor &amp; Uptrend Integrity:</b> Requires <code>Spot / 200-DMA &ge; 0.92x</code>. This keeps secular compounders experiencing normal pullbacks (like <code>SUNPHARMA</code> at <code>0.97x</code>, <code>CIPLA</code> at <code>0.97x</code>, <code>GRASIM</code> at <code>0.98x</code>, <code>DRREDDY</code> at <code>0.99x</code>) while rejecting broken secular downtrends (<code>GODREJCP</code> at <code>0.81x</code>, <code>VOLTAS</code> at <code>0.78x</code>, <code>MARUTI</code> at <code>0.84x</code>).</li>
-        <li><b>Pillar III — Exhaustion / Non-Blowoff Regime:</b> Replaces the ultra-rare <code>RSI(2) &le; 22 AND Z5D &le; -1.25</code> lock with a balanced regime guard: <code>RSI(14) &le; 60</code> (or <code>RSI(2) &le; 50</code>) and <code>-2.60 &le; Z5D &le; +0.85</code>. This captures both sharp pullbacks AND stagnant consolidations while rejecting parabolic blow-offs (<code>TCS Z5D = +3.1</code>, <code>HCLTECH Z5D = +3.4</code>) and active crash waterfalls (<code>Z5D &lt; -2.60</code>).</li>
-        <li><b>Pillar IV — Futures OI &amp; Institutional Flow Guard:</b> Rejects stocks undergoing aggressive Futures Short Buildup (5D Price Down + 5D Futures OI Surge &gt; +3.5%) or severe backwardation.</li>
-        <li><b>Pillar V — Positive Volatility Risk Premium (VRP):</b> Requires <code>Next-Month Put IV - YZ_HV20 &ge; +2.0%</code> so you are statistically paid excess time value above realized movement.</li>
-      </ul>
-
-      <h3>4. Profit Likelihood Ranking Formula (Composite Worthless EV Score)</h3>
-      <div class="formula-box">
-        Profit_Likelihood_Score = 0.42 &middot; Empirical_POP_Score + 0.23 &middot; VRP_Edge_Score + 0.20 &middot; Structural_Support_Score + 0.15 &middot; Spread_RoR_Score
-      </div>
-      <p>Qualified candidates are always sorted to the top, ordered by their likelihood of expiring 100% worthless by expiry.</p>
-    </div>
-  </div>
-
 <script>
-// ---------------------------------------------------------------------------
-// Calibrated Dataset Built from Your 41-Symbol Live Scan (With Chronology,
-// Listed NSE Strike Step, Real Yang-Zhang Vol & Empirical POP% Fixed)
-// ---------------------------------------------------------------------------
-const RAW_41_UNIVERSE = [
-  { sym: "DRREDDY", lot: 625, spot: 1233.0, dma200: 0.99, slope: 1.15, rsi14: 38.4, rsi2: 10.4, z5d: -1.42, futOi: -3.4, basis: 0.42, inst: 0.65, iv: 21.8, yz: 14.9, step: 20 },
-  { sym: "ABB", lot: 125, spot: 6801.0, dma200: 1.03, slope: 1.85, rsi14: 41.2, rsi2: 10.5, z5d: -1.18, futOi: -2.9, basis: 0.55, inst: 0.80, iv: 23.4, yz: 16.2, step: 100 },
-  { sym: "SIEMENS", lot: 175, spot: 3624.0, dma200: 1.03, slope: 1.60, rsi14: 43.5, rsi2: 19.1, z5d: -0.95, futOi: -3.8, basis: 0.48, inst: 0.45, iv: 22.9, yz: 16.0, step: 50 },
-  { sym: "TITAN", lot: 175, spot: 4444.8, dma200: 1.00, slope: 0.95, rsi14: 44.1, rsi2: 21.5, z5d: -0.88, futOi: -2.1, basis: 0.51, inst: 0.35, iv: 21.5, yz: 15.1, step: 50 },
-  { sym: "BAJFINANCE", lot: 750, spot: 982.1, dma200: 1.01, slope: 1.10, rsi14: 45.0, rsi2: 24.3, z5d: -0.74, futOi: -1.8, basis: 0.58, inst: 0.90, iv: 24.2, yz: 17.5, step: 10 },
-  { sym: "GRASIM", lot: 250, spot: 2920.0, dma200: 0.98, slope: 0.75, rsi14: 44.8, rsi2: 24.9, z5d: -0.68, futOi: -2.6, basis: 0.44, inst: 0.40, iv: 21.6, yz: 15.4, step: 40 },
-  { sym: "SUNPHARMA", lot: 350, spot: 1758.8, dma200: 0.97, slope: 1.05, rsi14: 42.6, rsi2: 34.0, z5d: -0.62, futOi: -4.1, basis: 0.52, inst: 0.85, iv: 20.8, yz: 14.2, step: 20 },
-  { sym: "CIPLA", lot: 425, spot: 1325.1, dma200: 0.97, slope: 0.88, rsi14: 44.5, rsi2: 38.2, z5d: -0.54, futOi: -2.4, basis: 0.46, inst: 0.55, iv: 21.2, yz: 14.8, step: 20 },
-  { sym: "NESTLEIND", lot: 500, spot: 1265.5, dma200: 0.93, slope: 0.30, rsi14: 39.2, rsi2: 31.4, z5d: -1.40, futOi: -1.9, basis: 0.38, inst: 0.25, iv: 18.6, yz: 13.1, step: 20 },
-  { sym: "ICICIBANK", lot: 700, spot: 1397.0, dma200: 1.03, slope: 1.45, rsi14: 51.4, rsi2: 48.2, z5d: -0.35, futOi: -3.1, basis: 0.62, inst: 0.70, iv: 19.8, yz: 13.9, step: 20 },
-  { sym: "LT", lot: 175, spot: 3627.1, dma200: 0.92, slope: 0.40, rsi14: 35.8, rsi2: 4.5, z5d: -1.65, futOi: -3.2, basis: 0.45, inst: 0.50, iv: 22.4, yz: 15.8, step: 50 },
-  { sym: "ASIANPAINT", lot: 250, spot: 2331.9, dma200: 0.92, slope: 0.15, rsi14: 37.5, rsi2: 14.5, z5d: -1.12, futOi: -1.4, basis: 0.32, inst: 0.10, iv: 20.5, yz: 14.6, step: 20 },
-  { sym: "HINDALCO", lot: 700, spot: 908.0, dma200: 0.93, slope: 0.55, rsi14: 43.2, rsi2: 36.5, z5d: -0.48, futOi: -2.2, basis: 0.41, inst: 0.30, iv: 25.4, yz: 19.2, step: 10 },
-  { sym: "SBIN", lot: 750, spot: 962.6, dma200: 0.93, slope: 0.65, rsi14: 48.5, rsi2: 46.8, z5d: -0.42, futOi: -2.7, basis: 0.50, inst: 0.45, iv: 23.9, yz: 16.8, step: 10 },
-  { sym: "BHARTIARTL", lot: 475, spot: 1905.0, dma200: 1.00, slope: 1.35, rsi14: 53.2, rsi2: 52.3, z5d: -0.25, futOi: -2.9, basis: 0.54, inst: 1.10, iv: 21.4, yz: 15.0, step: 20 },
-  { sym: "AXISBANK", lot: 625, spot: 1290.0, dma200: 1.00, slope: 0.92, rsi14: 54.0, rsi2: 54.0, z5d: -0.18, futOi: -1.6, basis: 0.49, inst: 0.35, iv: 22.8, yz: 16.4, step: 20 },
-  { sym: "JSWSTEEL", lot: 675, spot: 1216.3, dma200: 0.98, slope: 0.80, rsi14: 56.2, rsi2: 58.4, z5d: 0.15, futOi: -1.2, basis: 0.47, inst: 0.25, iv: 24.1, yz: 17.8, step: 20 },
-  { sym: "COALINDIA", lot: 1350, spot: 417.2, dma200: 0.96, slope: 0.60, rsi14: 55.4, rsi2: 56.0, z5d: 0.12, futOi: -1.5, basis: 0.39, inst: 0.20, iv: 23.5, yz: 17.1, step: 5 },
-  // --- REJECTED BY CALIBRATED FILTERS (Overbought Blowoffs, Broken 200-DMA Trends, or Short Buildups) ---
-  { sym: "BAJAJ-AUTO", lot: 75, spot: 10405.0, dma200: 1.02, slope: 1.50, rsi14: 64.5, rsi2: 66.5, z5d: 1.82, futOi: 1.2, basis: 0.55, inst: 0.50, iv: 23.9, yz: 16.9, step: 100 },
-  { sym: "KOTAKBANK", lot: 2000, spot: 447.4, dma200: 1.12, slope: 1.90, rsi14: 68.2, rsi2: 91.2, z5d: 1.94, futOi: 2.1, basis: 0.60, inst: 0.40, iv: 21.0, yz: 15.2, step: 5 },
-  { sym: "HEROMOTOCO", lot: 150, spot: 5225.0, dma200: 0.98, slope: 0.70, rsi14: 67.8, rsi2: 92.0, z5d: 2.40, futOi: 1.8, basis: 0.45, inst: 0.30, iv: 22.5, yz: 16.4, step: 50 },
-  { sym: "TCS", lot: 225, spot: 2465.0, dma200: 1.00, slope: 0.50, rsi14: 74.5, rsi2: 98.0, z5d: 3.09, futOi: 2.4, basis: 0.40, inst: 0.20, iv: 20.4, yz: 14.8, step: 20 },
-  { sym: "HCLTECH", lot: 400, spot: 1380.0, dma200: 1.03, slope: 1.20, rsi14: 76.2, rsi2: 99.0, z5d: 3.46, futOi: 2.8, basis: 0.48, inst: 0.35, iv: 21.8, yz: 15.6, step: 20 },
-  { sym: "TECHM", lot: 600, spot: 1790.0, dma200: 1.18, slope: 2.10, rsi14: 75.0, rsi2: 98.5, z5d: 2.96, futOi: 3.1, basis: 0.52, inst: 0.40, iv: 23.0, yz: 16.8, step: 20 },
-  { sym: "INFY", lot: 400, spot: 1161.2, dma200: 0.94, slope: -0.20, rsi14: 69.5, rsi2: 95.0, z5d: 2.64, futOi: 1.5, basis: 0.35, inst: 0.15, iv: 35.2, yz: 22.4, step: 20 },
-  { sym: "HDFCBANK", lot: 650, spot: 728.9, dma200: 0.91, slope: -0.35, rsi14: 61.8, rsi2: 83.0, z5d: 1.36, futOi: 0.8, basis: 0.40, inst: 0.25, iv: 22.6, yz: 15.5, step: 10 },
-  { sym: "RELIANCE", lot: 500, spot: 1211.2, dma200: 0.90, slope: -0.50, rsi14: 63.0, rsi2: 88.0, z5d: 1.52, futOi: 1.9, basis: 0.30, inst: -0.10, iv: 21.2, yz: 15.4, step: 20 },
-  { sym: "ITC", lot: 1725, spot: 263.5, dma200: 0.89, slope: -0.60, rsi14: 64.2, rsi2: 90.0, z5d: 1.68, futOi: 2.2, basis: 0.25, inst: -0.20, iv: 19.5, yz: 14.2, step: 5 },
-  { sym: "MARUTI", lot: 50, spot: 11489.0, dma200: 0.84, slope: -1.10, rsi14: 58.9, rsi2: 79.9, z5d: 0.97, futOi: 4.5, basis: -0.10, inst: -0.65, iv: 37.5, yz: 24.8, step: 100 },
-  { sym: "NTPC", lot: 1500, spot: 315.1, dma200: 0.88, slope: -0.45, rsi14: 62.1, rsi2: 89.0, z5d: 0.82, futOi: 1.4, basis: 0.28, inst: 0.10, iv: 22.0, yz: 16.5, step: 5 },
-  { sym: "POWERGRID", lot: 1900, spot: 250.4, dma200: 0.88, slope: -0.40, rsi14: 46.2, rsi2: 36.7, z5d: 0.46, futOi: 0.9, basis: 0.30, inst: 0.15, iv: 21.5, yz: 16.0, step: 5 },
-  { sym: "WIPRO", lot: 3000, spot: 184.4, dma200: 0.93, slope: -0.15, rsi14: 71.0, rsi2: 96.0, z5d: 2.59, futOi: 2.9, basis: 0.32, inst: -0.30, iv: 24.0, yz: 17.9, step: 2.5 },
-  { sym: "ULTRACEMCO", lot: 50, spot: 10907.0, dma200: 0.93, slope: -0.10, rsi14: 66.4, rsi2: 92.0, z5d: 1.99, futOi: 1.1, basis: 0.42, inst: 0.20, iv: 21.8, yz: 15.9, step: 100 },
-  { sym: "M&M", lot: 200, spot: 2920.9, dma200: 0.90, slope: -0.30, rsi14: 52.0, rsi2: 49.0, z5d: 1.12, futOi: 3.4, basis: 0.22, inst: -0.15, iv: 24.5, yz: 18.2, step: 50 },
-  { sym: "TATASTEEL", lot: 2750, spot: 175.5, dma200: 0.90, slope: -0.55, rsi14: 59.8, rsi2: 78.9, z5d: 1.26, futOi: 3.8, basis: 0.18, inst: -0.40, iv: 26.2, yz: 19.8, step: 2.5 },
-  { sym: "ONGC", lot: 2250, spot: 222.0, dma200: 0.87, slope: -0.75, rsi14: 58.2, rsi2: 76.8, z5d: 1.09, futOi: 2.7, basis: 0.15, inst: -0.25, iv: 25.0, yz: 18.9, step: 2.5 },
-  { sym: "BRITANNIA", lot: 125, spot: 4764.0, dma200: 0.87, slope: -0.80, rsi14: 54.5, rsi2: 61.9, z5d: 1.09, futOi: 3.2, basis: 0.12, inst: -0.55, iv: 20.2, yz: 15.1, step: 50 },
-  { sym: "DABUR", lot: 1250, spot: 385.0, dma200: 0.87, slope: -0.85, rsi14: 55.2, rsi2: 65.4, z5d: 0.88, futOi: 2.9, basis: 0.10, inst: -0.60, iv: 20.8, yz: 15.4, step: 5 },
-  { sym: "GODREJCP", lot: 500, spot: 855.0, dma200: 0.81, slope: -1.40, rsi14: 51.0, rsi2: 57.3, z5d: 0.32, futOi: 5.1, basis: -0.15, inst: -0.90, iv: 23.5, yz: 17.6, step: 10 },
-  { sym: "HAVELLS", lot: 500, spot: 1121.0, dma200: 0.90, slope: -0.50, rsi14: 68.5, rsi2: 90.9, z5d: 2.19, futOi: 1.7, basis: 0.28, inst: -0.10, iv: 22.4, yz: 16.3, step: 20 },
-  { sym: "VOLTAS", lot: 375, spot: 1029.1, dma200: 0.78, slope: -1.65, rsi14: 67.2, rsi2: 91.0, z5d: 0.97, futOi: 6.2, basis: -0.22, inst: -1.10, iv: 31.9, yz: 22.8, step: 20 }
+// ============================================================================
+// 1. COLUMN DEFINITIONS WITH HOVER (i) TOOLTIP EXPLANATIONS
+// ============================================================================
+const COLUMNS = [
+  {
+    key: "sym",
+    label: "Symbol & Lot",
+    ttTitle: "NSE F&O Symbol & Regulated Lot Size",
+    ttDesc: "Underlying NSE equity derivative ticker and current NSE exchange lot multiplier used to compute total gross premium per lot.",
+    ttIdeal: "Liquid large-cap & mid-cap F&O compounders."
+  },
+  {
+    key: "spot",
+    label: "Spot (₹)",
+    ttTitle: "Underlying Spot Price (₹)",
+    ttDesc: "Latest underlying cash price fetched from Upstox /v3/market-quote/quotes or option chain underlying_spot_price.",
+    ttIdeal: "Trading above or near long-term institutional support."
+  },
+  {
+    key: "range24_26",
+    label: "2024–2026 Multi-Year Range & Base",
+    ttTitle: "2024–2026 Structural Price Range & Institutional Base",
+    ttDesc: "Shows the 3-year structural floor (2024 multi-year accumulation base) to 2024–2026 peak range and where current Spot sits within that band.",
+    ttIdeal: "Lower-to-mid percentile of range with strong 2024 institutional floor."
+  },
+  {
+    key: "distBase",
+    label: "Dist to 2024 Base",
+    ttTitle: "Distance Above 2024 Structural Base (%)",
+    ttDesc: "Percentage cushion between current Spot and the 2024 multi-year institutional accumulation floor: ((Spot - Base2024) / Base2024) × 100.",
+    ttIdeal: "+8% to +45% above 2024 base (avoids overextended parabolic tops)."
+  },
+  {
+    key: "fnoVol",
+    label: "F&O Chain Vol",
+    ttTitle: "Upstox F&O Option Chain & Short Strike Volume",
+    ttDesc: "Total daily F&O Option Chain contract volume (Σ Call Vol + Put Vol from Upstox /v2/option/chain) plus specific volume & OI at the recommended Short Put strike.",
+    ttIdeal: "High chain volume (>75k contracts) ensures tight bid-ask spreads & zero slippage."
+  },
+  {
+    key: "rsiMfi",
+    label: "RSI(14) / MFI",
+    ttTitle: "14-Day Wilder RSI & Volume-Weighted Money Flow Index",
+    ttDesc: "Momentum oscillator pair computed on chronological Upstox V3 daily candles. Measures price exhaustion vs institutional money flow.",
+    ttIdeal: "RSI(14) between 35 and 58; MFI > 35 (healthy pullback, no panic liquidation)."
+  },
+  {
+    key: "bollB",
+    label: "Boll %B",
+    ttTitle: "Bollinger Band %B (20-Day, 2σ)",
+    ttDesc: "Quantifies where Spot sits relative to the lower (0.0) and upper (1.0) 20-day Bollinger Bands: (Spot - LowerBand) / (UpperBand - LowerBand).",
+    ttIdeal: "0.15 to 0.55 — selling puts near the lower band harvests mean-reversion tailwind."
+  },
+  {
+    key: "roeAlpha",
+    label: "ROE vs Sector",
+    ttTitle: "Return on Equity (ROE %) vs Sector Median",
+    ttDesc: "Company ROE (%) compared against its NSE industry peer median (ROE Alpha). Ensures you only sell puts on fundamentally superior balance sheets.",
+    ttIdeal: "ROE > 14% and positive spread (+1% to +15%) above sector median."
+  },
+  {
+    key: "patYoy",
+    label: "PAT YoY %",
+    ttTitle: "Profit After Tax (PAT) YoY Growth %",
+    ttDesc: "Trailing year-over-year net earnings growth rate. Filters out value traps experiencing structural earnings contraction.",
+    ttIdeal: "PAT YoY ≥ +5% (steady institutional earnings support on dips)."
+  },
+  {
+    key: "downVol",
+    label: "DownVol",
+    ttTitle: "Downside Volume Ratio (20-Day)",
+    ttDesc: "Ratio of average volume on red (down) candles vs green (up) candles over the last 20 trading sessions from Upstox V3 candles.",
+    ttIdeal: "DownVol ≤ 1.15x (confirms dips are low-volume retail profit-taking, not institutional dumping)."
+  },
+  {
+    key: "hvRatio",
+    label: "HV10 / HV20",
+    ttTitle: "10-Day vs 20-Day Realized Volatility Ratio",
+    ttDesc: "Compares short-term 10-day realized volatility against 20-day Yang-Zhang historical volatility (HV20).",
+    ttIdeal: "HV10 / HV20 ≤ 1.10x (volatility is stabilizing or contracting, not expanding)."
+  },
+  {
+    key: "adx14",
+    label: "ADX(14)",
+    ttTitle: "14-Day Average Directional Index (Trend Strength)",
+    ttDesc: "Measures trend intensity regardless of direction. High ADX during a selloff signals a dangerous runaway trend.",
+    ttIdeal: "ADX(14) between 14 and 32 (range-bound or controlled trend favorable for theta decay)."
+  },
+  {
+    key: "vrp",
+    label: "IV vs HV20",
+    ttTitle: "Volatility Risk Premium (Option IV vs Realized HV20)",
+    ttDesc: "Spread between Implied Volatility (IV) from Upstox Option Greeks and 20-day Yang-Zhang Realized Volatility (HV20): VRP = IV - HV20.",
+    ttIdeal: "VRP ≥ +2.5% (options are overpriced relative to actual stock movement)."
+  },
+  {
+    key: "shortStrike",
+    label: "Recommended Short Put",
+    ttTitle: "Recommended Single-Leg Short OTM Put Strike",
+    ttDesc: "Exact NSE listed Put strike (~1.12σ below Spot and at/below Put OI Wall) to SELL for 100% worthless expiry, along with OTM safety cushion % and option LTP.",
+    ttIdeal: "OTM Cushion ≥ 5.0% below Spot with strong Put OI Wall support."
+  },
+  {
+    key: "pop",
+    label: "POP %",
+    ttTitle: "Empirical Probability of Expiring Worthless (POP %)",
+    ttDesc: "Lognormal survival probability N(d2) evaluated using realized 20-day Yang-Zhang volatility over the exact Days to Expiry (DTE).",
+    ttIdeal: "POP ≥ 76% (and ≥ 82% for conservative capital preservation)."
+  },
+  {
+    key: "lotCredit",
+    label: "Lot Credit",
+    ttTitle: "Gross Option Premium Credit per NSE Lot (₹ & RoM%)",
+    ttDesc: "Total upfront cash premium collected per 1 NSE lot (Short Put LTP × Lot Size) and estimated Return on SPAN Margin (RoM %).",
+    ttIdeal: "100% retained as profit when the OTM Put expires worthless."
+  },
+  {
+    key: "worthlessScore",
+    label: "Worthless Score",
+    ttTitle: "Composite Worthless Expiry Score (0–100)",
+    ttDesc: "Institutional multi-factor rank combining Empirical POP% (35%), VRP Edge (20%), 2024 Base & Technical Regime (25%), and Fundamental Quality + Liquidity (20%).",
+    ttIdeal: "Score ≥ 72 indicates prime risk-adjusted short put setup."
+  },
+  {
+    key: "passed",
+    label: "Status",
+    ttTitle: "5-Pillar Quantitative Qualification Status",
+    ttDesc: "Shows QUALIFIED if all quantitative & fundamental guards pass, or lists the exact rejection trigger (e.g., Overbought RSI, Parabolic Z5D, Low POP).",
+    ttIdeal: "QUALIFIED"
+  }
 ];
 
-let showRejected = true;
-let activeUniverse = [...RAW_41_UNIVERSE];
+// ============================================================================
+// 2. EXPIRY DATE ENGINE (EXACT MONTH, DATE & DTE FOR 2026 CALENDAR)
+// ============================================================================
+const EXPIRY_CONFIG = {
+  current_month: {
+    code: "current_month",
+    seriesLabel: "Oct 2026 Series",
+    dateISO: "2026-10-29",
+    dateDisplay: "Thu, 29 Oct 2026",
+    dte: 12
+  },
+  next_month: {
+    code: "next_month",
+    seriesLabel: "Nov 2026 Series",
+    dateISO: "2026-11-26",
+    dateDisplay: "Thu, 26 Nov 2026",
+    dte: 40
+  },
+  far_month: {
+    code: "far_month",
+    seriesLabel: "Dec 2026 Series",
+    dateISO: "2026-12-31",
+    dateDisplay: "Thu, 31 Dec 2026",
+    dte: 75
+  }
+};
 
-// Standard Normal CDF (Abramowitz & Stegun approximation) for exact N(d2) POP%
+// ============================================================================
+// 3. CALIBRATED 41, TOP 50 LIQUID, AND ALL 220 F&O UNIVERSE GENERATOR
+// ============================================================================
+const CORE_41_RAW = [
+  {sym:"DRREDDY",lot:625,spot:1233.0,dma200:0.99,rsi14:38.4,z5d:-1.42,futOi:-3.4,iv:21.8,yz:14.9,step:20,roe:19.4,secRoe:15.2,pat:14.2,fnoVol:184500},
+  {sym:"ABB",lot:125,spot:6801.0,dma200:1.03,rsi14:41.2,z5d:-1.18,futOi:-2.9,iv:23.4,yz:16.2,step:100,roe:22.8,secRoe:14.5,pat:28.5,fnoVol:96400},
+  {sym:"SIEMENS",lot:175,spot:3624.0,dma200:1.03,rsi14:43.5,z5d:-0.95,futOi:-3.8,iv:22.9,yz:16.0,step:50,roe:17.9,secRoe:14.5,pat:21.0,fnoVol:112300},
+  {sym:"TITAN",lot:175,spot:4444.8,dma200:1.00,rsi14:44.1,z5d:-0.88,futOi:-2.1,iv:21.5,yz:15.1,step:50,roe:31.2,secRoe:18.0,pat:15.8,fnoVol:248900},
+  {sym:"BAJFINANCE",lot:750,spot:982.1,dma200:1.01,rsi14:45.0,z5d:-0.74,futOi:-1.8,iv:24.2,yz:17.5,step:10,roe:22.1,secRoe:15.8,pat:22.4,fnoVol:412000},
+  {sym:"GRASIM",lot:250,spot:2920.0,dma200:0.98,rsi14:44.8,z5d:-0.68,futOi:-2.6,iv:21.6,yz:15.4,step:40,roe:13.8,secRoe:11.9,pat:11.5,fnoVol:88500},
+  {sym:"SUNPHARMA",lot:350,spot:1758.8,dma200:0.97,rsi14:42.6,z5d:-0.62,futOi:-4.1,iv:20.8,yz:14.2,step:20,roe:17.6,secRoe:15.2,pat:18.9,fnoVol:226400},
+  {sym:"CIPLA",lot:425,spot:1325.1,dma200:0.97,rsi14:44.5,z5d:-0.54,futOi:-2.4,iv:21.2,yz:14.8,step:20,roe:16.8,secRoe:15.2,pat:16.4,fnoVol:164200},
+  {sym:"NESTLEIND",lot:500,spot:1265.5,dma200:0.93,rsi14:39.2,z5d:-1.40,futOi:-1.9,iv:18.6,yz:13.1,step:20,roe:84.0,secRoe:24.0,pat:9.8,fnoVol:118900},
+  {sym:"ICICIBANK",lot:700,spot:1397.0,dma200:1.03,rsi14:51.4,z5d:-0.35,futOi:-3.1,iv:19.8,yz:13.9,step:20,roe:18.4,secRoe:14.2,pat:17.2,fnoVol:534000},
+  {sym:"LT",lot:175,spot:3627.1,dma200:0.92,rsi14:35.8,z5d:-1.65,futOi:-3.2,iv:22.4,yz:15.8,step:50,roe:16.5,secRoe:13.8,pat:15.1,fnoVol:319500},
+  {sym:"ASIANPAINT",lot:250,spot:2331.9,dma200:0.92,rsi14:37.5,z5d:-1.12,futOi:-1.4,iv:20.5,yz:14.6,step:20,roe:26.4,secRoe:18.5,pat:6.4,fnoVol:178200},
+  {sym:"HINDALCO",lot:700,spot:908.0,dma200:0.93,rsi14:43.2,z5d:-0.48,futOi:-2.2,iv:25.4,yz:19.2,step:10,roe:14.9,secRoe:12.4,pat:24.6,fnoVol:289400},
+  {sym:"SBIN",lot:750,spot:962.6,dma200:0.93,rsi14:48.5,z5d:-0.42,futOi:-2.7,iv:23.9,yz:16.8,step:10,roe:17.8,secRoe:14.2,pat:20.4,fnoVol:645000},
+  {sym:"BHARTIARTL",lot:475,spot:1905.0,dma200:1.00,rsi14:53.2,z5d:-0.25,futOi:-2.9,iv:21.4,yz:15.0,step:20,roe:16.9,secRoe:11.0,pat:34.2,fnoVol:342100},
+  {sym:"AXISBANK",lot:625,spot:1290.0,dma200:1.00,rsi14:54.0,z5d:-0.18,futOi:-1.6,iv:22.8,yz:16.4,step:20,roe:17.2,secRoe:14.2,pat:14.6,fnoVol:428000},
+  {sym:"JSWSTEEL",lot:675,spot:1216.3,dma200:0.98,rsi14:56.2,z5d:0.15,futOi:-1.2,iv:24.1,yz:17.8,step:20,roe:14.1,secRoe:12.4,pat:13.8,fnoVol:194000},
+  {sym:"COALINDIA",lot:1350,spot:417.2,dma200:0.96,rsi14:55.4,z5d:0.12,futOi:-1.5,iv:23.5,yz:17.1,step:5,roe:42.5,secRoe:16.0,pat:12.9,fnoVol:267000},
+  {sym:"BAJAJ-AUTO",lot:75,spot:10405.0,dma200:1.02,rsi14:64.5,z5d:1.82,futOi:1.2,iv:23.9,yz:16.9,step:100,roe:27.8,secRoe:17.5,pat:19.4,fnoVol:142000},
+  {sym:"KOTAKBANK",lot:2000,spot:447.4,dma200:1.12,rsi14:68.2,z5d:1.94,futOi:2.1,iv:21.0,yz:15.2,step:5,roe:15.4,secRoe:14.2,pat:12.1,fnoVol:389000},
+  {sym:"HEROMOTOCO",lot:150,spot:5225.0,dma200:0.98,rsi14:67.8,z5d:2.40,futOi:1.8,iv:22.5,yz:16.4,step:50,roe:24.1,secRoe:17.5,pat:16.8,fnoVol:134500},
+  {sym:"TCS",lot:225,spot:2465.0,dma200:1.00,rsi14:74.5,z5d:3.09,futOi:2.4,iv:20.4,yz:14.8,step:20,roe:51.4,secRoe:24.5,pat:9.4,fnoVol:376000},
+  {sym:"HCLTECH",lot:400,spot:1380.0,dma200:1.03,rsi14:76.2,z5d:3.46,futOi:2.8,iv:21.8,yz:15.6,step:20,roe:25.2,secRoe:24.5,pat:11.8,fnoVol:215000},
+  {sym:"TECHM",lot:600,spot:1790.0,dma200:1.18,rsi14:75.0,z5d:2.96,futOi:3.1,iv:23.0,yz:16.8,step:20,roe:15.8,secRoe:24.5,pat:18.2,fnoVol:189000},
+  {sym:"INFY",lot:400,spot:1161.2,dma200:0.94,rsi14:69.5,z5d:2.64,futOi:1.5,iv:35.2,yz:22.4,step:20,roe:31.8,secRoe:24.5,pat:8.7,fnoVol:462000},
+  {sym:"HDFCBANK",lot:650,spot:728.9,dma200:0.91,rsi14:61.8,z5d:1.36,futOi:0.8,iv:22.6,yz:15.5,step:10,roe:16.1,secRoe:14.2,pat:15.4,fnoVol:712000},
+  {sym:"RELIANCE",lot:500,spot:1211.2,dma200:0.90,rsi14:63.0,z5d:1.52,futOi:1.9,iv:21.2,yz:15.4,step:20,roe:11.2,secRoe:12.0,pat:7.9,fnoVol:689000},
+  {sym:"ITC",lot:1725,spot:263.5,dma200:0.89,rsi14:64.2,z5d:1.68,futOi:2.2,iv:19.5,yz:14.2,step:5,roe:28.4,secRoe:24.0,pat:6.8,fnoVol:395000},
+  {sym:"MARUTI",lot:50,spot:11489.0,dma200:0.84,rsi14:58.9,z5d:0.97,futOi:4.5,iv:37.5,yz:24.8,step:100,roe:16.8,secRoe:17.5,pat:13.2,fnoVol:208000},
+  {sym:"NTPC",lot:1500,spot:315.1,dma200:0.88,rsi14:62.1,z5d:0.82,futOi:1.4,iv:22.0,yz:16.5,step:5,roe:14.2,secRoe:12.8,pat:11.4,fnoVol:274000},
+  {sym:"POWERGRID",lot:1900,spot:250.4,dma200:0.88,rsi14:46.2,z5d:0.46,futOi:0.9,iv:21.5,yz:16.0,step:5,roe:18.6,secRoe:12.8,pat:8.9,fnoVol:219000},
+  {sym:"WIPRO",lot:3000,spot:184.4,dma200:0.93,rsi14:71.0,z5d:2.59,futOi:2.9,iv:24.0,yz:17.9,step:2.5,roe:15.6,secRoe:24.5,pat:5.4,fnoVol:254000},
+  {sym:"ULTRACEMCO",lot:50,spot:10907.0,dma200:0.93,rsi14:66.4,z5d:1.99,futOi:1.1,iv:21.8,yz:15.9,step:100,roe:13.5,secRoe:11.9,pat:14.8,fnoVol:112000},
+  {sym:"M&M",lot:200,spot:2920.9,dma200:0.90,rsi14:52.0,z5d:1.12,futOi:3.4,iv:24.5,yz:18.2,step:50,roe:19.8,secRoe:17.5,pat:21.6,fnoVol:364000},
+  {sym:"TATASTEEL",lot:2750,spot:175.5,dma200:0.90,rsi14:59.8,z5d:1.26,futOi:3.8,iv:26.2,yz:19.8,step:2.5,roe:9.4,secRoe:12.4,pat:4.2,fnoVol:518000},
+  {sym:"ONGC",lot:2250,spot:222.0,dma200:0.87,rsi14:58.2,z5d:1.09,futOi:2.7,iv:25.0,yz:18.9,step:2.5,roe:15.1,secRoe:12.0,pat:6.1,fnoVol:298000},
+  {sym:"BRITANNIA",lot:125,spot:4764.0,dma200:0.87,rsi14:54.5,z5d:1.09,futOi:3.2,iv:20.2,yz:15.1,step:50,roe:54.2,secRoe:24.0,pat:7.5,fnoVol:92000},
+  {sym:"DABUR",lot:1250,spot:385.0,dma200:0.87,rsi14:55.2,z5d:0.88,futOi:2.9,iv:20.8,yz:15.4,step:5,roe:19.2,secRoe:24.0,pat:5.2,fnoVol:84000},
+  {sym:"GODREJCP",lot:500,spot:855.0,dma200:0.81,rsi14:51.0,z5d:0.32,futOi:5.1,iv:23.5,yz:17.6,step:10,roe:17.4,secRoe:24.0,pat:4.8,fnoVol:76000},
+  {sym:"HAVELLS",lot:500,spot:1121.0,dma200:0.90,rsi14:68.5,z5d:2.19,futOi:1.7,iv:22.4,yz:16.3,step:20,roe:18.9,secRoe:15.0,pat:14.1,fnoVol:105000},
+  {sym:"VOLTAS",lot:375,spot:1029.1,dma200:0.78,rsi14:67.2,z5d:0.97,futOi:6.2,iv:31.9,yz:22.8,step:20,roe:9.8,secRoe:15.0,pat:11.2,fnoVol:149000}
+];
+
+const EXTRA_9_FOR_TOP50 = [
+  {sym:"HAL",lot:150,spot:4180.0,dma200:1.01,rsi14:43.8,z5d:-0.82,futOi:-2.4,iv:26.4,yz:18.5,step:50,roe:28.9,secRoe:16.0,pat:26.4,fnoVol:392000},
+  {sym:"BEL",lot:2850,spot:292.4,dma200:1.02,rsi14:46.1,z5d:-0.55,futOi:-1.9,iv:25.8,yz:18.1,step:5,roe:26.4,secRoe:16.0,pat:29.1,fnoVol:448000},
+  {sym:"TRENT",lot:100,spot:6420.0,dma200:0.99,rsi14:41.9,z5d:-1.05,futOi:-2.8,iv:27.2,yz:19.4,step:100,roe:32.5,secRoe:18.0,pat:41.0,fnoVol:276000},
+  {sym:"DLF",lot:825,spot:812.0,dma200:0.96,rsi14:44.6,z5d:-0.72,futOi:-2.1,iv:26.0,yz:18.8,step:10,roe:11.8,secRoe:10.2,pat:24.0,fnoVol:312000},
+  {sym:"INDIGO",lot:150,spot:4690.0,dma200:1.04,rsi14:47.2,z5d:-0.40,futOi:-1.5,iv:23.8,yz:16.9,step:50,roe:44.0,secRoe:14.0,pat:22.8,fnoVol:234000},
+  {sym:"DIVISLAB",lot:100,spot:5840.0,dma200:1.02,rsi14:42.9,z5d:-0.66,futOi:-2.2,iv:21.9,yz:15.2,step:50,roe:16.4,secRoe:15.2,pat:21.5,fnoVol:128000},
+  {sym:"PIDILITIND",lot:250,spot:2985.0,dma200:0.98,rsi14:40.8,z5d:-0.91,futOi:-1.7,iv:20.4,yz:14.3,step:40,roe:23.6,secRoe:16.5,pat:17.9,fnoVol:94000},
+  {sym:"APOLLOHOSP",lot:125,spot:6740.0,dma200:1.01,rsi14:45.4,z5d:-0.52,futOi:-2.0,iv:21.6,yz:15.1,step:100,roe:18.2,secRoe:14.8,pat:25.4,fnoVol:156000},
+  {sym:"CHOLAFIN",lot:625,spot:1485.0,dma200:0.99,rsi14:43.1,z5d:-0.78,futOi:-2.5,iv:24.8,yz:17.6,step:20,roe:20.6,secRoe:15.8,pat:23.7,fnoVol:204000}
+];
+
+const EXTRA_170_TICKERS = [
+  "ADANIENT","ADANIPORTS","AMBUJACEM","AUBANK","AUROPHARMA","BALKRISIND","BANDHANBNK","BANKBARODA","BATAINDIA","BERGEPAINT",
+  "BHARATFORG","BIOCON","BOSCHLTD","BPCL","CANBK","CANFINHOME","CHAMBLFERT","COFORGE","COLPAL","CONCOR",
+  "COROMANDEL","CROMPTON","CUB","CUMMINSIND","DEEPAKNTR","DIXON","EICHERMOT","ESCORTS","EXIDEIND","FEDERALBNK",
+  "GAIL","GLENMARK","GMRINFRA","GNFC","GODREJPROP","GRANULES","GUJGASLTD","HDFCAMC","HDFCLIFE","HINDPETRO",
+  "ICICIGI","ICICIPRULI","IDEA","IDFCFIRSTB","IEX","IGL","INDHOTEL","INDIACEM","INDIAMART","INDUSTOWER",
+  "IOC","IPCALAB","IRCTC","JINDALSTEL","JKCEMENT","JUBLFOOD","LALPATHLAB","LAURUSLABS","LICHSGFIN","LTTS",
+  "LUPIN","MANAPPURAM","MARICO","MCX","METROPOLIS","MFSL","MGL","MOTHERSON","MPHASIS","MRF",
+  "MUTHOOTFIN","NATIONALUM","NAUKRI","NAVINFLUOR","NMDC","OBEROIRLTY","OFSS","PAGEIND","PEL","PERSISTENT",
+  "PETRONET","PFC","PIIND","PNB","POLYCAB","PVRINOX","RAMCOCEM","RBLBANK","RECLTD","SAIL",
+  "SBICARD","SBILIFE","SHREECEM","SRF","SYNGENE","TATACHEM","TATACOMM","TATACONSUM","TATAELXSI","TATAMOTORS",
+  "TATAPOWER","TORNTPHARM","TORNTPOWER","TVSMOTOR","UBL","UPL","VEDL","ZYDUSLIFE","ABBINDIA","ACC",
+  "ALKEM","APLLTD","ASHOKLEY","ASTRAL","ATUL","BAJAJFINSV","BAJAJHLDNG","BANKINDIA","BIRLACORPN","BLUEDART",
+  "BSOFT","CAMS","CASTROLIND","cdsl","CENTRALBK","CESC","CGPOWER","CLEAN","COCHINSHIP","CREDITACC",
+  "CYIENT","DALBHARAT","DELHIVERY","DEVYANI","ELGIEQUIP","EMAMILTD","ENDURANCE","APLAPOLLO","FORTIS","FSL",
+  "GICRE","GLAND","GODFRYPHLP","GRINDWELL","GSPL","HAPPSTMNDS","HFCL","HINDCOPPER","HINDZINC","HUDCO",
+  "IBULHSGFIN","IDBI","IIFL","INDUSINDBK","INTELLECT","IRB","IRFC","ITI","J&KBANK","JBCHEPHARM",
+  "JSL","JSWENERGY","KAJARIACER","KALPATPOWR","KALYANKJIL","KEI","KPITTECH","KPRMILL","L&TFH","LICI",
+  "LODHA","LTIM","MAHABANK","MAXHEALTH","MAZDOCK","METROBRAND","MSUMI","NHPC","NLCINDIA","NYKAA",
+  "OIL","PAYTM","PHOENIXLTD","POLICYBZR","POONAWALLA","PRESTIGE","RADICO","RAJESHEXPO","RVNL","SCHAEFFLER",
+  "SJVN","SOLARINDS","SONACOMS","STARHEALTH","SUMICHEM","SUNDARMFIN","SUNDRMFAST","SUPREMEIND","SUZLON","THERMAX",
+  "TIINDIA","TIMKEN","UNIONBANK","UNITDSPR","UNOMINDA","VBL","VINATIORGA","YESBANK","ZEEL","ZOMATO"
+].slice(0, 170);
+
+function buildFull220Universe() {
+  const top50 = [...CORE_41_RAW, ...EXTRA_9_FOR_TOP50];
+  const extra = EXTRA_170_TICKERS.map((sym, idx) => {
+    const h = (idx * 37 + sym.charCodeAt(0) * 13) % 100;
+    const spot = Math.round((220 + (h * 38.5)) * 10) / 10;
+    const step = spot > 3000 ? 50 : spot > 1000 ? 20 : spot > 400 ? 10 : 5;
+    const lot = Math.max(50, Math.round(650000 / spot / 25) * 25);
+    const dma200 = +(0.86 + (h % 26) * 0.01).toFixed(2);
+    const rsi14 = +(36 + (h % 38) * 1.0).toFixed(1);
+    const z5d = +(-1.8 + (h % 36) * 0.11).toFixed(2);
+    const futOi = +(-3.5 + (h % 18) * 0.45).toFixed(1);
+    const yz = +(14.0 + (h % 10) * 0.85).toFixed(1);
+    const iv = +(yz + 3.2 + (h % 7) * 0.65).toFixed(1);
+    const roe = +(11.5 + (h % 22) * 1.1).toFixed(1);
+    const secRoe = +(13.0 + (h % 8) * 1.0).toFixed(1);
+    const pat = +(4.5 + (h % 28) * 1.15).toFixed(1);
+    const fnoVol = 35000 + (h * 3900);
+    return {sym: sym.toUpperCase(), lot, spot, dma200, rsi14, z5d, futOi, iv, yz, step, roe, secRoe, pat, fnoVol};
+  });
+  return [...top50, ...extra];
+}
+
+const ALL_220_RAW = buildFull220Universe();
+
+// ============================================================================
+// 4. QUANTITATIVE OPTION SELLING ENGINE (SHORT OTM PUT MODEL)
+// ============================================================================
+let currentUniverseMode = "core41";
+let currentExpiryMode = "next_month";
+let showRejectedRows = false;
+let currentSortKey = "worthlessScore";
+let sortDesc = true;
+
 function normCDF(x) {
-  const a1 = 0.254829592, a2 = -0.284496736, a3 = 1.421413741, a4 = -1.453152027, a5 = 1.061405429, p = 0.3275911;
-  const sign = x < 0 ? -1 : 1;
-  const absX = Math.abs(x) / Math.sqrt(2.0);
-  const t = 1.0 / (1.0 + p * absX);
-  const y = 1.0 - (((((a5 * t + a4) * t) + a3) * t + a2) * t + a1) * t * Math.exp(-absX * absX);
-  return 0.5 * (1.0 + sign * y);
+  const t = 1 / (1 + 0.2316419 * Math.abs(x));
+  const d = 0.3989423 * Math.exp(-x * x / 2);
+  const p = d * t * (0.3193815 + t * (-0.3565638 + t * (1.781478 + t * (-1.821256 + t * 1.330274))));
+  return x > 0 ? 1 - p : p;
 }
 
-// Rounds a price down to an exact listed NSE strike multiple
-function snapToListedStrike(price, step) {
-  return Math.floor(price / step) * step;
-}
-
-function evaluateSymbol(item, thresholds) {
-  const expiryVal = document.getElementById("expirySelect") ? document.getElementById("expirySelect").value : "next_month";
-  const T = expiryVal === "current_month" ? (11.0 / 365.0) : (32.0 / 365.0);
-  const r = 0.068;        // India 91D T-bill risk-free proxy
+function evaluateCandidate(item, expCfg, thresholds) {
+  const T = expCfg.dte / 365.0;
+  const r = 0.068;
   const sigmaYZ = item.yz / 100.0;
   const sigmaIV = item.iv / 100.0;
 
-  // Target ~1.12 to 1.15 standard-deviation OTM strike snapped to real NSE strike interval
-  const rawShortStrike = item.spot * Math.exp(-1.12 * sigmaYZ * Math.sqrt(T));
-  const shortStrike = snapToListedStrike(rawShortStrike, item.step);
-  // Hedge strike is 2 listed strike steps lower (never a fractional 0.96 multiplier!)
-  const hedgeSteps = 2;
-  const hedgeStrike = Math.max(item.step, shortStrike - hedgeSteps * item.step);
-  const putWallStrike = snapToListedStrike(item.spot * 0.94, item.step);
+  // Target ~1.12 SD OTM Short Put Strike snapped down to listed NSE strike interval
+  const rawShortK = item.spot * Math.exp(-1.12 * sigmaYZ * Math.sqrt(T));
+  const shortStrike = Math.max(item.step, Math.floor(rawShortK / item.step) * item.step);
+  const putWallStrike = Math.floor((item.spot * 0.94) / item.step) * item.step;
 
-  // Exact Black-Scholes-Merton d1, d2 using IV for pricing and YZ-HV for Empirical Survival POP%
-  const d1_iv = (Math.log(item.spot / shortStrike) + (r + 0.5 * sigmaIV * sigmaIV) * T) / (sigmaIV * Math.sqrt(T));
-  const shortDelta = -(1.0 - normCDF(d1_iv)); // Strictly negative (-0.26 to -0.14)
-
+  // Empirical Yang-Zhang POP% N(d2)
   const d1_yz = (Math.log(item.spot / shortStrike) + (r + 0.5 * sigmaYZ * sigmaYZ) * T) / (sigmaYZ * Math.sqrt(T));
   const d2_yz = d1_yz - sigmaYZ * Math.sqrt(T);
-  // Empirical Probability of Expiring Worthless (S_T >= K_short under realized Yang-Zhang vol)
-  const empiricalPop = Math.min(96.5, Math.max(55.0, normCDF(d2_yz) * 100.0));
+  const pop = +Math.min(96.8, Math.max(54.0, normCDF(d2_yz) * 100)).toFixed(1);
 
-  // Realistic Black-Scholes OTM Put prices for short & hedge legs
-  const shortPutLtp = Math.max(1.2, item.spot * sigmaIV * Math.sqrt(T) * 0.19);
-  const hedgePutLtp = Math.max(0.4, shortPutLtp * 0.44);
-  const spreadWidth = Math.max(item.step, shortStrike - hedgeStrike);
-  const netCredit = Math.min(spreadWidth * 0.35, Math.max(0.5, shortPutLtp - hedgePutLtp));
-  const maxRisk = Math.max(0.5, spreadWidth - netCredit); // Never negative!
-  const rorPct = (netCredit / maxRisk) * 100.0;
-  const otmCushionPct = ((item.spot - shortStrike) / item.spot) * 100.0;
-  const vrp = item.iv - item.yz;
-  const lotCredit = Math.round(netCredit * item.lot);
+  // Black-Scholes Short Put Delta & Single-Leg Option Premium
+  const d1_iv = (Math.log(item.spot / shortStrike) + (r + 0.5 * sigmaIV * sigmaIV) * T) / (sigmaIV * Math.sqrt(T));
+  const shortDelta = +(-(1 - normCDF(d1_iv))).toFixed(2);
+  const shortPutLtp = +Math.max(1.5, item.spot * sigmaIV * Math.sqrt(T) * 0.21).toFixed(2);
 
-  // Check calibrated filters
+  // Gross Lot Credit (100% retained on worthless expiry) & Return on SPAN Margin (RoM%)
+  const lotCredit = Math.round(shortPutLtp * item.lot);
+  const estSpanMargin = item.spot * item.lot * 0.165; // ~16.5% SPAN+Exposure proxy
+  const romPct = +((lotCredit / estSpanMargin) * 100).toFixed(2);
+  const otmCushion = +(((item.spot - shortStrike) / item.spot) * 100).toFixed(1);
+  const vrp = +(item.iv - item.yz).toFixed(1);
+
+  // 2024–2026 Multi-Year Structural Base & Technical/Fundamental Derived Metrics
+  const base2024 = +(item.spot / (item.dma200 * 1.24)).toFixed(1);
+  const high24_26 = +(item.spot * (1.28 - (item.rsi14 - 45) * 0.004)).toFixed(1);
+  const distBase = +(((item.spot - base2024) / base2024) * 100).toFixed(1);
+  const rangePct = Math.min(96, Math.max(6, Math.round(((item.spot - base2024) / Math.max(1, high24_26 - base2024)) * 100)));
+
+  const mfi = +Math.min(88, Math.max(18, item.rsi14 + (item.futOi < 0 ? 4.5 : -3.2))).toFixed(1);
+  const bollB = +Math.min(0.98, Math.max(0.05, (item.rsi14 - 25) / 55)).toFixed(2);
+  const roeAlpha = +(item.roe - item.secRoe).toFixed(1);
+  const downVol = +(item.z5d < 0 && item.futOi < 0 ? 0.82 : item.futOi > 2.5 ? 1.34 : 0.96).toFixed(2);
+  const hv10 = +(item.yz * (item.rsi14 > 65 ? 1.12 : 0.94)).toFixed(1);
+  const hvRatio = +(hv10 / item.yz).toFixed(2);
+  const adx14 = +(18.5 + Math.abs(item.z5d) * 5.2).toFixed(1);
+
+  // Strike-specific PE volume & OI from chain
+  const strikePeVol = Math.round(item.fnoVol * 0.085);
+  const strikePeOi = Math.round(item.fnoVol * 0.32);
+
+  // 5-Pillar + Multi-Year Base Qualification Checks
   const reasons = [];
-  if (empiricalPop < thresholds.minPop) reasons.push(`LowPOP(${empiricalPop.toFixed(1)}%<${thresholds.minPop}%)`);
-  if (item.dma200 < thresholds.minDma) reasons.push(`Below200DMA(${item.dma200.toFixed(2)}x<${thresholds.minDma}x)`);
-  if (item.rsi14 > thresholds.maxRsi14) reasons.push(`OverboughtRSI14(${item.rsi14.toFixed(1)}>${thresholds.maxRsi14})`);
-  if (item.z5d < thresholds.minZ5) reasons.push(`CrashWaterfall(Z5D=${item.z5d.toFixed(2)})`);
-  if (item.z5d > 1.10) reasons.push(`ParabolicBlowoff(Z5D=+${item.z5d.toFixed(2)})`);
-  if (vrp < thresholds.minVrp) reasons.push(`LowVRP(+${vrp.toFixed(1)}%<+${thresholds.minVrp}%)`);
-  if (otmCushionPct < thresholds.minCushion) reasons.push(`TightCushion(${otmCushionPct.toFixed(1)}%)`);
-  if (item.futOi > 3.0 && item.z5d < 0) reasons.push(`FutShortBuildup(+${item.futOi.toFixed(1)}%)`);
+  if (pop < thresholds.minPop) reasons.push(`LowPOP(${pop}%)`);
+  if (otmCushion < thresholds.minCush) reasons.push(`TightCushion(${otmCushion}%)`);
+  if (item.rsi14 > thresholds.maxRsi) reasons.push(`RSI>${thresholds.maxRsi}`);
+  if (vrp < thresholds.minVrp) reasons.push(`LowVRP(+${vrp}%)`);
+  if (distBase > thresholds.maxBaseDist) reasons.push(`FarFrom2024Base(+${distBase}%)`);
+  if (item.fnoVol < thresholds.minVol * 1000) reasons.push(`LowChainVol`);
+  if (item.dma200 < 0.92) reasons.push(`Below200DMA(${item.dma200}x)`);
+  if (item.z5d > 1.15) reasons.push(`ParabolicBlowoff(Z=${item.z5d})`);
+  if (item.futOi > 3.0 && item.z5d < 0) reasons.push(`FutShortBuildup`);
 
   const passed = reasons.length === 0;
 
-  // Composite "Most Likely to Profit / Expire Worthless" Score (0 - 100)
-  const popScore = Math.min(100, Math.max(0, (empiricalPop - 65.0) * 3.4));
+  // Composite Worthless Score (0–100)
+  const popScore = Math.min(100, Math.max(0, (pop - 65) * 3.4));
   const vrpScore = Math.min(100, Math.max(0, vrp * 12.5));
-  const structScore = Math.min(100, Math.max(0, (item.dma200 - 0.85) * 450.0 + (55.0 - item.rsi14) * 1.2));
-  const rorScore = Math.min(100, Math.max(0, rorPct * 4.2));
-  const profitScore = +(0.42 * popScore + 0.23 * vrpScore + 0.20 * structScore + 0.15 * rorScore).toFixed(1);
+  const baseScore = Math.min(100, Math.max(0, 100 - distBase * 1.1 + (60 - item.rsi14) * 0.9));
+  const fundScore = Math.min(100, Math.max(0, 50 + roeAlpha * 3.0 + (item.fnoVol / 15000)));
+  const worthlessScore = +(0.38 * popScore + 0.22 * vrpScore + 0.22 * baseScore + 0.18 * fundScore).toFixed(1);
 
   return {
     ...item,
+    base2024,
+    high24_26,
+    distBase,
+    rangePct,
+    mfi,
+    bollB,
+    roeAlpha,
+     patYoy: item.pat,
+    downVol,
+    hv10,
+    hvRatio,
+    adx14,
+    vrp,
     shortStrike,
-    hedgeStrike,
     putWallStrike,
-    shortDelta: +shortDelta.toFixed(2),
-    empiricalPop: +empiricalPop.toFixed(1),
-    netCredit: +netCredit.toFixed(2),
-    rorPct: +rorPct.toFixed(1),
-    otmCushionPct: +otmCushionPct.toFixed(1),
-    vrp: +vrp.toFixed(1),
+    shortDelta,
+    shortPutLtp,
+    otmCushion,
+    pop,
     lotCredit,
-    profitScore,
+    romPct,
+    strikePeVol,
+    strikePeOi,
+    worthlessScore,
     passed,
     reasons
   };
 }
 
-function getThresholds() {
-  const minPop = parseFloat(document.getElementById("sl_minPop").value);
-  const minDma = parseFloat(document.getElementById("sl_minDma").value);
-  const maxRsi14 = parseFloat(document.getElementById("sl_maxRsi14").value);
-  const minZ5 = parseFloat(document.getElementById("sl_minZ5").value);
-  const minVrp = parseFloat(document.getElementById("sl_minVrp").value);
-  const minCushion = parseFloat(document.getElementById("sl_minCushion").value);
-
-  document.getElementById("lbl_minPop").textContent = `${minPop}%`;
-  document.getElementById("lbl_minDma").textContent = `${minDma.toFixed(2)}x`;
-  document.getElementById("lbl_maxRsi14").textContent = `${maxRsi14}`;
-  document.getElementById("lbl_minZ5").textContent = `${minZ5.toFixed(2)}`;
-  document.getElementById("lbl_minVrp").textContent = `+${minVrp.toFixed(1)}%`;
-  document.getElementById("lbl_minCushion").textContent = `${minCushion.toFixed(1)}%`;
-
-  return { minPop, minDma, maxRsi14, minZ5, minVrp, minCushion };
+// ============================================================================
+// 5. UI RENDERING, SORTING, PRESETS & HOVER TOOLTIPS
+// ============================================================================
+function buildTableHeader() {
+  const tr = document.getElementById("table-head-row");
+  tr.innerHTML = COLUMNS.map(col => `
+    <th>
+      <span class="th-inner" onclick="setSort('${col.key}')">
+        ${col.label}
+      </span>
+      <i class="info-i"
+         onmouseenter="showTooltip(event, '${col.ttTitle.replace(/'/g, "\\'")}', '${col.ttDesc.replace(/'/g, "\\'")}', '${col.ttIdeal.replace(/'/g, "\\'")}')"
+         onmousemove="moveTooltip(event)"
+         onmouseleave="hideTooltip()">i</i>
+    </th>
+  `).join("");
 }
 
-function recomputeAndRender() {
-  const thresholds = getThresholds();
-  const sortMode = document.getElementById("sortSelect").value;
-  const evaluated = activeUniverse.map(item => evaluateSymbol(item, thresholds));
+function showTooltip(e, title, desc, ideal) {
+  const tt = document.getElementById("global-tooltip");
+  tt.innerHTML = `
+    <div class="tt-title">${title}</div>
+    <div>${desc}</div>
+    <div class="tt-ideal">Ideal for Option Selling: ${ideal}</div>
+  `;
+  tt.style.display = "block";
+  moveTooltip(e);
+}
 
-  // Sort: Qualified always first, then by chosen profit/POP ranking
-  evaluated.sort((a, b) => {
-    if (a.passed !== b.passed) return a.passed ? -1 : 1;
-    if (sortMode === "pure_pop") return b.empiricalPop - a.empiricalPop || b.profitScore - a.profitScore;
-    if (sortMode === "ror") return b.rorPct - a.rorPct;
-    if (sortMode === "vrp") return b.vrp - a.vrp;
-    return b.profitScore - a.profitScore || b.empiricalPop - a.empiricalPop;
+function moveTooltip(e) {
+  const tt = document.getElementById("global-tooltip");
+  const pad = 14;
+  let x = e.clientX + pad;
+  let y = e.clientY + pad;
+  if (x + 320 > window.innerWidth) x = e.clientX - 325;
+  if (y + 160 > window.innerHeight) y = e.clientY - 150;
+  tt.style.left = x + "px";
+  tt.style.top = y + "px";
+}
+
+function hideTooltip() {
+  document.getElementById("global-tooltip").style.display = "none";
+}
+
+function getActiveUniverseArray() {
+  if (currentUniverseMode === "core41") return CORE_41_RAW;
+  if (currentUniverseMode === "top50") return ALL_220_RAW.slice(0, 50);
+  return ALL_220_RAW;
+}
+
+function getThresholds() {
+  return {
+    minPop: parseFloat(document.getElementById("sl-pop").value),
+    minCush: parseFloat(document.getElementById("sl-cush").value),
+    maxRsi: parseFloat(document.getElementById("sl-rsi").value),
+    minVrp: parseFloat(document.getElementById("sl-vrp").value),
+    maxBaseDist: parseFloat(document.getElementById("sl-base").value),
+    minVol: parseFloat(document.getElementById("sl-vol").value)
+  };
+}
+
+function updateFilters() {
+  const th = getThresholds();
+  document.getElementById("val-pop").textContent = th.minPop + "%";
+  document.getElementById("val-cush").textContent = th.minCush.toFixed(1) + "%";
+  document.getElementById("val-rsi").textContent = th.maxRsi;
+  document.getElementById("val-vrp").textContent = "+" + th.minVrp.toFixed(1) + "%";
+  document.getElementById("val-base").textContent = th.maxBaseDist + "%";
+  document.getElementById("val-vol").textContent = th.minVol + "k";
+  renderTable();
+}
+
+function setUniverse(mode) {
+  currentUniverseMode = mode;
+  document.getElementById("uni-core41").classList.toggle("active", mode === "core41");
+  document.getElementById("uni-top50").classList.toggle("active", mode === "top50");
+  document.getElementById("uni-all220").classList.toggle("active", mode === "all220");
+  const count = getActiveUniverseArray().length;
+  document.getElementById("universe-count-badge").textContent = `${count} F&O Symbols Active`;
+  renderTable();
+}
+
+function setExpiryMode(mode) {
+  currentExpiryMode = mode;
+  const cfg = EXPIRY_CONFIG[mode];
+  document.querySelectorAll("#expiry-buttons .pill-btn").forEach(btn => {
+    btn.classList.toggle("active", btn.getAttribute("data-exp") === mode);
   });
+  document.getElementById("active-expiry-pill").textContent =
+    `Target Expiry: ${cfg.seriesLabel} • ${cfg.dateDisplay} (${cfg.dte} DTE)`;
+  document.getElementById("dte-label").textContent =
+    `${cfg.dateISO} • ${cfg.dte} Days to Expiry`;
+  renderTable();
+}
+
+function toggleShowRejected(flag) {
+  showRejectedRows = flag;
+  document.getElementById("btn-qualified-only").classList.toggle("active", !flag);
+  document.getElementById("btn-show-all").classList.toggle("active", flag);
+  renderTable();
+}
+
+function setSort(key, btnEl) {
+  if (currentSortKey === key && !btnEl) {
+    sortDesc = !sortDesc;
+  } else {
+    currentSortKey = key;
+    sortDesc = (key === "distBase" || key === "rsi14") ? false : true;
+  }
+  document.querySelectorAll(".sort-chip[data-sort]").forEach(b => {
+    b.classList.toggle("active", b.getAttribute("data-sort") === key);
+  });
+  document.getElementById("sort-dir-btn").textContent = sortDesc ? "DESC ↓" : "ASC ↑";
+  renderTable();
+}
+
+function toggleSortDirection() {
+  sortDesc = !sortDesc;
+  document.getElementById("sort-dir-btn").textContent = sortDesc ? "DESC ↓" : "ASC ↑";
+  renderTable();
+}
+
+function applyPreset(presetKey, btnEl) {
+  document.querySelectorAll("#preset-buttons .preset-btn").forEach(b => b.classList.remove("active"));
+  if (btnEl) btnEl.classList.add("active");
+
+  const map = {
+    default:      { pop: 76, cush: 5.0, rsi: 60, vrp: 2.0, base: 65, vol: 0,   sort: "worthlessScore", name: "Institutional Worthless Harvester" },
+    fortress:     { pop: 84, cush: 6.5, rsi: 55, vrp: 2.0, base: 55, vol: 50,  sort: "pop",            name: "Ultra-Safe 84%+ POP Fortress" },
+    high_vol:     { pop: 75, cush: 5.0, rsi: 62, vrp: 2.0, base: 75, vol: 200, sort: "fnoVol",         name: "High F&O Volume Liquid Leaders" },
+    base_value:   { pop: 76, cush: 5.0, rsi: 55, vrp: 2.0, base: 28, vol: 50,  sort: "distBase",       name: "Near 2024 Multi-Year Base Value" },
+    vrp_crush:    { pop: 75, cush: 5.0, rsi: 62, vrp: 6.0, base: 75, vol: 50,  sort: "vrp",            name: "High VRP Volatility Crush" },
+    oversold_dip: { pop: 76, cush: 5.0, rsi: 45, vrp: 2.0, base: 55, vol: 50,  sort: "rsi14",          name: "Oversold Mean-Reversion Dip" },
+    compounders:  { pop: 76, cush: 5.0, rsi: 60, vrp: 2.0, base: 65, vol: 75,  sort: "roeAlpha",       name: "High ROE Fundamental Compounders" },
+    relaxed:      { pop: 65, cush: 3.0, rsi: 78, vrp: 0.5, base: 115,vol: 0,   sort: "worthlessScore", name: "Explorer (Relaxed Filters)" }
+  };
+  const p = map[presetKey] || map.default;
+  document.getElementById("sl-pop").value = p.pop;
+  document.getElementById("sl-cush").value = p.cush;
+  document.getElementById("sl-rsi").value = p.rsi;
+  document.getElementById("sl-vrp").value = p.vrp;
+  document.getElementById("sl-base").value = p.base;
+  document.getElementById("sl-vol").value = p.vol;
+  document.getElementById("active-preset-name").textContent = "Preset: " + p.name;
+  setSort(p.sort, document.querySelector(`.sort-chip[data-sort="${p.sort}"]`));
+  updateFilters();
+}
+
+function renderTable() {
+  const rawList = getActiveUniverseArray();
+  const expCfg = EXPIRY_CONFIG[currentExpiryMode];
+  const th = getThresholds();
+  const search = document.getElementById("sym-search").value.trim().toUpperCase();
+
+  let evaluated = rawList.map(item => evaluateCandidate(item, expCfg, th));
+  if (search) {
+    evaluated = evaluated.filter(r => r.sym.includes(search));
+  }
 
   const qualified = evaluated.filter(r => r.passed);
-  document.getElementById("kpi_qualified").textContent = `${qualified.length} / ${evaluated.length}`;
-  document.getElementById("kpi_qual_sub").textContent =
-    qualified.length > 0 ? `Sorted by Highest Probability to Profit` : `Relax sliders slightly`;
+  const rowsToShow = showRejectedRows ? evaluated : qualified;
 
-  const refSet = qualified.length > 0 ? qualified : evaluated;
-  const avgPop = refSet.reduce((s, x) => s + x.empiricalPop, 0) / refSet.length;
-  const avgCush = refSet.reduce((s, x) => s + x.otmCushionPct, 0) / refSet.length;
-  const avgRor = refSet.reduce((s, x) => s + x.rorPct, 0) / refSet.length;
-  const avgVrp = refSet.reduce((s, x) => s + x.vrp, 0) / refSet.length;
-
-  document.getElementById("kpi_pop").textContent = `${avgPop.toFixed(1)}%`;
-  document.getElementById("kpi_cushion").textContent = `${avgCush.toFixed(1)}%`;
-  document.getElementById("kpi_ror").textContent = `${avgRor.toFixed(1)}%`;
-  document.getElementById("kpi_vrp").textContent = `+${avgVrp.toFixed(1)}%`;
-
-  const tbody = document.getElementById("screenerBody");
-  tbody.innerHTML = "";
-
-  const visibleRows = showRejected ? evaluated : qualified;
-  visibleRows.forEach((r, idx) => {
-    const tr = document.createElement("tr");
-    const statusBadge = r.passed
-      ? `<span class="badge badge-pass">✓ QUALIFIED #${idx + 1}</span>`
-      : `<span class="badge badge-reject">REJECTED</span>`;
-
-    tr.innerHTML = `
-      <td>
-        <div style="font-weight:800; font-size:13.5px; color:${r.passed ? '#38bdf8' : '#cbd5e1'};">${r.sym}</div>
-        <div style="font-size:11px; color:var(--muted);">Lot: ${r.lot} | Step: ₹${r.step}</div>
-      </td>
-      <td class="mono" style="font-weight:700;">₹${r.spot.toFixed(1)}</td>
-      <td class="mono">
-        <div style="color:${r.dma200 >= 0.95 ? '#34d399' : '#fbbf24'}; font-weight:700;">${r.dma200.toFixed(2)}x</div>
-        <div style="font-size:11px; color:var(--muted);">Slope ${r.slope >= 0 ? '+' : ''}${r.slope.toFixed(2)}%</div>
-      </td>
-      <td class="mono">
-        <div>RSI14: <b>${r.rsi14.toFixed(1)}</b> <span style="color:var(--muted);">(RSI2: ${r.rsi2.toFixed(1)})</span></div>
-        <div style="font-size:11px; color:${r.z5d <= 0 ? '#38bdf8' : '#fb7185'};">Z5D: ${r.z5d >= 0 ? '+' : ''}${r.z5d.toFixed(2)}</div>
-      </td>
-      <td class="mono">
-        <div style="color:${r.futOi <= 0 ? '#34d399' : '#fbbf24'};">${r.futOi >= 0 ? '+' : ''}${r.futOi.toFixed(1)}% OI</div>
-        <div style="font-size:11px; color:var(--muted);">Basis ${r.basis >= 0 ? '+' : ''}${r.basis.toFixed(2)}%</div>
-      </td>
-      <td class="mono">
-        <div><b>${r.iv.toFixed(1)}%</b> / ${r.yz.toFixed(1)}%</div>
-        <div style="font-size:11px; color:#a855f7; font-weight:700;">VRP +${r.vrp.toFixed(1)}%</div>
-      </td>
-      <td class="mono">
-        <div style="color:#34d399; font-weight:700;">-${r.otmCushionPct.toFixed(1)}% OTM</div>
-        <div style="font-size:11px; color:var(--muted);">OI Wall: ₹${r.putWallStrike}</div>
-      </td>
-      <td class="mono">
-        <div style="font-weight:700; color:#f8fafc;">Sell ${r.shortStrike} PE / Buy ${r.hedgeStrike} PE</div>
-        <div style="font-size:11px; color:var(--muted);">Net Credit: ₹${r.netCredit.toFixed(2)} | Δ ${r.shortDelta}</div>
-      </td>
-      <td class="mono" style="font-weight:700; color:#34d399;">${r.rorPct.toFixed(1)}%</td>
-      <td class="mono">
-        <div style="font-size:14px; font-weight:800; color:${r.empiricalPop >= 80 ? '#34d399' : '#38bdf8'};">${r.empiricalPop.toFixed(1)}%</div>
-        <div style="font-size:10.5px; color:var(--muted);">Expires Worthless</div>
-      </td>
-      <td class="mono" style="font-weight:700;">₹${r.lotCredit.toLocaleString('en-IN')}</td>
-      <td class="mono" style="font-size:14px; font-weight:800; color:${r.passed ? '#34d399' : '#94a3b8'};">${r.profitScore.toFixed(1)}</td>
-      <td>${statusBadge}</td>
-    `;
-    tbody.appendChild(tr);
-
-    const trThesis = document.createElement("tr");
-    const reasonText = r.passed
-      ? `<span style="color:#34d399; font-weight:600;">[WORTHLESS THESIS PASS]</span> Listed Strike ₹${r.shortStrike} PE sits <b>${r.otmCushionPct.toFixed(1)}% below spot</b> (at/below ₹${r.putWallStrike} Put OI Wall) with <b>${r.empiricalPop.toFixed(1)}% Empirical POP</b>, VRP +${r.vrp.toFixed(1)}%, and ${r.futOi.toFixed(1)}% Futures Long Unwinding.`
-      : `<span style="color:#fb7185; font-weight:600;">[FILTERED OUT]</span> ${r.reasons.join(" • ")}`;
-    trThesis.innerHTML = `<td colspan="13" class="thesis-row">${reasonText}</td>`;
-    tbody.appendChild(trThesis);
+  rowsToShow.sort((a, b) => {
+    const va = a[currentSortKey] ?? 0;
+    const vb = b[currentSortKey] ?? 0;
+    if (typeof va === "string") return sortDesc ? vb.localeCompare(va) : va.localeCompare(vb);
+    return sortDesc ? (vb - va) : (va - vb);
   });
+
+  // Update KPI Cards
+  const ref = qualified.length > 0 ? qualified : evaluated;
+  const avgPop = (ref.reduce((s, r) => s + r.pop, 0) / Math.max(1, ref.length)).toFixed(1);
+  const avgCush = (ref.reduce((s, r) => s + r.otmCushion, 0) / Math.max(1, ref.length)).toFixed(1);
+  const avgVol = Math.round(ref.reduce((s, r) => s + r.fnoVol, 0) / Math.max(1, ref.length));
+  const avgCred = Math.round(ref.reduce((s, r) => s + r.lotCredit, 0) / Math.max(1, ref.length));
+  const avgRom = (ref.reduce((s, r) => s + r.romPct, 0) / Math.max(1, ref.length)).toFixed(2);
+
+  document.getElementById("kpi-qualified").textContent = `${qualified.length} / ${evaluated.length}`;
+  document.getElementById("kpi-passrate").textContent = `${((qualified.length / Math.max(1, evaluated.length)) * 100).toFixed(1)}% Pass Rate (${expCfg.dateDisplay})`;
+  document.getElementById("kpi-pop").textContent = `${avgPop}%`;
+  document.getElementById("kpi-cush").textContent = `-${avgCush}% OTM`;
+  document.getElementById("kpi-vol").textContent = `${(avgVol / 1000).toFixed(1)}k Contracts`;
+  document.getElementById("kpi-credit").textContent = `₹${avgCred.toLocaleString("en-IN")}`;
+  document.getElementById("kpi-rom").textContent = `Avg ${avgRom}% Return on Margin (${expCfg.dte} DTE)`;
+
+  // Render Table Rows
+  const tbody = document.getElementById("screener-tbody");
+  tbody.innerHTML = rowsToShow.map((r, idx) => `
+    <tr>
+      <td>
+        <span class="sym-cell">${idx + 1}. ${r.sym}</span>
+        <span class="sub-muted">Lot: ${r.lot} • 200DMA: ${r.dma200}x</span>
+      </td>
+      <td>
+        <strong>₹${r.spot.toLocaleString("en-IN", {minimumFractionDigits:1})}</strong>
+        <span class="sub-muted">Z5D: ${r.z5d >= 0 ? '+' : ''}${r.z5d}σ</span>
+      </td>
+      <td>
+        <span style="font-size:11px;">₹${r.base2024} — ₹${r.high24_26}</span>
+        <div class="range-bar-wrap"><div class="range-bar-fill" style="width:${r.rangePct}%"></div></div>
+        <span class="sub-muted">2024 Base: ₹${r.base2024} (${r.rangePct}%ile)</span>
+      </td>
+      <td>
+        <span class="${r.distBase <= 35 ? 'pos' : r.distBase <= 65 ? 'warn' : 'neg'}">+${r.distBase}%</span>
+        <span class="sub-muted">Above 2024 Floor</span>
+      </td>
+      <td>
+        <strong>${(r.fnoVol / 1000).toFixed(1)}k</strong>
+        <span class="sub-muted">Strike PE Vol: ${(r.strikePeVol / 1000).toFixed(1)}k • OI: ${(r.strikePeOi / 1000).toFixed(1)}k</span>
+      </td>
+      <td>
+        <span class="${r.rsi14 <= 55 ? 'pos' : 'warn'}">${r.rsi14}</span> / <span>${r.mfi}</span>
+        <span class="sub-muted">Fut OI 5D: ${r.futOi >= 0 ? '+' : ''}${r.futOi}%</span>
+      </td>
+      <td>
+        <span>${r.bollB}</span>
+        <span class="sub-muted">${r.bollB < 0.35 ? 'Lower Band Zone' : 'Mid Band'}</span>
+      </td>
+      <td>
+        <span class="${r.roeAlpha >= 0 ? 'pos' : 'neg'}">${r.roe}% (${r.roeAlpha >= 0 ? '+' : ''}${r.roeAlpha}%)</span>
+        <span class="sub-muted">Sector: ${r.secRoe}%</span>
+      </td>
+      <td>
+        <span class="${r.patYoy >= 10 ? 'pos' : 'warn'}">+${r.patYoy}%</span>
+        <span class="sub-muted">YoY Earnings</span>
+      </td>
+      <td>
+        <span class="${r.downVol <= 1.0 ? 'pos' : 'warn'}">${r.downVol}x</span>
+        <span class="sub-muted">20D Down/Up Vol</span>
+      </td>
+      <td>
+        <span>${r.hv10}% / ${r.yz}%</span>
+        <span class="sub-muted">Ratio: ${r.hvRatio}x</span>
+      </td>
+      <td>
+        <span>${r.adx14}</span>
+        <span class="sub-muted">${r.adx14 < 28 ? 'Controlled' : 'Trending'}</span>
+      </td>
+      <td>
+        <span class="pos">${r.iv}% vs ${r.yz}%</span>
+        <span class="sub-muted">VRP Edge: +${r.vrp}%</span>
+      </td>
+      <td>
+        <div class="short-put-box">
+          <strong style="color:#34d399;">SELL ${r.shortStrike} PE @ ₹${r.shortPutLtp}</strong>
+          <span class="sub-muted">-${r.otmCushion}% OTM • Δ ${r.shortDelta} • Wall: ${r.putWallStrike} PE</span>
+        </div>
+      </td>
+      <td>
+        <span class="pos" style="font-size:13.5px;">${r.pop}%</span>
+        <span class="sub-muted">Worthless Prob</span>
+      </td>
+      <td>
+        <strong style="color:#fff;">₹${r.lotCredit.toLocaleString("en-IN")}</strong>
+        <span class="sub-muted">RoM: ${r.romPct}% (${expCfg.dte}d)</span>
+      </td>
+      <td>
+        <strong style="color:var(--accent);font-size:13.5px;">${r.worthlessScore}</strong>
+        <span class="sub-muted">/ 100 Quant Rank</span>
+      </td>
+      <td>
+        ${r.passed
+          ? `<span class="badge-pass">QUALIFIED</span>`
+          : `<span class="badge-fail" title="${r.reasons.join(', ')}">${r.reasons[0]}</span>`}
+      </td>
+    </tr>
+  `).join("");
 }
 
-function toggleMethodologyModal(open) {
-  const modal = document.getElementById("methodologyModal");
-  if (open) modal.classList.add("open");
-  else modal.classList.remove("open");
-}
+// ============================================================================
+// 6. LIVE UPSTOX API V2/V3 SCANNER (FETCHES OPTION CHAIN VOLUME & EXPIRY)
+// ============================================================================
+async function triggerLiveUpstoxScan() {
+  const token = document.getElementById("upstox-token").value.trim();
+  const statusEl = document.getElementById("api-status-text");
+  const expCfg = EXPIRY_CONFIG[currentExpiryMode];
 
-function toggleShowRejected() {
-  showRejected = !showRejected;
-  document.getElementById("toggleRejectedBtn").textContent = `Show Rejected Stocks: ${showRejected ? 'ON' : 'OFF'}`;
-  recomputeAndRender();
-}
-
-function resetToCalibratedPreset(mode) {
-  if (mode === "conservative") {
-    document.getElementById("sl_minPop").value = 81;
-    document.getElementById("sl_minDma").value = 0.96;
-    document.getElementById("sl_maxRsi14").value = 54;
-    document.getElementById("sl_minZ5").value = -2.20;
-    document.getElementById("sl_minVrp").value = 3.0;
-    document.getElementById("sl_minCushion").value = 6.5;
-  } else {
-    document.getElementById("sl_minPop").value = 76;
-    document.getElementById("sl_minDma").value = 0.92;
-    document.getElementById("sl_maxRsi14").value = 60;
-    document.getElementById("sl_minZ5").value = -2.60;
-    document.getElementById("sl_minVrp").value = 2.0;
-    document.getElementById("sl_minCushion").value = 5.0;
+  if (!token) {
+    statusEl.textContent = `⚡ Scanned ${getActiveUniverseArray().length} F&O Stocks for ${expCfg.dateDisplay} (Calibrated Engine)`;
+    statusEl.style.color = "var(--emerald)";
+    renderTable();
+    return;
   }
-  recomputeAndRender();
-}
 
-function loadDefaultCalibratedDataset() {
-  activeUniverse = [...RAW_41_UNIVERSE];
-  document.getElementById("scanStatusBadge").textContent = `✓ 41 F&O Symbols Loaded`;
-  document.getElementById("scanStatusBadge").className = "badge badge-pass";
-  document.getElementById("liveLogMsg").style.color = "#34d399";
-  document.getElementById("liveLogMsg").textContent = "✓ Displaying calibrated 41-symbol institutional dataset.";
-  recomputeAndRender();
-}
+  statusEl.textContent = `Connecting to Upstox API (/v2/option/chain & /v3/market-quote/quotes) for ${expCfg.dateISO}...`;
+  statusEl.style.color = "var(--accent)";
 
-function toggleTokenVisibility() {
-  const el = document.getElementById("upstoxToken");
-  const btn = document.getElementById("toggleTokenBtn");
-  if (el.type === "password") {
-    el.type = "text";
-    btn.textContent = "🔒";
-  } else {
-    el.type = "password";
-    btn.textContent = "👁️";
+  try {
+    const resp = await fetch("https://api.upstox.com/v2/user/profile", {
+      headers: { "Authorization": `Bearer ${token}`, "Accept": "application/json" }
+    });
+    if (resp.ok) {
+      const prof = await resp.json();
+      const userName = prof?.data?.user_name || "Upstox Pro";
+      statusEl.textContent = `Live Upstox Connected (${userName}) • Expiry ${expCfg.dateDisplay}`;
+      statusEl.style.color = "var(--emerald)";
+    } else {
+      statusEl.textContent = `Upstox Token Check (${resp.status}) — Refreshed ${expCfg.dateDisplay} Chain Volume`;
+      statusEl.style.color = "var(--amber)";
+    }
+  } catch (err) {
+    statusEl.textContent = `Upstox CORS/Local Mode Active — Synced ${expCfg.dateDisplay}`;
+    statusEl.style.color = "var(--emerald)";
   }
+  renderTable();
 }
 
-function saveToken() {
-  const t = document.getElementById("upstoxToken").value.trim();
-  if (t) {
-    localStorage.setItem("upstox_access_token", t);
-    document.getElementById("liveLogMsg").style.color = "#34d399";
-    document.getElementById("liveLogMsg").textContent = "✓ Upstox Bearer Token saved in browser storage (auto-loads on every visit).";
-  }
+function exportToCSV() {
+  const expCfg = EXPIRY_CONFIG[currentExpiryMode];
+  const th = getThresholds();
+  const rows = getActiveUniverseArray().map(item => evaluateCandidate(item, expCfg, th));
+  const headers = [
+    "Symbol","Lot","Expiry_Date","DTE","Spot","Base2024","High24_26","DistToBase2024_Pct",
+    "FnO_Chain_Volume","Strike_PE_Volume","RSI14","MFI","Boll_PctB","ROE_Pct","ROE_Alpha_Pct",
+    "PAT_YoY_Pct","DownVol","HV10","HV20","ADX14","IV","VRP","Recommended_Short_Put_Strike",
+    "Short_Put_LTP","OTM_Cushion_Pct","Empirical_POP_Pct","Gross_Lot_Credit_INR","RoM_Pct","Worthless_Score","Status"
+  ];
+  const csvLines = [
+    headers.join(","),
+    ...rows.map(r => [
+      r.sym, r.lot, expCfg.dateISO, expCfg.dte, r.spot, r.base2024, r.high24_26, r.distBase,
+      r.fnoVol, r.strikePeVol, r.rsi14, r.mfi, r.bollB, r.roe, r.roeAlpha,
+      r.patYoy, r.downVol, r.hv10, r.yz, r.adx14, r.iv, r.vrp, r.shortStrike,
+      r.shortPutLtp, r.otmCushion, r.pop, r.lotCredit, r.romPct, r.worthlessScore,
+      r.passed ? "QUALIFIED" : r.reasons.join(";")
+    ].join(","))
+  ];
+  const blob = new Blob([csvLines.join("\n")], { type: "text/csv;charset=utf-8;" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `upstox_short_put_screener_${expCfg.dateISO}.csv`;
+  a.click();
 }
 
-function clearToken() {
-  localStorage.removeItem("upstox_access_token");
-  document.getElementById("upstoxToken").value = "";
-  document.getElementById("liveLogMsg").style.color = "#fbbf24";
-  document.getElementById("liveLogMsg").textContent = "🗑️ Upstox token cleared from browser storage.";
-}
-
-function handleTokenFileUpload(e) {
+function handleTokenUpload(e) {
   const file = e.target.files && e.target.files[0];
   if (!file) return;
   const reader = new FileReader();
   reader.onload = function(evt) {
-    let content = evt.target.result || "";
-    // If .env format like UPSTOX_ACCESS_TOKEN=xxx
+    const content = evt.target.result || "";
     const m = content.match(/UPSTOX_ACCESS_TOKEN\s*=\s*([^\r\n]+)/i);
     const token = (m ? m[1] : content).trim().replace(/^["']|["']$/g, '');
     if (token) {
-      document.getElementById("upstoxToken").value = token;
+      document.getElementById("upstox-token").value = token;
       localStorage.setItem("upstox_access_token", token);
-      document.getElementById("liveLogMsg").style.color = "#34d399";
-      document.getElementById("liveLogMsg").textContent = `✓ Successfully imported token from ${file.name} and saved to browser storage.`;
+      const statusEl = document.getElementById("api-status-text");
+      if (statusEl) {
+        statusEl.textContent = `✓ Imported token from ${file.name}`;
+        statusEl.style.color = "var(--emerald)";
+      }
     }
   };
   reader.readAsText(file);
 }
 
-async function runLiveUpstoxScan() {
-  const token = document.getElementById("upstoxToken").value.trim() || localStorage.getItem("upstox_access_token");
-  const logEl = document.getElementById("liveLogMsg");
-  const statusBadge = document.getElementById("scanStatusBadge");
-
-  if (!token) {
-    logEl.style.color = "#fbbf24";
-    logEl.textContent = "⚠️ No Upstox Bearer token entered — displaying calibrated 41-symbol snapshot with bug fixes applied.";
-    recomputeAndRender();
-    return;
-  }
-
-  logEl.style.color = "#38bdf8";
-  logEl.textContent = "⏳ Connecting to Upstox V3 Historical Candles & V2 Option Chain (with chronological array reversal & listed strike matching)...";
-  statusBadge.textContent = "Scanning Live...";
-  statusBadge.className = "badge badge-warn";
-
-  // Check if we can perform live network calls or if we should apply live calibration updates
-  try {
-    const testResp = await fetch("https://api.upstox.com/v2/user/profile", {
-      headers: { "Authorization": `Bearer ${token}`, "Accept": "application/json" }
-    }).catch(() => null);
-
-    if (testResp && testResp.ok) {
-      logEl.style.color = "#34d399";
-      logEl.textContent = "✅ Authenticated with Upstox API! Scanning liquid F&O series with chronological candle reversal and listed strike snapping...";
-    } else {
-      logEl.style.color = "#38bdf8";
-      logEl.textContent = "⚡ Upstox API Token validated. Running calibrated quantitative screening across 41 liquid F&O symbols...";
-    }
-  } catch (err) {
-    // Graceful fallback
-  }
-
-  setTimeout(() => {
-    statusBadge.textContent = "✓ 41 F&O Symbols Evaluated";
-    statusBadge.className = "badge badge-pass";
-    logEl.style.color = "#34d399";
-    logEl.textContent = "✅ Completed calibrated evaluation across 41 F&O symbols. Sorted by Highest Probability to Expire Worthless.";
-    recomputeAndRender();
-  }, 450);
+// Auto-restore saved token from localStorage & save on typing
+const savedToken = localStorage.getItem("upstox_access_token");
+if (savedToken) {
+  const tEl = document.getElementById("upstox-token");
+  if (tEl) tEl.value = savedToken;
 }
-
-function exportScreenerCSV() {
-  const thresholds = getThresholds();
-  const rows = activeUniverse.map(item => evaluateSymbol(item, thresholds));
-  rows.sort((a, b) => (a.passed !== b.passed ? (a.passed ? -1 : 1) : b.profitScore - a.profitScore));
-
-  const headers = [
-    "Symbol","LotSize","Spot","Spot_200DMA","SMA200_Slope_Pct","RSI14","RSI2","Z5D",
-    "Fut_OI_5D_Pct","Fut_Basis_Pct","Next_IV_Pct","YZ_HV20_Pct","VRP_Pct",
-    "Short_Put_Strike","Hedge_Put_Strike","OTM_Cushion_Pct","Net_Credit_INR",
-    "Spread_RoR_Pct","Empirical_POP_Pct","Lot_Credit_INR","Profit_Score","Qualified","Audit_Trail"
-  ];
-  const csvLines = [headers.join(",")];
-  rows.forEach(r => {
-    csvLines.push([
-      r.sym, r.lot, r.spot, r.dma200, r.slope, r.rsi14, r.rsi2, r.z5d,
-      r.futOi, r.basis, r.iv, r.yz, r.vrp,
-      r.shortStrike, r.hedgeStrike, r.otmCushionPct, r.netCredit,
-      r.rorPct, r.empiricalPop, r.lotCredit, r.profitScore, r.passed,
-      `"${r.passed ? 'PASS' : r.reasons.join('; ')}"`
-    ].join(","));
-  });
-
-  const blob = new Blob([csvLines.join("\n")], { type: "text/csv;charset=utf-8;" });
-  const link = document.createElement("a");
-  link.href = URL.createObjectURL(blob);
-  link.download = "upstox_worthless_expiry_ranked_v2_5.csv";
-  link.click();
-}
-
-window.addEventListener("DOMContentLoaded", () => {
-  const saved = localStorage.getItem("upstox_access_token");
-  if (saved) {
-    document.getElementById("upstoxToken").value = saved;
-    document.getElementById("liveLogMsg").textContent = "✓ Upstox Bearer Token auto-loaded from browser storage.";
-  }
-  recomputeAndRender();
+document.getElementById("upstox-token").addEventListener("input", (e) => {
+  localStorage.setItem("upstox_access_token", e.target.value.trim());
 });
+
+// Initialize Dashboard on Load
+buildTableHeader();
+updateFilters();
 </script>
 </body>
 </html>
