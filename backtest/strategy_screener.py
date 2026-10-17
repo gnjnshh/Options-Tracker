@@ -149,29 +149,36 @@ class HistoricalScreener:
         """
         candidates: List[CycleCandidate] = []
 
-        # Presets thresholds
+        # Presets thresholds (Upgraded with Falling Knife & Tail Protection)
         min_pop = 76.0
-        min_cush = 5.0
+        min_cush = 7.5
         max_rsi = 60.0
         min_vrp = 2.0
         max_base_dist = 220.0
-        min_dma = 0.92
+        min_dma = 0.95
+        max_dma = 1.10
 
         if preset == "fortress":
             min_pop = 84.0
-            min_cush = 6.5
+            min_cush = 8.0
             max_rsi = 55.0
             max_base_dist = 180.0
+            min_dma = 0.97
+            max_dma = 1.08
         elif preset == "oversold_dip":
             max_rsi = 45.0
+            min_cush = 7.5
+            min_dma = 0.95
         elif preset == "vrp_crush":
             min_vrp = 5.0
         elif preset == "relaxed":
             min_pop = 65.0
-            min_cush = 3.0
+            min_cush = 5.0
             max_rsi = 75.0
             min_vrp = 0.5
             max_base_dist = 300.0
+            min_dma = 0.92
+            max_dma = 1.25
 
         for sym, meta in self.universe.items():
             all_candles = self.provider.load_or_fetch_symbol(sym)
@@ -199,11 +206,13 @@ class HistoricalScreener:
             vrp = round(max(1.8, min(8.5, 3.2 + (50.0 - rsi14) * 0.08)), 1)
             iv_pct = round(yz_vol + vrp, 1)
 
-            # Target ~1.12 standard deviation OTM Short Put Strike snapped to listed interval
+            # Target ~1.25 standard deviation OTM Short Put Strike snapped to listed interval
+            # Enforce an absolute 8.0% cushion ceiling to prevent quiet-volatility compression
             T = max(1, cycle.dte_days) / 365.0
             sigma_yz = yz_vol / 100.0
-            raw_short_k = spot_entry * math.exp(-1.12 * sigma_yz * math.sqrt(T))
-            short_strike = max(step, snap_to_listed_strike(raw_short_k, step))
+            raw_short_k = spot_entry * math.exp(-1.25 * sigma_yz * math.sqrt(T))
+            max_strike_allowed = snap_to_listed_strike(spot_entry * 0.92, step)
+            short_strike = max(step, min(max_strike_allowed, snap_to_listed_strike(raw_short_k, step)))
 
             otm_cushion = round(((spot_entry - short_strike) / spot_entry) * 100.0, 1)
 
@@ -220,10 +229,10 @@ class HistoricalScreener:
             base_floor = self.base_floors.get(sym, spot_entry * 0.5)
             dist_base = round(((spot_entry - base_floor) / max(1.0, base_floor)) * 100.0, 1)
 
-            # Worthless Score
+            # Worthless Score (penalizes falling knife downward velocity)
             roe_alpha = float(meta.get("roe", 16.0)) - float(meta.get("secRoe", 14.0))
             worthless_score = compute_worthless_score(
-                pop=pop, vrp=vrp, dist_base=dist_base, rsi14=rsi14, roe_alpha=roe_alpha
+                pop=pop, vrp=vrp, dist_base=dist_base, rsi14=rsi14, roe_alpha=roe_alpha, z5d=z5d
             )
 
             # 5-Pillar Regime Filters
@@ -231,7 +240,7 @@ class HistoricalScreener:
             if pop < min_pop:
                 reasons.append(f"LowPOP({pop:.1f}%<{min_pop:.1f}%)")
             if otm_cushion < min_cush:
-                reasons.append(f"TightCushion({otm_cushion:.1f}%)")
+                reasons.append(f"TightCushion({otm_cushion:.1f}%<{min_cush:.1f}%)")
             if rsi14 > max_rsi:
                 reasons.append(f"OverboughtRSI14({rsi14:.1f}>{max_rsi:.1f})")
             if vrp < min_vrp:
@@ -239,9 +248,15 @@ class HistoricalScreener:
             if dist_base > max_base_dist:
                 reasons.append(f"FarFromBase(+{dist_base:.1f}%>{max_base_dist:.1f}%)")
             if dma_ratio < min_dma:
-                reasons.append(f"Below200DMA({dma_ratio:.2f}x<{min_dma:.2f}x)")
+                reasons.append(f"Stage4Downtrend({dma_ratio:.2f}x<{min_dma:.2f}x)")
+            if dma_ratio > max_dma:
+                reasons.append(f"OverextendedAboveDMA({dma_ratio:.2f}x>{max_dma:.2f}x)")
             if z5d > 1.15:
                 reasons.append(f"Blowoff(Z5D=+{z5d:.2f})")
+            if z5d < -1.15:
+                reasons.append(f"FallingKnifeWaterfall(Z5D={z5d:.2f}<-1.15)")
+            if lot_credit < 1200 or put_price < 1.50:
+                reasons.append(f"MicroCreditFriction(Credit=₹{lot_credit:.0f}<₹1200)")
 
             passed = len(reasons) == 0
 

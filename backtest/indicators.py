@@ -181,13 +181,21 @@ def compute_worthless_score(
     rsi14: float,
     roe_alpha: float,
     fno_vol: int = 150000,
+    z5d: float = 0.0,
 ) -> float:
     """
-    Computes Composite Worthless Score (0–100) exactly matching screener engine v3.0.
+    Computes Upgraded Composite Worthless Score (0–100).
+    Decouples falling prices from score inflation and penalizes negative velocity shocks.
     """
     pop_score = min(100.0, max(0.0, (pop - 65.0) * 3.4))
     vrp_score = min(100.0, max(0.0, vrp * 12.5))
-    base_score = min(100.0, max(0.0, 100.0 - (dist_base - 100.0) * 0.5 + (60.0 - rsi14) * 0.9))
+    
+    # Base score rewards distance near stable 2020 base without rewarding plunging RSI:
+    base_score = min(100.0, max(0.0, 100.0 - (dist_base - 80.0) * 0.4))
+    # Penalize active downward velocity shock (falling knife penalty):
+    if z5d < -0.5:
+        base_score *= max(0.2, 1.0 + (z5d + 0.5) * 0.4)
+        
     fund_score = min(100.0, max(0.0, 50.0 + roe_alpha * 3.0 + (fno_vol / 15000.0)))
     return round(0.38 * pop_score + 0.22 * vrp_score + 0.22 * base_score + 0.18 * fund_score, 1)
 

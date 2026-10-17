@@ -181,46 +181,83 @@ class PortfolioSimulator:
                 exit_reason = "WORTHLESS_EXPIRY"
                 exit_put_price = 0.0
                 stopped_out = False
+                early_profit_taken = False
+                exit_spread_loss = 0.0
 
-                # Stop Loss check (if enabled)
-                if stop_loss_mult is not None and len(holding_candles) > 1:
-                    stop_threshold = cand.put_premium * stop_loss_mult
-                    for h_day in holding_candles[1:-1]:
+                # Check day-by-day holding candles (including final expiry session)
+                if len(holding_candles) > 1:
+                    stop_threshold = cand.put_premium * stop_loss_mult if stop_loss_mult is not None else None
+                    for h_day in holding_candles[1:]:
                         d_spot = h_day["close"]
-                        # Approximate intraday/daily put price
-                        d_days_left = max(1, (dt.datetime.strptime(cycle.expiry_date, "%Y-%m-%d") - dt.datetime.strptime(h_day["date"], "%Y-%m-%d")).days)
-                        curr_put, _, _ = black_scholes_put_price(
-                            spot=d_spot, strike=cand.short_strike, dte_days=d_days_left, iv_pct=cand.iv_pct
-                        )
-                        if curr_put >= stop_threshold:
+                        d_days_left = max(0, (dt.datetime.strptime(cycle.expiry_date, "%Y-%m-%d") - dt.datetime.strptime(h_day["date"], "%Y-%m-%d")).days)
+
+                        if d_days_left == 0:
+                            curr_put = max(0.0, cand.short_strike - d_spot)
+                            curr_long_put = max(0.0, long_strike - d_spot) if use_spread and long_strike else 0.0
+                        else:
+                            curr_put, _, _ = black_scholes_put_price(
+                                spot=d_spot, strike=cand.short_strike, dte_days=d_days_left, iv_pct=cand.iv_pct
+                            )
+                            curr_long_put = (
+                                black_scholes_put_price(
+                                    spot=d_spot, strike=long_strike, dte_days=d_days_left, iv_pct=cand.iv_pct
+                                )[0]
+                                if use_spread and long_strike
+                                else 0.0
+                            )
+
+                        # A. Early Profit-Taking: 85% profit captured OR DTE <= 2 days with safe cushion
+                        if not use_spread and (curr_put <= cand.put_premium * 0.15 or (d_days_left <= 2 and d_spot >= cand.short_strike * 1.03)):
+                            early_profit_taken = True
+                            exit_reason = "EARLY_PROFIT_TAKE"
+                            exit_date = h_day["date"]
+                            final_spot = d_spot
+                            exit_put_price = curr_put
+                            break
+                        elif use_spread and ((curr_put - curr_long_put) <= (net_premium * 0.15) or (d_days_left <= 2 and d_spot >= cand.short_strike * 1.03)):
+                            early_profit_taken = True
+                            exit_reason = "EARLY_PROFIT_TAKE"
+                            exit_date = h_day["date"]
+                            final_spot = d_spot
+                            exit_put_price = max(0.0, curr_put - curr_long_put)
+                            break
+
+                        # B. Stop-Loss Trigger (if enabled)
+                        if stop_threshold is not None and curr_put >= stop_threshold:
                             stopped_out = True
                             exit_reason = "STOP_LOSS"
                             exit_date = h_day["date"]
                             final_spot = d_spot
                             exit_put_price = curr_put
+                            if use_spread:
+                                exit_spread_loss = max(0.0, curr_put - curr_long_put)
                             break
 
                 # 3. Calculate PnL & Settlement
                 friction = 120.0  # ₹120 round-trip taxes/charges per lot
 
                 if stopped_out:
-                    # Loss = (entry_premium - exit_put_price) * lot - friction
-                    pnl = (cand.put_premium - exit_put_price) * cand.lot - friction
+                    if use_spread:
+                        pnl = (net_credit - exit_spread_loss * cand.lot) - friction
+                    else:
+                        pnl = (cand.put_premium - exit_put_price) * cand.lot - friction
+                elif early_profit_taken:
+                    if use_spread:
+                        pnl = (net_credit - exit_put_price * cand.lot) - friction
+                    else:
+                        pnl = (cand.put_premium - exit_put_price) * cand.lot - friction
                 elif use_spread:
                     # Spread settlement at expiry
                     if final_spot >= cand.short_strike:
-                        # Both options expire worthless -> retain 100% net credit
                         exit_reason = "WORTHLESS_EXPIRY"
                         exit_put_price = 0.0
                         pnl = net_credit - friction
                     elif final_spot <= long_strike:
-                        # Max loss on spread
                         exit_reason = "MAX_SPREAD_LOSS"
                         spread_loss = (cand.short_strike - long_strike) * cand.lot
                         pnl = (net_credit - spread_loss) - friction
                         exit_put_price = cand.short_strike - final_spot
                     else:
-                        # Short ITM, Long OTM
                         short_intrinsic = (cand.short_strike - final_spot) * cand.lot
                         pnl = (net_credit - short_intrinsic) - friction
                         exit_reason = "PARTIAL_ITM_LOSS"

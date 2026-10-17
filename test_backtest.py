@@ -230,7 +230,58 @@ def test_live_option_chain_and_quote_integration():
         scr.CORE_41_RAW[0], th, expiry_mode="next_month", chain_data=mock_chain_zero_ltp, candles=candles
     )
     assert cand_zero_ltp.short_put_ltp == 5.40
+
+    # 7. Test fallback when LTP and close_price are 0, but ask_price is selling at 1.55 (PIDILITIND fix)
+    mock_chain_ask_price = [
+        {
+            "strike_price": 1400.0,
+            "underlying_spot_price": 1502.8,
+            "call_options": {"market_data": {"volume": 0, "oi": 1000}},
+            "put_options": {
+                "market_data": {"volume": 0, "oi": 15000, "ltp": 0.0, "close_price": 0.0, "ask_price": 1.55, "bid_price": 1.50},
+                "option_greeks": {"iv": 28.0, "delta": -0.05, "pop": 94.5},
+            },
+        }
+    ]
+    pidi_item = [x for x in scr.EXTRA_9_FOR_TOP50 if x["sym"] == "PIDILITIND"][0]
+    cand_ask = scr.evaluate_candidate(
+        pidi_item, th, expiry_mode="current_month", chain_data=mock_chain_ask_price
+    )
+    assert cand_ask.short_put_ltp == 1.55
+    assert cand_ask.short_strike == 1400.0
+    assert cand_ask.lot == 500
+
     print("test_live_option_chain_and_quote_integration: PASS")
+
+
+def test_official_lot_sizes_and_universe_mapping():
+    from backtest.upstox_data_provider import TOP_50_UNIVERSE, ALL_220_UNIVERSE_KEYS
+    import upstox_fno_option_screener as scr
+
+    # 1. Official NSE lot sizes in TOP_50_UNIVERSE
+    assert TOP_50_UNIVERSE["PIDILITIND"]["lot"] == 500
+    assert TOP_50_UNIVERSE["BEL"]["lot"] == 1425
+    assert TOP_50_UNIVERSE["TRENT"]["lot"] == 225
+    assert TOP_50_UNIVERSE["DLF"]["lot"] == 950
+
+    # 2. Key resolution for LUPIN in ALL_220_UNIVERSE_KEYS
+    assert "LUPIN" in ALL_220_UNIVERSE_KEYS
+    assert ALL_220_UNIVERSE_KEYS["LUPIN"] == "NSE_EQ|INE326A01037"
+    assert ALL_220_UNIVERSE_KEYS["PIDILITIND"] == "NSE_EQ|INE318A01026"
+
+    # 3. LUPIN spot and lot in full 220 universe
+    uni = scr.build_full_220_universe()
+    assert len(uni) == 220
+    lupin = [x for x in uni if x["sym"] == "LUPIN"][0]
+    assert lupin["lot"] == 425
+    assert lupin["spot"] == 1961.6
+    assert lupin["z5d"] == -0.92
+
+    # 4. PIDILITIND lot in full 220 universe
+    pidi = [x for x in uni if x["sym"] == "PIDILITIND"][0]
+    assert pidi["lot"] == 500
+    assert pidi["spot"] == 1502.8
+    print("test_official_lot_sizes_and_universe_mapping: PASS")
 
 
 def test_data_provider_caching_and_fallback():
@@ -257,6 +308,7 @@ if __name__ == "__main__":
     test_additional_indicators()
     test_screener_candle_evaluation()
     test_live_option_chain_and_quote_integration()
+    test_official_lot_sizes_and_universe_mapping()
     test_data_provider_caching_and_fallback()
     test_simulation_runs()
     print("\nALL UNIT TESTS PASSED SUCCESSFULLY!")
