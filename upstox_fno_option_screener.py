@@ -20,6 +20,9 @@ Core Calibrated Pillars & Bug Fixes:
    - Pillar III: RSI(14) <= 60 and -2.60 <= Z5D <= +1.10 (Eliminates parabolic blowoffs & active waterfalls).
    - Pillar IV: Futures Short Buildup Guard (Rejects 5D Fut OI surge > +3% on down price).
    - Pillar V: True VRP (IV - YZ_HV20) >= +2.0%.
+6. NSE Monthly Expiry Resolver & Upstox Option Chain Volume Extractor:
+   - resolve_nse_expiry_details: Dynamically calculates ISO date, formatted series, and DTE.
+   - extract_upstox_chain_volume: Extracts total chain volume, short put strike volume, and OI.
 
 Usage:
   1. Offline Verification & Demo Simulation (Instant 41-symbol scan):
@@ -145,6 +148,56 @@ class EvaluatedCandidate:
     profit_score: float
     passed: bool
     reasons: List[str]
+    total_chain_vol: int = 0
+    strike_pe_vol: int = 0
+    strike_pe_oi: int = 0
+    expiry_iso: str = ""
+    expiry_formatted: str = ""
+    dte: int = 32
+
+
+# ---------------------------------------------------------------------------
+# Key Additions: NSE Expiry Resolver & Upstox Option Chain Volume Extractor
+# ---------------------------------------------------------------------------
+def resolve_nse_expiry_details(expiry_mode: str = "next_month") -> Tuple[str, str, int]:
+    """
+    Returns (expiry_iso, formatted_month_and_date, dte_days) for NSE Monthly F&O Expiry.
+    """
+    today = dt.date.today()
+    month_offset = 0 if expiry_mode == "current_month" else (1 if expiry_mode == "next_month" else 2)
+    year = today.year + (today.month + month_offset - 1) // 12
+    month = (today.month + month_offset - 1) % 12 + 1
+
+    # Find last Thursday of target month
+    next_m_year = year + (month // 12)
+    next_m = (month % 12) + 1
+    last_day = dt.date(next_m_year, next_m, 1) - dt.timedelta(days=1)
+    offset = (last_day.weekday() - 3) % 7  # Thursday is weekday 3
+    expiry_dt = last_day - dt.timedelta(days=offset)
+
+    dte = max(1, (expiry_dt - today).days)
+    formatted = expiry_dt.strftime("%b %Y Series — %a, %d %b %Y")
+    return expiry_dt.strftime("%Y-%m-%d"), formatted, dte
+
+
+def extract_upstox_chain_volume(chain_data: List[Dict[str, Any]], short_strike: float) -> Tuple[int, int, int]:
+    """
+    Extracts (total_chain_volume, target_put_strike_volume, target_put_strike_oi)
+    from Upstox GET /v2/option/chain response payload.
+    """
+    total_vol = 0
+    strike_pe_vol = 0
+    strike_pe_oi = 0
+    for row in chain_data:
+        ce_md = (row.get("call_options") or {}).get("market_data") or {}
+        pe_md = (row.get("put_options") or {}).get("market_data") or {}
+        c_vol = int(ce_md.get("volume") or 0)
+        p_vol = int(pe_md.get("volume") or 0)
+        total_vol += (c_vol + p_vol)
+        if abs(float(row.get("strike_price") or 0.0) - short_strike) < 1e-4:
+            strike_pe_vol = p_vol
+            strike_pe_oi = int(pe_md.get("oi") or 0)
+    return total_vol, strike_pe_vol, strike_pe_oi
 
 
 def norm_cdf(x: float) -> float:
@@ -161,12 +214,14 @@ def evaluate_symbol(
     item: Dict[str, Any],
     th: ScreeningThresholds,
     expiry_mode: str = "next_month",
+    chain_data: Optional[List[Dict[str, Any]]] = None,
 ) -> EvaluatedCandidate:
     """
     Evaluates a candidate using the exact calibrated mathematical model from v2.5.
+    Dynamically computes DTE and expiry series via resolve_nse_expiry_details.
     """
-    t_days = 32.0 if expiry_mode == "next_month" else 11.0
-    T = t_days / 365.0
+    expiry_iso, expiry_formatted, dte_days = resolve_nse_expiry_details(expiry_mode)
+    T = dte_days / 365.0
     r = 0.068  # 91D T-bill risk-free proxy
     sigma_yz = item["yz"] / 100.0
     sigma_iv = item["iv"] / 100.0
@@ -198,6 +253,14 @@ def evaluate_symbol(
     otm_cushion_pct = round(((item["spot"] - short_k) / item["spot"]) * 100.0, 1)
     vrp = round(item["iv"] - item["yz"], 1)
     lot_credit = int(round(net_credit * item["lot"]))
+
+    # Extract or estimate chain volume and target strike OI
+    if chain_data:
+        total_chain_vol, strike_pe_vol, strike_pe_oi = extract_upstox_chain_volume(chain_data, short_k)
+    else:
+        total_chain_vol = int(item.get("chain_vol", item["lot"] * 480))
+        strike_pe_vol = int(total_chain_vol * 0.14)
+        strike_pe_oi = int(total_chain_vol * 0.88)
 
     # Calibrated 5-Pillar filtering
     reasons: List[str] = []
@@ -255,6 +318,12 @@ def evaluate_symbol(
         profit_score=profit_score,
         passed=passed,
         reasons=reasons,
+        total_chain_vol=total_chain_vol,
+        strike_pe_vol=strike_pe_vol,
+        strike_pe_oi=strike_pe_oi,
+        expiry_iso=expiry_iso,
+        expiry_formatted=expiry_formatted,
+        dte=dte_days,
     )
 
 
@@ -390,15 +459,18 @@ def print_terminal_screener_report(
     avg_ror = sum(r.ror_pct for r in ref_set) / len(ref_set)
     avg_vrp = sum(r.vrp for r in ref_set) / len(ref_set)
 
-    print("\n" + "=" * 142)
+    series_info = f"{evaluated[0].expiry_formatted} ({evaluated[0].dte} DTE)" if evaluated else "Next Month Series"
+
+    print("\n" + "=" * 144)
     print(" UPSTOX F&O QUANT SCREENER v2.5 — WORTHLESS EXPIRY & VRP HARVESTER (CALIBRATED ENGINE)")
+    print(f" Target Expiry: {series_info}")
     print(" Objective: Maximum Empirical Probability of Expiring Worthless (POP%) + Positive Volatility Risk Premium")
-    print("=" * 142)
+    print("=" * 144)
     print(f" Qualified Candidates: {len(qualified)} / {len(evaluated)} ({len(qualified)/len(evaluated)*100:.1f}% pass rate)")
     print(f" KPI Averages (Qualified): POP: {avg_pop:.1f}% | Cushion: {avg_cush:.1f}% | Spread RoR: {avg_ror:.1f}% | True VRP: +{avg_vrp:.1f}%")
-    print("-" * 142)
+    print("-" * 144)
     print(f"{'RANK & SYMBOL':<14} {'SPOT (INR)':<10} {'200-DMA':<8} {'RSI14/Z5D':<13} {'FUT OI':<9} {'IV/YZ':<12} {'VRP':<7} {'RECOMMENDED BULL PUT SPREAD':<30} {'RoR%':<7} {'POP%':<7} {'CREDIT':<9} {'SCORE':<6} {'STATUS'}")
-    print("-" * 142)
+    print("-" * 144)
 
     for idx, r in enumerate(display_list, 1):
         status = "QUALIFIED" if r.passed else "REJECTED"
@@ -417,14 +489,14 @@ def print_terminal_screener_report(
 
         print(f"{sym_col:<14} {spot_col:<10} {dma_col:<8} {rsi_z_col:<13} {fut_col:<9} {iv_yz_col:<12} {vrp_col:<7} {spread_col:<30} {ror_col:<7} {pop_col:<7} {credit_col:<9} {score_col:<6} {status}")
         
-        # Thesis / Reason row
+        # Thesis / Reason row with volume & OI details
         if r.passed:
-            thesis = f"   [THESIS] Strike {r.short_strike:.0f} PE sits -{r.otm_cushion_pct:.1f}% below spot (at/below Put Wall {r.put_wall_strike:.0f}) with {r.empirical_pop:.1f}% Empirical POP and +{r.vrp:.1f}% VRP."
+            thesis = f"   [THESIS] Strike {r.short_strike:.0f} PE sits -{r.otm_cushion_pct:.1f}% below spot (at/below Put Wall {r.put_wall_strike:.0f}) with {r.empirical_pop:.1f}% Empirical POP, +{r.vrp:.1f}% VRP, and {r.strike_pe_oi:,} Put OI."
         else:
             thesis = f"   [FILTERED] {' • '.join(r.reasons)}"
         print(thesis)
 
-    print("-" * 142)
+    print("-" * 144)
 
 
 def export_candidates_csv(evaluated: List[EvaluatedCandidate], filepath: str) -> None:
@@ -433,7 +505,8 @@ def export_candidates_csv(evaluated: List[EvaluatedCandidate], filepath: str) ->
         "Rank", "Symbol", "LotSize", "Spot", "Spot_200DMA", "SMA200_Slope_Pct", "RSI14", "RSI2", "Z5D",
         "Fut_OI_5D_Pct", "Fut_Basis_Pct", "Next_IV_Pct", "YZ_HV20_Pct", "VRP_Pct",
         "Short_Put_Strike", "Hedge_Put_Strike", "OTM_Cushion_Pct", "Net_Credit_INR",
-        "Spread_RoR_Pct", "Empirical_POP_Pct", "Lot_Credit_INR", "Profit_Score", "Passed", "Reasons"
+        "Spread_RoR_Pct", "Empirical_POP_Pct", "Lot_Credit_INR", "Profit_Score", "Passed", "Reasons",
+        "Total_Chain_Volume", "Strike_PE_Volume", "Strike_PE_OI", "Expiry_Series", "DTE"
     ]
     with open(filepath, "w", newline="", encoding="utf-8") as f:
         writer = csv.writer(f)
@@ -444,7 +517,8 @@ def export_candidates_csv(evaluated: List[EvaluatedCandidate], filepath: str) ->
                 r.fut_oi, r.basis, r.iv, r.yz, r.vrp,
                 r.short_strike, r.hedge_strike, r.otm_cushion_pct, r.net_credit,
                 r.ror_pct, r.empirical_pop, r.lot_credit, r.profit_score, r.passed,
-                "PASS" if r.passed else "; ".join(r.reasons)
+                "PASS" if r.passed else "; ".join(r.reasons),
+                r.total_chain_vol, r.strike_pe_vol, r.strike_pe_oi, r.expiry_formatted, r.dte
             ])
     print(f"\nSaved full quantitative screener report to: {filepath}")
 
@@ -480,14 +554,15 @@ def main() -> None:
         min_cushion=args.min_cushion,
     )
 
+    expiry_iso, expiry_fmt, dte = resolve_nse_expiry_details(args.expiry)
     token = discover_upstox_token(args.token)
 
     if args.demo or not token:
         if not token and not args.demo:
             print("Note: No Upstox API token found in environment, .env, or Desktop API file.")
-            print("Running in calibrated simulation mode across 41 liquid F&O symbols...\n")
+            print(f"Running in calibrated simulation mode for {expiry_fmt} ({dte} DTE)...\n")
         else:
-            print("Running in calibrated verification mode across 41 liquid F&O symbols...\n")
+            print(f"Running in calibrated verification mode for {expiry_fmt} ({dte} DTE)...\n")
 
         evaluated = [evaluate_symbol(item, th, args.expiry) for item in RAW_41_UNIVERSE]
         print_terminal_screener_report(evaluated, show_rejected=args.show_rejected, sort_mode=args.sort)
@@ -495,7 +570,7 @@ def main() -> None:
         return
 
     # Live Mode
-    print(f"Authenticated with Upstox API token. Target Expiry: {args.expiry}")
+    print(f"Authenticated with Upstox API token. Target Expiry: {expiry_fmt} (ISO: {expiry_iso}, {dte} DTE)")
     print("Evaluating liquid F&O universe with chronological candle reversal and listed strike snapping...\n")
 
     client = UpstoxClient(token)
