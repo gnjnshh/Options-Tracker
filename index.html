@@ -26,39 +26,42 @@
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       background: var(--bg);
       color: var(--text);
-      font-size: 13px;
-      line-height: 1.45;
-      padding: 18px;
+      font-size: 12px;
+      line-height: 1.4;
+      padding: 10px 12px;
+      margin: 0;
+      width: 100%;
+      overflow-x: hidden;
     }
-    /* Top Header & Oversized Scan Live Button */
+    /* Top Header & Scan Live Button */
     .top-bar {
       display: flex;
       flex-wrap: wrap;
       justify-content: space-between;
       align-items: center;
-      gap: 16px;
+      gap: 10px;
       background: linear-gradient(135deg, #0e172a 0%, #111f38 100%);
       border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 16px 20px;
-      margin-bottom: 14px;
+      border-radius: 10px;
+      padding: 10px 14px;
+      margin-bottom: 8px;
     }
     .brand-title {
-      font-size: 20px;
+      font-size: 16px;
       font-weight: 800;
       letter-spacing: -0.3px;
       color: #fff;
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
       flex-wrap: wrap;
     }
     .badge-strategy {
       background: var(--emerald-bg);
       color: var(--emerald);
       border: 1px solid rgba(16,185,129,0.4);
-      font-size: 11px;
-      padding: 3px 9px;
+      font-size: 10px;
+      padding: 2px 7px;
       border-radius: 999px;
       font-weight: 700;
     }
@@ -66,55 +69,55 @@
       background: rgba(56, 189, 248, 0.12);
       border: 1px solid rgba(56, 189, 248, 0.4);
       color: var(--accent);
-      padding: 4px 10px;
-      border-radius: 6px;
-      font-size: 12px;
+      padding: 3px 8px;
+      border-radius: 5px;
+      font-size: 11px;
       font-weight: 700;
     }
     .subtitle {
       color: var(--muted);
-      font-size: 12px;
-      margin-top: 4px;
+      font-size: 11px;
+      margin-top: 2px;
     }
     .scan-cta-group {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 8px;
       flex-wrap: wrap;
     }
     .token-input {
       background: #070c18;
       border: 1px solid var(--border);
       color: var(--text);
-      padding: 10px 12px;
-      border-radius: 8px;
-      font-size: 12px;
-      width: 230px;
+      padding: 7px 10px;
+      border-radius: 6px;
+      font-size: 11px;
+      width: 210px;
     }
     .btn-scan-live {
       background: linear-gradient(135deg, #10b981 0%, #059669 100%);
       color: #04130d;
       font-weight: 800;
-      font-size: 15px;
-      padding: 13px 26px;
-      border-radius: 10px;
-      border: 2px solid #34d399;
+      font-size: 13px;
+      padding: 8px 18px;
+      border-radius: 8px;
+      border: 1.5px solid #34d399;
       cursor: pointer;
       display: inline-flex;
       align-items: center;
-      gap: 10px;
-      box-shadow: 0 0 22px rgba(16, 185, 129, 0.35);
+      gap: 8px;
+      box-shadow: 0 0 16px rgba(16, 185, 129, 0.35);
       transition: all 0.18s ease;
-      letter-spacing: 0.3px;
+      letter-spacing: 0.2px;
     }
     .btn-scan-live:hover {
       transform: translateY(-1px) scale(1.02);
-      box-shadow: 0 0 30px rgba(16, 185, 129, 0.55);
+      box-shadow: 0 0 24px rgba(16, 185, 129, 0.55);
       background: linear-gradient(135deg, #34d399 0%, #10b981 100%);
     }
     .pulse-dot {
-      width: 10px;
-      height: 10px;
+      width: 8px;
+      height: 8px;
       background: #04130d;
       border-radius: 50%;
       animation: pulse 1.6s infinite;
@@ -128,23 +131,23 @@
     /* Universe & Expiry Control Strip */
     .control-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
-      gap: 12px;
-      margin-bottom: 12px;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 8px;
+      margin-bottom: 8px;
     }
     .card {
       background: var(--panel);
       border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 12px 14px;
+      border-radius: 8px;
+      padding: 8px 11px;
     }
     .card-label {
-      font-size: 11px;
+      font-size: 10.5px;
       text-transform: uppercase;
-      letter-spacing: 0.6px;
+      letter-spacing: 0.5px;
       color: var(--muted);
       font-weight: 700;
-      margin-bottom: 8px;
+      margin-bottom: 6px;
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -152,15 +155,15 @@
     .btn-group {
       display: flex;
       flex-wrap: wrap;
-      gap: 6px;
+      gap: 5px;
     }
     .pill-btn {
       background: var(--panel-alt);
       color: var(--text);
       border: 1px solid var(--border);
-      padding: 6px 11px;
-      border-radius: 7px;
-      font-size: 12px;
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 11px;
       font-weight: 600;
       cursor: pointer;
       transition: all 0.15s;
@@ -179,17 +182,17 @@
     .presets-bar {
       background: var(--panel);
       border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 11px 14px;
-      margin-bottom: 12px;
+      border-radius: 8px;
+      padding: 6px 11px;
+      margin-bottom: 8px;
     }
     .preset-btn {
       background: #131d33;
       color: #cbd5e1;
       border: 1px solid #263859;
-      padding: 6px 11px;
-      border-radius: 6px;
-      font-size: 11.5px;
+      padding: 4px 8px;
+      border-radius: 5px;
+      font-size: 10.5px;
       font-weight: 600;
       cursor: pointer;
     }
@@ -202,20 +205,20 @@
     /* Sliders Row */
     .sliders-bar {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(155px, 1fr));
-      gap: 10px;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 8px;
       background: var(--panel);
       border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 11px 14px;
-      margin-bottom: 12px;
+      border-radius: 8px;
+      padding: 6px 11px;
+      margin-bottom: 8px;
     }
     .slider-item label {
       display: flex;
       justify-content: space-between;
-      font-size: 11px;
+      font-size: 10px;
       color: var(--muted);
-      margin-bottom: 4px;
+      margin-bottom: 2px;
       font-weight: 600;
     }
     .slider-item label span { color: var(--accent); font-weight: 700; }
@@ -224,19 +227,19 @@
     /* KPI Summary Cards */
     .kpi-row {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(175px, 1fr));
-      gap: 10px;
-      margin-bottom: 12px;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 8px;
+      margin-bottom: 8px;
     }
     .kpi-card {
       background: var(--panel);
       border: 1px solid var(--border);
-      border-radius: 9px;
-      padding: 10px 13px;
+      border-radius: 8px;
+      padding: 6px 10px;
     }
-    .kpi-title { font-size: 11px; color: var(--muted); font-weight: 600; }
-    .kpi-val { font-size: 18px; font-weight: 800; color: #fff; margin-top: 2px; }
-    .kpi-sub { font-size: 11px; color: var(--emerald); margin-top: 2px; }
+    .kpi-title { font-size: 10px; color: var(--muted); font-weight: 600; }
+    .kpi-val { font-size: 15px; font-weight: 800; color: #fff; margin-top: 1px; }
+    .kpi-sub { font-size: 9.5px; color: var(--emerald); margin-top: 1px; }
 
     /* Dedicated Quick Sort Toolbar Near Table */
     .table-sort-bar {
@@ -244,33 +247,33 @@
       flex-wrap: wrap;
       justify-content: space-between;
       align-items: center;
-      gap: 10px;
+      gap: 6px;
       background: #10192d;
       border: 1px solid var(--border);
       border-bottom: none;
-      border-radius: 10px 10px 0 0;
-      padding: 10px 14px;
+      border-radius: 8px 8px 0 0;
+      padding: 6px 10px;
     }
     .sort-left {
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 5px;
       flex-wrap: wrap;
     }
     .sort-label {
-      font-size: 11.5px;
+      font-size: 10.5px;
       font-weight: 700;
       color: var(--accent);
       text-transform: uppercase;
-      margin-right: 4px;
+      margin-right: 2px;
     }
     .sort-chip {
       background: #091020;
       color: var(--muted);
       border: 1px solid var(--border);
-      padding: 5px 10px;
-      border-radius: 6px;
-      font-size: 11.5px;
+      padding: 3px 7px;
+      border-radius: 5px;
+      font-size: 10.5px;
       font-weight: 600;
       cursor: pointer;
     }
@@ -283,10 +286,10 @@
       background: #070b14;
       border: 1px solid var(--border);
       color: #fff;
-      padding: 5px 10px;
-      border-radius: 6px;
-      font-size: 12px;
-      width: 180px;
+      padding: 4px 8px;
+      border-radius: 5px;
+      font-size: 11px;
+      width: 150px;
     }
 
     /* Main Table & Sticky Headers with (i) Hover Tooltips */
@@ -294,13 +297,17 @@
       overflow-x: auto;
       background: var(--panel);
       border: 1px solid var(--border);
-      border-radius: 0 0 10px 10px;
-      max-height: 680px;
+      border-radius: 0 0 8px 8px;
+      max-height: calc(100vh - 355px);
+      min-height: 480px;
+      position: relative;
     }
     table {
       width: 100%;
-      border-collapse: collapse;
-      min-width: 1780px;
+      border-collapse: separate;
+      border-spacing: 0;
+      min-width: 0;
+      table-layout: auto;
     }
     thead th {
       position: sticky;
@@ -308,11 +315,11 @@
       z-index: 20;
       background: #0b1222;
       color: #cbd5e1;
-      font-size: 11px;
+      font-size: 10px;
       font-weight: 700;
       text-transform: uppercase;
-      letter-spacing: 0.3px;
-      padding: 10px 8px;
+      letter-spacing: 0.2px;
+      padding: 6px 4px;
       text-align: left;
       border-bottom: 2px solid var(--border);
       white-space: nowrap;
@@ -321,7 +328,7 @@
     thead th .th-inner {
       display: inline-flex;
       align-items: center;
-      gap: 5px;
+      gap: 3px;
       cursor: pointer;
     }
     thead th .th-inner:hover { color: var(--accent); }
@@ -331,13 +338,13 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      width: 15px;
-      height: 15px;
+      width: 12px;
+      height: 12px;
       border-radius: 50%;
       background: rgba(56, 189, 248, 0.16);
       border: 1px solid rgba(56, 189, 248, 0.45);
       color: var(--accent);
-      font-size: 10px;
+      font-size: 8.5px;
       font-weight: 800;
       font-style: normal;
       cursor: help;
@@ -352,14 +359,14 @@
     #global-tooltip {
       position: fixed;
       z-index: 9999;
-      max-width: 310px;
+      max-width: 290px;
       background: #070d19;
       color: #f1f5f9;
       border: 1px solid var(--accent);
       border-radius: 8px;
-      padding: 10px 12px;
-      font-size: 11.5px;
-      line-height: 1.45;
+      padding: 8px 11px;
+      font-size: 11px;
+      line-height: 1.4;
       box-shadow: 0 10px 25px rgba(0,0,0,0.75);
       pointer-events: none;
       display: none;
@@ -367,67 +374,101 @@
     #global-tooltip .tt-title {
       font-weight: 800;
       color: var(--accent);
-      margin-bottom: 4px;
-      font-size: 12px;
+      margin-bottom: 3px;
+      font-size: 11.5px;
     }
     #global-tooltip .tt-ideal {
-      margin-top: 5px;
-      padding-top: 5px;
+      margin-top: 4px;
+      padding-top: 4px;
       border-top: 1px dashed #1e2d4a;
       color: var(--emerald);
       font-weight: 600;
     }
 
+    /* Pinned Sticky Status Column - Always in view without horizontal scrolling */
+    thead th.col-status {
+      position: sticky;
+      right: 0;
+      top: 0;
+      z-index: 30;
+      background: #0b1222;
+      box-shadow: -4px 0 8px rgba(0, 0, 0, 0.45);
+      text-align: center;
+      min-width: 82px;
+      border-left: 1px solid var(--border);
+    }
+    tbody td.col-status {
+      position: sticky;
+      right: 0;
+      z-index: 15;
+      background: #0e1525;
+      box-shadow: -4px 0 8px rgba(0, 0, 0, 0.45);
+      text-align: center;
+      min-width: 82px;
+      border-left: 1px solid var(--border);
+    }
+    tbody tr:hover td.col-status {
+      background: #141f36;
+    }
+
     tbody tr {
-      border-bottom: 1px solid rgba(30, 45, 74, 0.65);
+      border-bottom: 1px solid rgba(30, 45, 74, 0.55);
       transition: background 0.12s;
     }
     tbody tr:hover { background: rgba(56, 189, 248, 0.05); }
     td {
-      padding: 9px 8px;
+      padding: 4px 3px;
       vertical-align: middle;
       white-space: nowrap;
-      font-size: 12px;
+      font-size: 11px;
+      border-bottom: 1px solid rgba(30, 45, 74, 0.5);
     }
-    .sym-cell { font-weight: 800; color: #fff; font-size: 12.5px; }
-    .sub-muted { font-size: 10.5px; color: var(--muted); display: block; }
+    .sym-cell { font-weight: 800; color: #fff; font-size: 11px; }
+    .sub-muted { font-size: 9.5px; color: var(--muted); display: block; line-height: 1.15; margin-top: 1px; }
     .range-bar-wrap {
-      width: 115px;
-      height: 6px;
+      width: 50px;
+      height: 4px;
       background: #1e293b;
-      border-radius: 4px;
+      border-radius: 2px;
       overflow: hidden;
-      margin: 3px 0;
+      margin: 2px 0;
       position: relative;
     }
     .range-bar-fill {
       height: 100%;
       background: linear-gradient(90deg, #10b981, #38bdf8);
-      border-radius: 4px;
+      border-radius: 2px;
     }
     .badge-pass {
       background: var(--emerald-bg);
       color: var(--emerald);
       border: 1px solid rgba(16,185,129,0.35);
-      padding: 3px 7px;
-      border-radius: 5px;
-      font-size: 10.5px;
+      padding: 2px 5px;
+      border-radius: 4px;
+      font-size: 9.5px;
       font-weight: 700;
+      display: inline-block;
     }
     .badge-fail {
       background: var(--rose-bg);
       color: var(--rose);
       border: 1px solid rgba(244,63,94,0.35);
-      padding: 3px 7px;
-      border-radius: 5px;
-      font-size: 10.5px;
+      padding: 2px 5px;
+      border-radius: 4px;
+      font-size: 9px;
       font-weight: 700;
+      display: inline-block;
+      max-width: 90px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
     .short-put-box {
-      background: rgba(16, 185, 129, 0.1);
-      border: 1px solid rgba(16, 185, 129, 0.35);
-      border-radius: 6px;
-      padding: 4px 8px;
+      background: rgba(16, 185, 129, 0.08);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      border-radius: 4px;
+      padding: 2px 5px;
+      display: inline-block;
     }
     .pos { color: var(--emerald); font-weight: 700; }
     .warn { color: var(--amber); font-weight: 700; }
@@ -585,19 +626,19 @@
   <!-- Dedicated Quick Sort Toolbar Directly Above the Table -->
   <div class="table-sort-bar">
     <div class="sort-left">
-      <span class="sort-label">⇅ Sort Table By:</span>
-      <button class="sort-chip active" data-sort="worthlessScore" onclick="setSort('worthlessScore', this)">Worthless Score</button>
-      <button class="sort-chip" data-sort="fnoVol" onclick="setSort('fnoVol', this)">🔥 F&amp;O Chain Volume</button>
-      <button class="sort-chip" data-sort="pop" onclick="setSort('pop', this)">Empirical POP %</button>
-      <button class="sort-chip" data-sort="lotCredit" onclick="setSort('lotCredit', this)">Lot Credit (₹)</button>
-      <button class="sort-chip" data-sort="vrp" onclick="setSort('vrp', this)">IV vs HV20 (VRP)</button>
-      <button class="sort-chip" data-sort="distBase" onclick="setSort('distBase', this)">Dist to 2024 Base (Low→High)</button>
-      <button class="sort-chip" data-sort="roeAlpha" onclick="setSort('roeAlpha', this)">ROE vs Sector</button>
-      <button class="sort-chip" data-sort="rsi14" onclick="setSort('rsi14', this)">RSI(14) (Low→High)</button>
+      <span class="sort-label">⇅ Sort:</span>
+      <button class="sort-chip active" data-sort="worthlessScore" onclick="setSort('worthlessScore', this)">Score</button>
+      <button class="sort-chip" data-sort="fnoVol" onclick="setSort('fnoVol', this)">🔥 F&amp;O Vol</button>
+      <button class="sort-chip" data-sort="pop" onclick="setSort('pop', this)">POP %</button>
+      <button class="sort-chip" data-sort="lotCredit" onclick="setSort('lotCredit', this)">Credit (₹)</button>
+      <button class="sort-chip" data-sort="vrp" onclick="setSort('vrp', this)">VRP (IV/HV)</button>
+      <button class="sort-chip" data-sort="distBase" onclick="setSort('distBase', this)">Base Dist</button>
+      <button class="sort-chip" data-sort="roeAlpha" onclick="setSort('roeAlpha', this)">ROE Alpha</button>
+      <button class="sort-chip" data-sort="rsi14" onclick="setSort('rsi14', this)">RSI(14)</button>
       <button class="sort-chip" onclick="toggleSortDirection()" id="sort-dir-btn" title="Toggle Ascending/Descending">DESC ↓</button>
     </div>
     <div>
-      <input type="text" id="sym-search" class="search-box" placeholder="🔍 Filter symbol (e.g. SBIN)..." oninput="renderTable()" />
+      <input type="text" id="sym-search" class="search-box" placeholder="🔍 Filter symbol..." oninput="renderTable()" />
     </div>
   </div>
 
@@ -620,7 +661,7 @@
 const COLUMNS = [
   {
     key: "sym",
-    label: "Symbol & Lot",
+    label: "Symbol / Lot",
     ttTitle: "NSE F&O Symbol & Regulated Lot Size",
     ttDesc: "Underlying NSE equity derivative ticker and current NSE exchange lot multiplier used to compute total gross premium per lot.",
     ttIdeal: "Liquid large-cap & mid-cap F&O compounders."
@@ -634,28 +675,28 @@ const COLUMNS = [
   },
   {
     key: "range24_26",
-    label: "2024–2026 Multi-Year Range & Base",
+    label: "2024–26 Base",
     ttTitle: "2024–2026 Structural Price Range & Institutional Base",
     ttDesc: "Shows the 3-year structural floor (2024 multi-year accumulation base) to 2024–2026 peak range and where current Spot sits within that band.",
     ttIdeal: "Lower-to-mid percentile of range with strong 2024 institutional floor."
   },
   {
     key: "distBase",
-    label: "Dist to 2024 Base",
+    label: "Base Dist",
     ttTitle: "Distance Above 2024 Structural Base (%)",
     ttDesc: "Percentage cushion between current Spot and the 2024 multi-year institutional accumulation floor: ((Spot - Base2024) / Base2024) × 100.",
     ttIdeal: "+8% to +45% above 2024 base (avoids overextended parabolic tops)."
   },
   {
     key: "fnoVol",
-    label: "F&O Chain Vol",
+    label: "F&O Vol",
     ttTitle: "Upstox F&O Option Chain & Short Strike Volume",
     ttDesc: "Total daily F&O Option Chain contract volume (Σ Call Vol + Put Vol from Upstox /v2/option/chain) plus specific volume & OI at the recommended Short Put strike.",
     ttIdeal: "High chain volume (>75k contracts) ensures tight bid-ask spreads & zero slippage."
   },
   {
     key: "rsiMfi",
-    label: "RSI(14) / MFI",
+    label: "RSI / MFI",
     ttTitle: "14-Day Wilder RSI & Volume-Weighted Money Flow Index",
     ttDesc: "Momentum oscillator pair computed on chronological Upstox V3 daily candles. Measures price exhaustion vs institutional money flow.",
     ttIdeal: "RSI(14) between 35 and 58; MFI > 35 (healthy pullback, no panic liquidation)."
@@ -669,14 +710,14 @@ const COLUMNS = [
   },
   {
     key: "roeAlpha",
-    label: "ROE vs Sector",
+    label: "ROE Alpha",
     ttTitle: "Return on Equity (ROE %) vs Sector Median",
     ttDesc: "Company ROE (%) compared against its NSE industry peer median (ROE Alpha). Ensures you only sell puts on fundamentally superior balance sheets.",
     ttIdeal: "ROE > 14% and positive spread (+1% to +15%) above sector median."
   },
   {
     key: "patYoy",
-    label: "PAT YoY %",
+    label: "PAT YoY",
     ttTitle: "Profit After Tax (PAT) YoY Growth %",
     ttDesc: "Trailing year-over-year net earnings growth rate. Filters out value traps experiencing structural earnings contraction.",
     ttIdeal: "PAT YoY ≥ +5% (steady institutional earnings support on dips)."
@@ -690,7 +731,7 @@ const COLUMNS = [
   },
   {
     key: "hvRatio",
-    label: "HV10 / HV20",
+    label: "HV Ratio",
     ttTitle: "10-Day vs 20-Day Realized Volatility Ratio",
     ttDesc: "Compares short-term 10-day realized volatility against 20-day Yang-Zhang historical volatility (HV20).",
     ttIdeal: "HV10 / HV20 ≤ 1.10x (volatility is stabilizing or contracting, not expanding)."
@@ -704,14 +745,14 @@ const COLUMNS = [
   },
   {
     key: "vrp",
-    label: "IV vs HV20",
+    label: "VRP (IV/HV)",
     ttTitle: "Volatility Risk Premium (Option IV vs Realized HV20)",
     ttDesc: "Spread between Implied Volatility (IV) from Upstox Option Greeks and 20-day Yang-Zhang Realized Volatility (HV20): VRP = IV - HV20.",
     ttIdeal: "VRP ≥ +2.5% (options are overpriced relative to actual stock movement)."
   },
   {
     key: "shortStrike",
-    label: "Recommended Short Put",
+    label: "Short Put (PE)",
     ttTitle: "Recommended Single-Leg Short OTM Put Strike",
     ttDesc: "Exact NSE listed Put strike (~1.12σ below Spot and at/below Put OI Wall) to SELL for 100% worthless expiry, along with OTM safety cushion % and option LTP.",
     ttIdeal: "OTM Cushion ≥ 5.0% below Spot with strong Put OI Wall support."
@@ -732,7 +773,7 @@ const COLUMNS = [
   },
   {
     key: "worthlessScore",
-    label: "Worthless Score",
+    label: "Score",
     ttTitle: "Composite Worthless Expiry Score (0–100)",
     ttDesc: "Institutional multi-factor rank combining Empirical POP% (35%), VRP Edge (20%), 2024 Base & Technical Regime (25%), and Fundamental Quality + Liquidity (20%).",
     ttIdeal: "Score ≥ 72 indicates prime risk-adjusted short put setup."
@@ -1000,7 +1041,7 @@ function evaluateCandidate(item, expCfg, thresholds) {
 function buildTableHeader() {
   const tr = document.getElementById("table-head-row");
   tr.innerHTML = COLUMNS.map(col => `
-    <th>
+    <th class="${col.key === 'passed' ? 'col-status' : ''}">
       <span class="th-inner" onclick="setSort('${col.key}')">
         ${col.label}
       </span>
@@ -1185,76 +1226,76 @@ function renderTable() {
     <tr>
       <td>
         <span class="sym-cell">${idx + 1}. ${r.sym}</span>
-        <span class="sub-muted">Lot: ${r.lot} • 200DMA: ${r.dma200}x</span>
+        <span class="sub-muted">Lot ${r.lot} • ${r.dma200}x</span>
       </td>
       <td>
         <strong>₹${r.spot.toLocaleString("en-IN", {minimumFractionDigits:1})}</strong>
-        <span class="sub-muted">Z5D: ${r.z5d >= 0 ? '+' : ''}${r.z5d}σ</span>
+        <span class="sub-muted">Z: ${r.z5d >= 0 ? '+' : ''}${r.z5d}σ</span>
       </td>
       <td>
-        <span style="font-size:11px;">₹${r.base2024} — ₹${r.high24_26}</span>
+        <span style="font-size:10px;">₹${r.base2024}—${r.high24_26}</span>
         <div class="range-bar-wrap"><div class="range-bar-fill" style="width:${r.rangePct}%"></div></div>
-        <span class="sub-muted">2024 Base: ₹${r.base2024} (${r.rangePct}%ile)</span>
+        <span class="sub-muted">Base ₹${r.base2024} (${r.rangePct}%)</span>
       </td>
       <td>
         <span class="${r.distBase <= 35 ? 'pos' : r.distBase <= 65 ? 'warn' : 'neg'}">+${r.distBase}%</span>
-        <span class="sub-muted">Above 2024 Floor</span>
+        <span class="sub-muted">vs 2024</span>
       </td>
       <td>
-        <strong>${(r.fnoVol / 1000).toFixed(1)}k</strong>
-        <span class="sub-muted">Strike PE Vol: ${(r.strikePeVol / 1000).toFixed(1)}k • OI: ${(r.strikePeOi / 1000).toFixed(1)}k</span>
+        <strong>${(r.fnoVol / 1000).toFixed(0)}k</strong>
+        <span class="sub-muted">PE: ${(r.strikePeVol / 1000).toFixed(1)}k</span>
       </td>
       <td>
-        <span class="${r.rsi14 <= 55 ? 'pos' : 'warn'}">${r.rsi14}</span> / <span>${r.mfi}</span>
-        <span class="sub-muted">Fut OI 5D: ${r.futOi >= 0 ? '+' : ''}${r.futOi}%</span>
+        <span class="${r.rsi14 <= 55 ? 'pos' : 'warn'}">${r.rsi14}</span>/<span>${r.mfi}</span>
+        <span class="sub-muted">OI: ${r.futOi >= 0 ? '+' : ''}${r.futOi}%</span>
       </td>
       <td>
         <span>${r.bollB}</span>
-        <span class="sub-muted">${r.bollB < 0.35 ? 'Lower Band Zone' : 'Mid Band'}</span>
+        <span class="sub-muted">${r.bollB < 0.35 ? 'Lower' : 'Mid'}</span>
       </td>
       <td>
-        <span class="${r.roeAlpha >= 0 ? 'pos' : 'neg'}">${r.roe}% (${r.roeAlpha >= 0 ? '+' : ''}${r.roeAlpha}%)</span>
-        <span class="sub-muted">Sector: ${r.secRoe}%</span>
+        <span class="${r.roeAlpha >= 0 ? 'pos' : 'neg'}">${r.roe}%</span>
+        <span class="sub-muted">${r.roeAlpha >= 0 ? '+' : ''}${r.roeAlpha}% vs peer</span>
       </td>
       <td>
         <span class="${r.patYoy >= 10 ? 'pos' : 'warn'}">+${r.patYoy}%</span>
-        <span class="sub-muted">YoY Earnings</span>
+        <span class="sub-muted">YoY</span>
       </td>
       <td>
         <span class="${r.downVol <= 1.0 ? 'pos' : 'warn'}">${r.downVol}x</span>
-        <span class="sub-muted">20D Down/Up Vol</span>
+        <span class="sub-muted">20D Vol</span>
       </td>
       <td>
-        <span>${r.hv10}% / ${r.yz}%</span>
-        <span class="sub-muted">Ratio: ${r.hvRatio}x</span>
+        <span>${r.hv10}%/${r.yz}%</span>
+        <span class="sub-muted">${r.hvRatio}x</span>
       </td>
       <td>
         <span>${r.adx14}</span>
-        <span class="sub-muted">${r.adx14 < 28 ? 'Controlled' : 'Trending'}</span>
+        <span class="sub-muted">${r.adx14 < 28 ? 'Calm' : 'Trend'}</span>
       </td>
       <td>
-        <span class="pos">${r.iv}% vs ${r.yz}%</span>
-        <span class="sub-muted">VRP Edge: +${r.vrp}%</span>
+        <span class="pos">${r.iv}%/${r.yz}%</span>
+        <span class="sub-muted">+${r.vrp}%</span>
       </td>
       <td>
         <div class="short-put-box">
-          <strong style="color:#34d399;">SELL ${r.shortStrike} PE @ ₹${r.shortPutLtp}</strong>
-          <span class="sub-muted">-${r.otmCushion}% OTM • Δ ${r.shortDelta} • Wall: ${r.putWallStrike} PE</span>
+          <strong style="color:#34d399;font-size:11px;">SELL ${r.shortStrike} PE @ ₹${r.shortPutLtp}</strong>
+          <span class="sub-muted">-${r.otmCushion}% OTM • Δ ${r.shortDelta}</span>
         </div>
       </td>
       <td>
-        <span class="pos" style="font-size:13.5px;">${r.pop}%</span>
-        <span class="sub-muted">Worthless Prob</span>
+        <span class="pos" style="font-weight:700;">${r.pop}%</span>
+        <span class="sub-muted">N(d2)</span>
       </td>
       <td>
         <strong style="color:#fff;">₹${r.lotCredit.toLocaleString("en-IN")}</strong>
-        <span class="sub-muted">RoM: ${r.romPct}% (${expCfg.dte}d)</span>
+        <span class="sub-muted">RoM: ${r.romPct}%</span>
       </td>
       <td>
-        <strong style="color:var(--accent);font-size:13.5px;">${r.worthlessScore}</strong>
-        <span class="sub-muted">/ 100 Quant Rank</span>
+        <strong style="color:var(--accent);font-size:12px;">${r.worthlessScore}</strong>
+        <span class="sub-muted">/100</span>
       </td>
-      <td>
+      <td class="col-status">
         ${r.passed
           ? `<span class="badge-pass">QUALIFIED</span>`
           : `<span class="badge-fail" title="${r.reasons.join(', ')}">${r.reasons[0]}</span>`}
@@ -1264,40 +1305,101 @@ function renderTable() {
 }
 
 // ============================================================================
-// 6. LIVE UPSTOX API V2/V3 SCANNER (FETCHES OPTION CHAIN VOLUME & EXPIRY)
+// 6. UPSTOX LIVE MARKET QUOTE & OPTION CHAIN API INTEGRATION
 // ============================================================================
+const UPSTOX_INSTRUMENT_KEYS = {
+  "MARUTI": "NSE_EQ|INE585B01010", "BAJAJ-AUTO": "NSE_EQ|INE917I01010", "GODREJCP": "NSE_EQ|INE102D01028",
+  "INFY": "NSE_EQ|INE009A01021", "KOTAKBANK": "NSE_EQ|INE237A01036", "DIVISLAB": "NSE_EQ|INE361B01024",
+  "HEROMOTOCO": "NSE_EQ|INE158A01026", "TRENT": "NSE_EQ|INE849A01020", "TECHM": "NSE_EQ|INE669C01036",
+  "BRITANNIA": "NSE_EQ|INE216A01030", "SBIN": "NSE_EQ|INE062A01020", "TATASTEEL": "NSE_EQ|INE081A01020",
+  "WIPRO": "NSE_EQ|INE075A01022", "CHOLAFIN": "NSE_EQ|INE121A01024", "VOLTAS": "NSE_EQ|INE226A01021",
+  "GRASIM": "NSE_EQ|INE047A01021", "ONGC": "NSE_EQ|INE213A01029", "ASIANPAINT": "NSE_EQ|INE021A01026",
+  "NTPC": "NSE_EQ|INE733E01010", "ABB": "NSE_EQ|INE117A01022", "NESTLEIND": "NSE_EQ|INE239A01024",
+  "APOLLOHOSP": "NSE_EQ|INE437A01024", "JSWSTEEL": "NSE_EQ|INE019A01038", "COALINDIA": "NSE_EQ|INE522F01014",
+  "BAJFINANCE": "NSE_EQ|INE296A01032", "HAL": "NSE_EQ|INE066F01020", "RELIANCE": "NSE_EQ|INE002A01018",
+  "TCS": "NSE_EQ|INE467B01029", "HDFCBANK": "NSE_EQ|INE040A01034", "POWERGRID": "NSE_EQ|INE752E01010",
+  "DLF": "NSE_EQ|INE271C01023", "PIDILITIND": "NSE_EQ|INE318A01026", "DRREDDY": "NSE_EQ|INE089A01031",
+  "INDIGO": "NSE_EQ|INE646L01027", "BHARTIARTL": "NSE_EQ|INE397D01024", "CIPLA": "NSE_EQ|INE059A01026",
+  "TITAN": "NSE_EQ|INE280A01028", "AXISBANK": "NSE_EQ|INE238A01034", "SUNPHARMA": "NSE_EQ|INE044A01036",
+  "HINDALCO": "NSE_EQ|INE038A01020", "BEL": "NSE_EQ|INE263A01024", "HCLTECH": "NSE_EQ|INE860A01027",
+  "HAVELLS": "NSE_EQ|INE176B01034", "ITC": "NSE_EQ|INE154A01025", "M&M": "NSE_EQ|INE101A01026",
+  "ICICIBANK": "NSE_EQ|INE090A01021", "LT": "NSE_EQ|INE018A01030", "ULTRACEMCO": "NSE_EQ|INE481G01011",
+  "SIEMENS": "NSE_EQ|INE003A01024", "DABUR": "NSE_EQ|INE016A01026"
+};
+
 async function triggerLiveUpstoxScan() {
-  const token = document.getElementById("upstox-token").value.trim();
+  let token = document.getElementById("upstox-token").value.trim();
+  token = token.replace(/^Bearer\s+/i, '').replace(/[\r\n\t "']/g, '');
   const statusEl = document.getElementById("api-status-text");
   const expCfg = EXPIRY_CONFIG[currentExpiryMode];
 
   if (!token) {
-    statusEl.textContent = `⚡ Scanned ${getActiveUniverseArray().length} F&O Stocks for ${expCfg.dateDisplay} (Calibrated Engine)`;
+    statusEl.textContent = `⚡ Calibrated Simulation Active (${getActiveUniverseArray().length} Symbols • ${expCfg.dateDisplay})`;
     statusEl.style.color = "var(--emerald)";
     renderTable();
     return;
   }
 
-  statusEl.textContent = `Connecting to Upstox API (/v2/option/chain & /v3/market-quote/quotes) for ${expCfg.dateISO}...`;
+  // Persist cleaned token in localStorage & input
+  localStorage.setItem("upstox_access_token", token);
+  document.getElementById("upstox-token").value = token;
+
+  statusEl.textContent = `Connecting to Upstox Market Data API for ${expCfg.dateDisplay}...`;
   statusEl.style.color = "var(--accent)";
 
   try {
-    const resp = await fetch("https://api.upstox.com/v2/user/profile", {
-      headers: { "Authorization": `Bearer ${token}`, "Accept": "application/json" }
+    const activeList = getActiveUniverseArray();
+    const queryKeys = [];
+    activeList.forEach(item => {
+      const k = UPSTOX_INSTRUMENT_KEYS[item.sym];
+      if (k) queryKeys.push(k);
     });
+
+    const testKeys = queryKeys.length > 0 ? queryKeys.slice(0, 50).join(",") : "NSE_EQ|INE002A01018";
+    const quoteUrl = `https://api.upstox.com/v3/market-quote/quotes?instrument_key=${encodeURIComponent(testKeys)}`;
+
+    const resp = await fetch(quoteUrl, {
+      method: "GET",
+      headers: {
+        "Authorization": `Bearer ${token}`,
+        "Accept": "application/json"
+      }
+    });
+
     if (resp.ok) {
-      const prof = await resp.json();
-      const userName = prof?.data?.user_name || "Upstox Pro";
-      statusEl.textContent = `Live Upstox Connected (${userName}) • Expiry ${expCfg.dateDisplay}`;
+      const quoteData = await resp.json();
+      const quotes = quoteData?.data || {};
+      let updatedCount = 0;
+
+      activeList.forEach(item => {
+        const k = UPSTOX_INSTRUMENT_KEYS[item.sym];
+        if (k) {
+          const formattedKey = k.replace("|", ":");
+          const q = quotes[formattedKey] || quotes[k];
+          if (q && q.last_price) {
+            item.spot = Number(q.last_price);
+            if (q.volume) item.fnoVol = Number(q.volume);
+            updatedCount++;
+          }
+        }
+      });
+
+      statusEl.textContent = `🟢 Live Upstox Connected • ${updatedCount} Live Quotes Synced • Expiry ${expCfg.dateDisplay}`;
       statusEl.style.color = "var(--emerald)";
     } else {
-      statusEl.textContent = `Upstox Token Check (${resp.status}) — Refreshed ${expCfg.dateDisplay} Chain Volume`;
-      statusEl.style.color = "var(--amber)";
+      if (resp.status === 401) {
+        statusEl.textContent = `⚠️ Upstox Token Expired or Invalid (401) — Generate fresh token at developer.upstox.com`;
+        statusEl.style.color = "var(--rose)";
+      } else {
+        statusEl.textContent = `Upstox API Check (${resp.status}) — Refreshed ${expCfg.dateDisplay} Calibrated Volume`;
+        statusEl.style.color = "var(--amber)";
+      }
     }
   } catch (err) {
-    statusEl.textContent = `Upstox CORS/Local Mode Active — Synced ${expCfg.dateDisplay}`;
+    statusEl.textContent = `Upstox Offline / Local Mode Active • Synced ${expCfg.dateDisplay}`;
     statusEl.style.color = "var(--emerald)";
   }
+
   renderTable();
 }
 
@@ -1335,15 +1437,17 @@ function handleTokenUpload(e) {
   reader.onload = function(evt) {
     const content = evt.target.result || "";
     const m = content.match(/UPSTOX_ACCESS_TOKEN\s*=\s*([^\r\n]+)/i);
-    const token = (m ? m[1] : content).trim().replace(/^["']|["']$/g, '');
+    let token = (m ? m[1] : content).trim().replace(/^["']|["']$/g, '');
+    token = token.replace(/^Bearer\s+/i, '').replace(/[\r\n\t "']/g, '');
     if (token) {
       document.getElementById("upstox-token").value = token;
       localStorage.setItem("upstox_access_token", token);
       const statusEl = document.getElementById("api-status-text");
       if (statusEl) {
-        statusEl.textContent = `✓ Imported token from ${file.name}`;
+        statusEl.textContent = `✓ Imported token from ${file.name} — Scanning live quotes...`;
         statusEl.style.color = "var(--emerald)";
       }
+      triggerLiveUpstoxScan();
     }
   };
   reader.readAsText(file);
@@ -1353,10 +1457,14 @@ function handleTokenUpload(e) {
 const savedToken = localStorage.getItem("upstox_access_token");
 if (savedToken) {
   const tEl = document.getElementById("upstox-token");
-  if (tEl) tEl.value = savedToken;
+  if (tEl) {
+    tEl.value = savedToken;
+    setTimeout(() => { triggerLiveUpstoxScan(); }, 100);
+  }
 }
 document.getElementById("upstox-token").addEventListener("input", (e) => {
-  localStorage.setItem("upstox_access_token", e.target.value.trim());
+  const cleaned = e.target.value.trim().replace(/^Bearer\s+/i, '').replace(/[\r\n\t "']/g, '');
+  localStorage.setItem("upstox_access_token", cleaned);
 });
 
 // Initialize Dashboard on Load
