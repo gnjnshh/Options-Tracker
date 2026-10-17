@@ -474,65 +474,46 @@
     .warn { color: var(--amber); font-weight: 700; }
     .neg { color: var(--rose); font-weight: 700; }
 
-    /* Split Layout with Thesis Panel on Right */
-    .main-layout {
-      display: flex;
-      gap: 10px;
-      align-items: flex-start;
-      width: 100%;
-      margin-top: 2px;
-    }
-    .table-container-flex {
-      min-width: 0;
+    /* Top Right FAQ & Definitions Button */
+    .btn-faq-top {
+      background: rgba(168, 85, 247, 0.16);
+      color: #e9d5ff;
+      border: 1px solid #7c3aed;
+      border-radius: 6px;
+      padding: 5px 10px;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      white-space: nowrap;
       transition: all 0.2s ease;
     }
-    .main-layout.with-thesis .table-container-flex {
-      flex: 1 1 calc(100% - 370px);
-      width: calc(100% - 370px);
+    .btn-faq-top:hover {
+      background: #7c3aed;
+      color: #fff;
+      box-shadow: 0 0 12px rgba(168, 85, 247, 0.45);
     }
-    .main-layout.without-thesis .table-container-flex {
-      flex: 1 1 100%;
-      width: 100%;
-    }
-    .thesis-sidebar {
-      flex: 0 0 360px;
-      width: 360px;
-      max-width: 360px;
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 12px;
-      position: sticky;
-      top: 10px;
-      max-height: calc(100vh - 80px);
-      overflow-y: auto;
-      box-shadow: -4px 0 16px rgba(0,0,0,0.4);
-    }
-    .main-layout.without-thesis .thesis-sidebar {
-      display: none;
-    }
-    .thesis-sidebar::-webkit-scrollbar,
-    .table-wrap::-webkit-scrollbar {
+
+    /* Scrollbars */
+    .table-wrap::-webkit-scrollbar,
+    .modal-body::-webkit-scrollbar {
       width: 6px;
       height: 6px;
     }
-    .thesis-sidebar::-webkit-scrollbar-track,
-    .table-wrap::-webkit-scrollbar-track {
+    .table-wrap::-webkit-scrollbar-track,
+    .modal-body::-webkit-scrollbar-track {
       background: #090f1d;
     }
-    .thesis-sidebar::-webkit-scrollbar-thumb,
-    .table-wrap::-webkit-scrollbar-thumb {
+    .table-wrap::-webkit-scrollbar-thumb,
+    .modal-body::-webkit-scrollbar-thumb {
       background: #1e2d4a;
       border-radius: 3px;
     }
-    .thesis-sidebar::-webkit-scrollbar-thumb:hover,
-    .table-wrap::-webkit-scrollbar-thumb:hover {
+    .table-wrap::-webkit-scrollbar-thumb:hover,
+    .modal-body::-webkit-scrollbar-thumb:hover {
       background: var(--accent);
-    }
-    @media (max-width: 1200px) {
-      .main-layout { flex-direction: column; }
-      .main-layout.with-thesis .table-container-flex { flex: 1 1 100%; width: 100%; }
-      .thesis-sidebar { width: 100%; max-width: 100%; flex: 1 1 100%; position: static; max-height: none; }
     }
 
     /* Selected Row & Hover Styling */
@@ -543,132 +524,198 @@
       border-bottom: 1px solid var(--accent);
     }
 
-    /* Thesis Sidebar Interior Styling */
-    .thesis-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      margin-bottom: 8px;
-      padding-bottom: 6px;
-      border-bottom: 1px solid var(--border);
+    /* Interactive FAQs & Thesis Criteria Modal Overlay */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(3, 7, 18, 0.85);
+      backdrop-filter: blur(5px);
+      z-index: 10000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
     }
-    .thesis-title-wrap {
+    .modal-overlay.active {
+      display: flex;
+    }
+    .modal-container {
+      background: #0b1222;
+      border: 1px solid #1e2d4a;
+      border-radius: 12px;
+      width: 100%;
+      max-width: 960px;
+      max-height: 88vh;
       display: flex;
       flex-direction: column;
-      gap: 2px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.85);
+      overflow: hidden;
     }
-    .thesis-sym-title {
-      font-size: 15px;
+    .modal-header {
+      padding: 12px 18px;
+      border-bottom: 1px solid #1e2d4a;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #080e1c;
+    }
+    .modal-title {
+      font-size: 14.5px;
       font-weight: 800;
       color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .modal-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .modal-close-btn {
+      background: #111a2f;
+      border: 1px solid #1e2d4a;
+      color: #cbd5e1;
+      border-radius: 6px;
+      padding: 4px 9px;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .modal-close-btn:hover {
+      background: #ef4444;
+      border-color: #ef4444;
+      color: #fff;
+    }
+    .modal-body {
+      padding: 14px 18px;
+      overflow-y: auto;
+      flex: 1 1 auto;
+      line-height: 1.5;
+    }
+    .faq-search-bar {
+      margin-bottom: 10px;
+      display: flex;
+      gap: 8px;
+    }
+    .faq-search-input {
+      flex: 1;
+      background: #050914;
+      border: 1px solid #1e2d4a;
+      border-radius: 6px;
+      padding: 7px 12px;
+      font-size: 12px;
+      color: #fff;
+    }
+    .faq-search-input:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+    .faq-category-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      margin-bottom: 12px;
+    }
+    .faq-cat-btn {
+      background: #101a30;
+      color: #94a3b8;
+      border: 1px solid #1e2d4a;
+      padding: 3px 8px;
+      border-radius: 5px;
+      font-size: 10.5px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.15s;
+    }
+    .faq-cat-btn.active, .faq-cat-btn:hover {
+      background: rgba(168, 85, 247, 0.2);
+      color: #e9d5ff;
+      border-color: #a855f7;
+    }
+    .faq-item {
+      background: #0c1426;
+      border: 1px solid #1a2948;
+      border-radius: 7px;
+      margin-bottom: 7px;
+      overflow: hidden;
+      transition: border-color 0.15s;
+    }
+    .faq-item:hover {
+      border-color: #2a406e;
+    }
+    .faq-question {
+      padding: 9px 13px;
+      font-size: 12px;
+      font-weight: 700;
+      color: #38bdf8;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      user-select: none;
+    }
+    .faq-question:hover {
+      background: rgba(56, 189, 248, 0.06);
+    }
+    .faq-question .faq-q-text {
       display: flex;
       align-items: center;
       gap: 6px;
     }
-    .thesis-trade-box {
-      background: rgba(16, 185, 129, 0.08);
-      border: 1px solid rgba(16, 185, 129, 0.35);
-      border-radius: 6px;
-      padding: 8px 10px;
-      margin-bottom: 8px;
-    }
-    .thesis-trade-title {
-      font-size: 12px;
-      font-weight: 800;
-      color: #34d399;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 4px;
-    }
-    .thesis-trade-sub {
-      font-size: 10px;
-      color: var(--muted);
-      line-height: 1.3;
-    }
-    .thesis-metrics-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 5px;
-      margin-bottom: 8px;
-    }
-    .thesis-metric-box {
-      background: var(--panel-alt);
-      border: 1px solid var(--border);
-      border-radius: 5px;
-      padding: 5px;
-      text-align: center;
-    }
-    .thesis-metric-box .m-val {
-      font-size: 12px;
-      font-weight: 800;
-      color: #fff;
-    }
-    .thesis-metric-box .m-lbl {
-      font-size: 8.5px;
-      color: var(--muted);
+    .faq-tag {
+      background: rgba(168, 85, 247, 0.18);
+      color: #d8b4fe;
+      border: 1px solid rgba(168, 85, 247, 0.35);
+      border-radius: 4px;
+      font-size: 9px;
+      padding: 1px 5px;
+      font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.3px;
     }
-    .thesis-section-title {
+    .faq-arrow {
       font-size: 10px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      color: var(--accent);
-      margin: 8px 0 4px 0;
-      display: flex;
-      align-items: center;
-      gap: 5px;
+      color: var(--muted);
+      transition: transform 0.2s;
     }
-    .thesis-pillar-box {
-      background: #070d1a;
-      border: 1px solid #1a2742;
-      border-radius: 5px;
-      padding: 6px 8px;
-      margin-bottom: 5px;
-      font-size: 10px;
-      line-height: 1.35;
+    .faq-answer {
+      padding: 0 13px 11px 13px;
+      font-size: 11.5px;
       color: #cbd5e1;
-    }
-    .thesis-pillar-box strong {
-      color: var(--accent);
-      display: block;
-      font-size: 10px;
-      margin-bottom: 2px;
-    }
-    .thesis-summary-text {
-      background: rgba(16, 185, 129, 0.05);
-      border: 1px solid rgba(16, 185, 129, 0.25);
-      border-radius: 6px;
-      padding: 7px 9px;
-      font-size: 10.5px;
-      line-height: 1.4;
-      color: #e2e8f0;
-      margin-top: 6px;
-    }
-    .thesis-nav-bar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 6px;
-      margin-top: 8px;
+      border-top: 1px solid rgba(30, 45, 74, 0.45);
       padding-top: 8px;
-      border-top: 1px solid var(--border);
+      display: none;
+      line-height: 1.5;
     }
-    .thesis-btn-sm {
-      background: var(--panel-alt);
-      color: var(--text);
-      border: 1px solid var(--border);
-      padding: 3px 8px;
+    .faq-item.open .faq-answer {
+      display: block;
+    }
+    .faq-item.open .faq-arrow {
+      transform: rotate(180deg);
+      color: var(--accent);
+    }
+    .faq-highlight-box {
+      background: rgba(16, 185, 129, 0.07);
+      border: 1px solid rgba(16, 185, 129, 0.3);
       border-radius: 5px;
-      font-size: 10px;
-      font-weight: 600;
-      cursor: pointer;
+      padding: 7px 10px;
+      margin: 6px 0;
+      font-size: 11px;
+      color: #d1fae5;
     }
-    .thesis-btn-sm:hover {
-      border-color: var(--accent);
-      color: #fff;
+    .faq-formula-box {
+      background: #060a15;
+      border: 1px solid #192742;
+      border-radius: 5px;
+      padding: 6px 9px;
+      margin: 5px 0;
+      font-family: monospace;
+      font-size: 11px;
+      color: #38bdf8;
     }
   </style>
 </head>
@@ -683,7 +730,7 @@
       <div class="brand-title">
         <span>UPSTOX F&amp;O QUANT SCREENER v3.0</span>
         <span class="badge-strategy">SHORT OTM PUT HARVESTER (100% WORTHLESS EXPIRY THESIS)</span>
-        <span class="expiry-banner" id="active-expiry-pill">Target Expiry: Nov Series • Thu, 26 Nov 2026 (40 DTE)</span>
+        <span class="expiry-banner" id="active-expiry-pill">Target Expiry: Nov Series • Mon, 23 Nov 2026 (37 DTE)</span>
       </div>
       <div class="subtitle">
         2024–2026 Structural Multi-Year Base • Empirical Yang-Zhang POP% N(d2) • Upstox API V2/V3 Option Chain Volume &amp; VRP Harvester
@@ -696,6 +743,9 @@
       <button class="btn-scan-live" id="btn-scan-live" onclick="triggerLiveUpstoxScan()">
         <span class="pulse-dot"></span>
         ⚡ SCAN LIVE UPSTOX API
+      </button>
+      <button class="btn-faq-top" onclick="openFaqModal()" title="View Quantitative Thesis Definitions, Criteria & Terminology FAQs">
+        📖 Thesis &amp; FAQs
       </button>
     </div>
   </div>
@@ -717,31 +767,31 @@
     <div class="card">
       <div class="card-label">
         <span>2. Target Option Expiry (Month &amp; Exact Date)</span>
-        <span id="dte-label" style="color:var(--emerald)">40 Days to Expiry</span>
+        <span id="dte-label" style="color:var(--emerald)">37 Days to Expiry</span>
       </div>
       <div class="btn-group" id="expiry-buttons">
         <button class="pill-btn" data-exp="current_month" onclick="setExpiryMode('current_month')">
-          Oct 2026 (Thu, 29 Oct 2026 • 12 DTE)
+          Oct 2026 (Tue, 27 Oct 2026 • 10 DTE)
         </button>
         <button class="pill-btn active" data-exp="next_month" onclick="setExpiryMode('next_month')">
-          Nov 2026 (Thu, 26 Nov 2026 • 40 DTE)
+          Nov 2026 (Mon, 23 Nov 2026 • 37 DTE)
         </button>
         <button class="pill-btn" data-exp="far_month" onclick="setExpiryMode('far_month')">
-          Dec 2026 (Thu, 31 Dec 2026 • 75 DTE)
+          Dec 2026 (Tue, 29 Dec 2026 • 73 DTE)
         </button>
       </div>
     </div>
 
     <div class="card">
       <div class="card-label">
-        <span>3. View Mode &amp; Export</span>
+        <span>3. View Mode &amp; Knowledge Base</span>
         <span id="api-status-text" style="color:var(--muted)">Mode: Calibrated Quant Engine</span>
       </div>
       <div class="btn-group">
         <button class="pill-btn active" id="btn-qualified-only" onclick="toggleShowRejected(false)">Qualified Only</button>
         <button class="pill-btn" id="btn-show-all" onclick="toggleShowRejected(true)">Show All</button>
-        <button class="pill-btn" id="btn-toggle-thesis" onclick="toggleThesisPanel()" title="Toggle Quantitative Thesis Panel on Right">📑 Thesis on Right (OFF)</button>
-        <a href="thesis.html" class="pill-btn" style="text-decoration:none; background: rgba(168, 85, 247, 0.18); color: #e9d5ff; border-color: var(--violet); font-weight:700;" title="Dedicated Full Page with Quantitative Thesis on Right">📑 Thesis on Right Page ↗</a>
+        <button class="pill-btn" onclick="openFaqModal()" style="border-color:var(--violet); color:#e9d5ff; background:rgba(168,85,247,0.14); font-weight:700;" title="Open Quantitative Thesis & FAQs">📖 Thesis &amp; FAQs</button>
+        <a href="thesis.html" class="pill-btn" style="text-decoration:none;" title="Dedicated Full Page with Criteria Definitions & Terminology FAQs">↗ Dedicated FAQ Page</a>
         <button class="pill-btn" onclick="exportToCSV()">⬇ Export CSV</button>
       </div>
     </div>
@@ -822,44 +872,65 @@
     </div>
   </div>
 
-  <!-- Main Single-Screen Layout (Full Table by default, toggleable Thesis on Right) -->
-  <div class="main-layout without-thesis" id="main-layout-container">
-    <div class="table-container-flex">
-      <!-- Dedicated Quick Sort Toolbar Directly Above the Table -->
-      <div class="table-sort-bar">
-        <div class="sort-left">
-          <span class="sort-label">⇅ Sort:</span>
-          <button class="sort-chip active" data-sort="worthlessScore" onclick="setSort('worthlessScore', this)">Score</button>
-          <button class="sort-chip" data-sort="fnoVol" onclick="setSort('fnoVol', this)">🔥 F&amp;O Vol</button>
-          <button class="sort-chip" data-sort="pop" onclick="setSort('pop', this)">POP %</button>
-          <button class="sort-chip" data-sort="lotCredit" onclick="setSort('lotCredit', this)">Credit (₹)</button>
-          <button class="sort-chip" data-sort="vrp" onclick="setSort('vrp', this)">VRP (IV/HV)</button>
-          <button class="sort-chip" data-sort="distBase" onclick="setSort('distBase', this)">Base Dist</button>
-          <button class="sort-chip" data-sort="roeAlpha" onclick="setSort('roeAlpha', this)">ROE Alpha</button>
-          <button class="sort-chip" data-sort="rsi14" onclick="setSort('rsi14', this)">RSI(14)</button>
-          <button class="sort-chip" onclick="toggleSortDirection()" id="sort-dir-btn" title="Toggle Ascending/Descending">DESC ↓</button>
-        </div>
-        <div>
-          <input type="text" id="sym-search" class="search-box" placeholder="🔍 Filter symbol..." oninput="renderTable()" />
-        </div>
-      </div>
-
-      <!-- Main 18-Column Quantitative Screener Table -->
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr id="table-head-row">
-              <!-- Dynamically populated with (i) tooltips -->
-            </tr>
-          </thead>
-          <tbody id="screener-tbody"></tbody>
-        </table>
-      </div>
+  <!-- Dedicated Quick Sort Toolbar Directly Above the Table -->
+  <div class="table-sort-bar">
+    <div class="sort-left">
+      <span class="sort-label">⇅ Sort:</span>
+      <button class="sort-chip active" data-sort="worthlessScore" onclick="setSort('worthlessScore', this)">Score</button>
+      <button class="sort-chip" data-sort="fnoVol" onclick="setSort('fnoVol', this)">🔥 F&amp;O Vol</button>
+      <button class="sort-chip" data-sort="pop" onclick="setSort('pop', this)">POP %</button>
+      <button class="sort-chip" data-sort="lotCredit" onclick="setSort('lotCredit', this)">Credit (₹)</button>
+      <button class="sort-chip" data-sort="vrp" onclick="setSort('vrp', this)">VRP (IV/HV)</button>
+      <button class="sort-chip" data-sort="distBase" onclick="setSort('distBase', this)">Base Dist</button>
+      <button class="sort-chip" data-sort="roeAlpha" onclick="setSort('roeAlpha', this)">ROE Alpha</button>
+      <button class="sort-chip" data-sort="rsi14" onclick="setSort('rsi14', this)">RSI(14)</button>
+      <button class="sort-chip" onclick="toggleSortDirection()" id="sort-dir-btn" title="Toggle Ascending/Descending">DESC ↓</button>
     </div>
+    <div>
+      <input type="text" id="sym-search" class="search-box" placeholder="🔍 Filter symbol..." oninput="renderTable()" />
+    </div>
+  </div>
 
-    <!-- Right-Side Quantitative Thesis & Candidate Deep-Dive Panel -->
-    <div class="thesis-sidebar" id="thesis-sidebar-panel">
-      <!-- Populated dynamically by renderThesisPanel() -->
+  <!-- Main 18-Column Quantitative Screener Table (100% Full Width Screen Fit) -->
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr id="table-head-row">
+          <!-- Dynamically populated with (i) tooltips -->
+        </tr>
+      </thead>
+      <tbody id="screener-tbody"></tbody>
+    </table>
+  </div>
+
+  <!-- Interactive Quantitative Thesis & Criteria Definitions Modal Overlay -->
+  <div class="modal-overlay" id="faq-modal" onclick="handleModalOverlayClick(event)">
+    <div class="modal-container">
+      <div class="modal-header">
+        <div class="modal-title">
+          <span>📖 Quantitative Thesis, Criteria &amp; Terminology FAQs</span>
+          <span class="faq-tag">Institutional Knowledge Base</span>
+        </div>
+        <div class="modal-actions">
+          <a href="thesis.html" class="pill-btn" style="text-decoration:none; color:var(--accent); border-color:var(--accent); font-weight:700;" title="Open Dedicated Standalone Page">↗ Open Full Page</a>
+          <button class="modal-close-btn" onclick="closeFaqModal()" title="Close Modal (Esc)">✖ Close</button>
+        </div>
+      </div>
+      <div class="modal-body">
+        <div class="faq-search-bar">
+          <input type="text" class="faq-search-input" id="faq-search-input" placeholder="🔍 Search criteria, acronyms, or formulas (e.g. VRP, POP, 2024 Base, Yang-Zhang, RoM%)..." oninput="filterFaqItems()" />
+        </div>
+        <div class="faq-category-pills">
+          <button class="faq-cat-btn active" data-cat="all" onclick="filterFaqCategory('all', this)">All Topics</button>
+          <button class="faq-cat-btn" data-cat="thesis" onclick="filterFaqCategory('thesis', this)">Executive Thesis</button>
+          <button class="faq-cat-btn" data-cat="pillars" onclick="filterFaqCategory('pillars', this)">5 Structural Pillars</button>
+          <button class="faq-cat-btn" data-cat="math" onclick="filterFaqCategory('math', this)">Options Math</button>
+          <button class="faq-cat-btn" data-cat="faq" onclick="filterFaqCategory('faq', this)">Trading FAQs</button>
+        </div>
+        <div id="faq-items-container">
+          <!-- Populated dynamically by buildFaqAccordion() -->
+        </div>
+      </div>
     </div>
   </div>
 
@@ -1003,23 +1074,23 @@ const EXPIRY_CONFIG = {
   current_month: {
     code: "current_month",
     seriesLabel: "Oct 2026 Series",
-    dateISO: "2026-10-29",
-    dateDisplay: "Thu, 29 Oct 2026",
-    dte: 12
+    dateISO: "2026-10-27",
+    dateDisplay: "Tue, 27 Oct 2026",
+    dte: 10
   },
   next_month: {
     code: "next_month",
     seriesLabel: "Nov 2026 Series",
-    dateISO: "2026-11-26",
-    dateDisplay: "Thu, 26 Nov 2026",
-    dte: 40
+    dateISO: "2026-11-23",
+    dateDisplay: "Mon, 23 Nov 2026",
+    dte: 37
   },
   far_month: {
     code: "far_month",
     seriesLabel: "Dec 2026 Series",
-    dateISO: "2026-12-31",
-    dateDisplay: "Thu, 31 Dec 2026",
-    dte: 75
+    dateISO: "2026-12-29",
+    dateDisplay: "Tue, 29 Dec 2026",
+    dte: 73
   }
 };
 
@@ -1431,11 +1502,10 @@ function renderTable() {
   document.getElementById("kpi-credit").textContent = `₹${avgCred.toLocaleString("en-IN")}`;
   document.getElementById("kpi-rom").textContent = `Avg ${avgRom}% Return on Margin (${expCfg.dte} DTE)`;
 
-  // Determine active candidate for thesis panel
+  // Determine active candidate
   const activeCand = rowsToShow.find(r => r.sym === selectedSymbol) || rowsToShow[0] || evaluated[0];
   if (activeCand) {
     selectedSymbol = activeCand.sym;
-    renderThesisPanel(activeCand, expCfg);
   }
 
   // Render Table Rows
@@ -1443,7 +1513,7 @@ function renderTable() {
   tbody.innerHTML = rowsToShow.map((r, idx) => {
     const isSelected = r.sym === selectedSymbol;
     return `
-    <tr class="${isSelected ? 'row-selected' : ''}" onclick="selectCandidate('${r.sym}')" title="Click to view quantitative thesis on right">
+    <tr class="${isSelected ? 'row-selected' : ''}" onclick="selectCandidate('${r.sym}')" title="Click to select row">
       <td>
         <span class="sym-cell">${idx + 1}. ${r.sym}</span>
         <span class="sub-muted">Lot ${r.lot} • ${r.dma200}x</span>
@@ -1562,175 +1632,294 @@ function buildCandidateThesis(r, expCfg) {
   }
 }
 
-function renderThesisPanel(r, expCfg) {
-  const panel = document.getElementById("thesis-sidebar-panel");
-  if (!panel) return;
-  const t = buildCandidateThesis(r, expCfg);
+// ============================================================================
+// 5B. QUANTITATIVE THESIS, CRITERIA & TERMINOLOGY FAQS KNOWLEDGE BASE
+// ============================================================================
+const FAQ_DATABASE = [
+  {
+    cat: "thesis",
+    tag: "Core Strategy",
+    q: "Why Pure Single-Leg Short OTM Put Selling (100% Worthless Expiry)?",
+    a: `
+      <p>Traditional option buyers suffer from persistent negative theta decay (-Θ) and pay heavy implied volatility premiums. In contrast, <strong>Pure Option Sellers harvest positive expected value (+EV)</strong> by underwriting out-of-the-money put options (Sell &lt;Strike&gt; PE) priced below proven institutional bases.</p>
+      <div class="faq-highlight-box">
+        <strong>⚡ 100% Worthless Expiry Rule:</strong> When the underlying stock expires above the short put strike (S<sub>T</sub> ≥ K<sub>short</sub>), the option expires with ₹0 intrinsic value. The seller keeps <strong>100% of the upfront cash credit</strong> (Short Put LTP × Lot Size) as net realized profit.
+      </div>
+      <p>Unlike 2-leg bull put spreads that sacrifice 40–60% of gross credit to buy an unnecessary protective long put wing, selling calibrated single-leg OTM puts optimizes <strong>Return on SPAN Margin (RoM %)</strong> while relying on institutional support walls and the 2024 multi-year accumulation floor.</p>
+    `
+  },
+  {
+    cat: "pillars",
+    tag: "Pillar I",
+    q: "Pillar I — 2024–2026 Structural Base Floor & 200-DMA Guard",
+    a: `
+      <p>The 2024 multi-year base represents the long-term institutional accumulation floor formed during the 2024 cyclical consolidation. Stocks that trade near or in orderly relation to this floor possess strong structural demand.</p>
+      <div class="faq-formula-box">
+        Distance to 2024 Base (%) = ((Spot - Base2024) / Base2024) × 100<br/>
+        Trend Guard: Spot / 200-DMA ≥ 0.92x
+      </div>
+      <p><strong>Screening Guard:</strong> Stocks with Distance to Base &gt; 65% are flagged as overextended parabolic tops. Stocks below 0.92x of their 200-DMA are eliminated to prevent catching falling knives in active secular downtrends.</p>
+    `
+  },
+  {
+    cat: "pillars",
+    tag: "Pillar II",
+    q: "Pillar II — True Volatility Risk Premium (VRP) & Yang-Zhang Variance",
+    a: `
+      <p><strong>Volatility Risk Premium (VRP)</strong> is the structural edge where implied volatility (market pricing of future uncertainty) exceeds actual realized stock movement.</p>
+      <div class="faq-formula-box">
+        True VRP (%) = Option Implied Volatility (IV) - Yang-Zhang 20-Day Realized Volatility (σ<sub>YZ</sub>)
+      </div>
+      <div class="faq-highlight-box">
+        <strong>Ideal VRP:</strong> +2.0% to +8.5%. A positive VRP guarantees options are statistically overpriced relative to real historical volatility, accelerating premium decay.
+      </div>
+      <p>We also track the <strong>HV10 / HV20 Ratio</strong> (ideal &lt; 1.10x) to confirm short-term volatility contraction rather than volatility expansion.</p>
+    `
+  },
+  {
+    cat: "pillars",
+    tag: "Pillar III",
+    q: "Pillar III — Technical Momentum Exhaustion & Down-Day Volume Ratio",
+    a: `
+      <p>Option selling is optimal during orderly pullbacks and consolidation ranges, not during panic liquidation cascades or parabolic frenzies.</p>
+      <div class="faq-formula-box">
+        Wilder RSI(14) ≤ 60 &nbsp;|&nbsp; MFI(14) &gt; 35 &nbsp;|&nbsp; Bollinger %B: 0.15 to 0.55<br/>
+        Down-Day / Up-Day Volume Ratio ≤ 1.0x &nbsp;|&nbsp; 5-Day Z-Score: -2.60σ ≤ Z<sub>5D</sub> ≤ +1.10σ
+      </div>
+      <p><strong>Why Down-Day Volume Matters:</strong> A ratio ≤ 1.0x proves that recent downward days occurred on light retail volume (profit taking) rather than institutional distribution.</p>
+    `
+  },
+  {
+    cat: "pillars",
+    tag: "Pillar IV",
+    q: "Pillar IV — Futures Open Interest Flow & Anti-Short-Buildup Guard",
+    a: `
+      <p>In the Indian derivatives market (NSE F&O), tracking change in Futures Open Interest (OI) reveals institutional positioning.</p>
+      <div class="faq-highlight-box">
+        <strong>The Trap to Avoid:</strong> If stock price is falling while 5-day Futures OI surges by &gt; +3.0%, institutions are aggressively creating fresh short positions (Short Buildup). The engine immediately rejects these symbols.
+      </div>
+      <p>Qualified candidates display either neutral futures positioning or healthy Long Unwinding without aggressive short creation.</p>
+    `
+  },
+  {
+    cat: "pillars",
+    tag: "Pillar V",
+    q: "Pillar V — Fundamental Moat & Quality Compounders",
+    a: `
+      <p>The ultimate safeguard in short option underwriting is the fundamental quality of the underlying business. Even in a black-swan market crash where assignment occurs, you want to own superior businesses at deep multi-year discounts.</p>
+      <div class="faq-formula-box">
+        ROE Alpha = Underlying Company ROE (%) - Sector Median ROE (%)<br/>
+        Earnings Guard: Trailing YoY PAT Growth ≥ 0%
+      </div>
+      <p>Qualified candidates must demonstrate positive ROE Alpha and stable or expanding earnings momentum.</p>
+    `
+  },
+  {
+    cat: "math",
+    tag: "Probability",
+    q: "Empirical POP% (Probability of Expiring Worthless) & N(d2)",
+    a: `
+      <p>Retail brokers often estimate POP as (1 - Delta). However, Delta is a pricing sensitivity, not an accurate statistical survival probability.</p>
+      <div class="faq-formula-box">
+        Empirical POP% = N(d2) × 100<br/>
+        where d2 = [ ln(S / K) + (r - 0.5 × σ<sub>YZ</sub><sup>2</sup>) × T ] / [ σ<sub>YZ</sub> × √T ]
+      </div>
+      <p>Our quantitative model evaluates exact lognormal survival probability using <strong>20-day Yang-Zhang (2000) minimum-variance OHLC volatility</strong> over actual Days to Expiry (DTE). Minimum threshold: <strong>POP ≥ 76%</strong> (institutional preset targets 80%+).</p>
+    `
+  },
+  {
+    cat: "math",
+    tag: "Risk Metrics",
+    q: "Return on Margin (RoM %) vs Spread Risk/Reward",
+    a: `
+      <p>When selling single-leg options, the return is calculated as <strong>Return on SPAN Margin (RoM %)</strong> rather than simple premium yield.</p>
+      <div class="faq-formula-box">
+        Gross Lot Credit (₹) = Short Put LTP × NSE Lot Size<br/>
+        Estimated SPAN Margin (₹) ≈ Underlying Spot × Lot Size × 16.5%<br/>
+        RoM (%) = (Gross Lot Credit / Estimated SPAN Margin) × 100
+      </div>
+      <p>For a 37-day expiry, generating an RoM of 2.0%–4.0% per month compounds to an annualized return of 25%–50% on deployed margin with high statistical probability.</p>
+    `
+  },
+  {
+    cat: "math",
+    tag: "Strike Selection",
+    q: "OTM Cushion % & NSE Put OI Support Wall",
+    a: `
+      <p>The <strong>OTM Cushion</strong> is the percentage distance between current Spot and the recommended short strike:</p>
+      <div class="faq-formula-box">
+        OTM Cushion (%) = ((Spot - Strike<sub>PE</sub>) / Spot) × 100 &nbsp;(Minimum: ≥ 5.0%)
+      </div>
+      <p>The strike is snapped strictly to listed NSE strike increments (₹10, ₹20, ₹50, ₹100) and placed <strong>at or below the exchange Put OI Wall</strong> (the strike with highest open interest where market makers absorb sell pressure).</p>
+    `
+  },
+  {
+    cat: "faq",
+    tag: "Execution",
+    q: "What happens on expiry day if the stock stays above the short strike?",
+    a: `
+      <p>If Spot price at expiry is higher than your short strike (S<sub>T</sub> ≥ K<sub>PE</sub>):</p>
+      <ul>
+        <li>The Put option expires completely worthless (₹0.00).</li>
+        <li>You retain <strong>100% of the upfront premium</strong> credited on trade entry.</li>
+        <li>Your margin is automatically released by the clearing corporation with zero delivery or STT penalty.</li>
+      </ul>
+    `
+  },
+  {
+    cat: "faq",
+    tag: "Risk Management",
+    q: "What if the stock drops sharply toward the short strike before expiry?",
+    a: `
+      <p>The 5-Pillar model ensures multiple defensive cushions:</p>
+      <ol>
+        <li><strong>Strike sits below Put Wall & 2024 Base:</strong> Large institutional buying typically steps in at these multi-year floors.</li>
+        <li><strong>Roll Out and Down:</strong> Standard institutional procedure is to roll the short put to the next month's series at a lower strike for an additional net credit.</li>
+        <li><strong>Physical Assignment:</strong> Because candidates are vetted for high ROE and solid earnings, taking delivery of the stock at a steep discount (Spot minus premium) represents an attractive institutional entry price.</li>
+      </ol>
+    `
+  },
+  {
+    cat: "faq",
+    tag: "API & Data",
+    q: "How does the Live Upstox API integration work?",
+    a: `
+      <p>The screener connects directly from your browser to the official <strong>Upstox Developer API (v2 and v3)</strong>:</p>
+      <ul>
+        <li><strong>GET /v3/market-quote/quotes:</strong> Synchronizes real-time spot prices, daily turnover, and OHLC data.</li>
+        <li><strong>GET /v2/option/contract:</strong> Retrieves the exact live NSE exchange expiration calendar.</li>
+        <li><strong>GET /v2/option/chain:</strong> Pulls live total option chain contracts, put strike volumes, and open interest.</li>
+      </ul>
+      <div class="faq-highlight-box">
+        <strong>🔒 Privacy Guarantee:</strong> Your Upstox access token is stored strictly in your browser's local storage (<code>localStorage</code>). It is never sent to GitHub or any third-party server.
+      </div>
+    `
+  }
+];
 
-  panel.innerHTML = `
-    <div class="thesis-header">
-      <div class="thesis-title-wrap">
-        <div class="thesis-sym-title">
-          <span>${r.sym}</span>
-          ${t.statusBadge}
-        </div>
-        <span class="sub-muted">Lot ${r.lot} • Spot ₹${r.spot.toLocaleString("en-IN", {minimumFractionDigits:1})} • Rank Score ${r.worthlessScore}/100</span>
-      </div>
-      <div>
-        <button class="thesis-btn-sm" onclick="toggleThesisPanel()" title="Hide Thesis Panel">✖ Close</button>
-      </div>
-    </div>
+let activeFaqCat = "all";
 
-    <!-- Strategy Execution Box -->
-    <div class="thesis-trade-box">
-      <div class="thesis-trade-title">
-        <span>${t.strikeLtp}</span>
-        <span style="font-size:11px;color:var(--accent);">RoM: ${t.romVal}</span>
-      </div>
-      <div class="thesis-trade-sub">${t.cushionText}</div>
-    </div>
+function buildFaqAccordion() {
+  const container = document.getElementById("faq-items-container");
+  if (!container) return;
+  const searchQ = (document.getElementById("faq-search-input")?.value || "").toLowerCase().trim();
 
-    <!-- Key Metrics Grid -->
-    <div class="thesis-metrics-grid">
-      <div class="thesis-metric-box">
-        <div class="m-val" style="color:var(--emerald);">${t.popVal}</div>
-        <div class="m-lbl">Worthless POP</div>
-      </div>
-      <div class="thesis-metric-box">
-        <div class="m-val" style="color:#fff;">${t.creditVal}</div>
-        <div class="m-lbl">Gross Credit</div>
-      </div>
-      <div class="thesis-metric-box">
-        <div class="m-val" style="color:var(--accent);">${t.romVal}</div>
-        <div class="m-lbl">Return on Margin</div>
-      </div>
-    </div>
+  const filtered = FAQ_DATABASE.filter(item => {
+    const matchesCat = (activeFaqCat === "all" || item.cat === activeFaqCat);
+    const matchesSearch = !searchQ || item.q.toLowerCase().includes(searchQ) || item.a.toLowerCase().includes(searchQ) || item.tag.toLowerCase().includes(searchQ);
+    return matchesCat && matchesSearch;
+  });
 
-    <!-- Summary Box -->
-    <div class="thesis-summary-text">
-      <strong style="color:var(--emerald);">⚡ Quantitative Worthless Thesis:</strong><br/>
-      ${t.summary}
-    </div>
+  if (filtered.length === 0) {
+    container.innerHTML = `<div style="text-align:center;padding:25px;color:var(--muted);font-size:12px;">No criteria matching "<strong>${searchQ}</strong>". Try searching "VRP", "POP", "2024 Base", or "Margin".</div>`;
+    return;
+  }
 
-    <!-- 5-Pillar Breakdown -->
-    <div class="thesis-section-title">🏛 5-Pillar Structural Breakdown</div>
-    <div class="thesis-pillar-box">
-      <strong>I. 2024 Multi-Year Structural Base Floor:</strong>
-      ${t.p1}
-    </div>
-    <div class="thesis-pillar-box">
-      <strong>II. Volatility Risk Premium & Decay Edge:</strong>
-      ${t.p2}
-    </div>
-    <div class="thesis-pillar-box">
-      <strong>III. Technical Exhaustion & Down-Day Volume:</strong>
-      ${t.p3}
-    </div>
-    <div class="thesis-pillar-box">
-      <strong>IV. Futures Open Interest & Trend Guard:</strong>
-      ${t.p4}
-    </div>
-    <div class="thesis-pillar-box">
-      <strong>V. Fundamental Moat & Earnings Momentum:</strong>
-      ${t.p5}
-    </div>
-
-    <!-- Bottom Navigation Bar -->
-    <div class="thesis-nav-bar">
-      <div style="display:flex;gap:4px;">
-        <button class="thesis-btn-sm" onclick="stepCandidate(-1)" title="Previous Candidate">❮ Prev</button>
-        <button class="thesis-btn-sm" onclick="stepCandidate(1)" title="Next Candidate">Next ❯</button>
+  container.innerHTML = filtered.map((item, idx) => `
+    <div class="faq-item ${idx === 0 && !searchQ ? 'open' : ''}">
+      <div class="faq-question" onclick="toggleFaqItem(this)">
+        <span class="faq-q-text">
+          <span class="faq-tag">${item.tag}</span>
+          ${item.q}
+        </span>
+        <span class="faq-arrow">▼</span>
       </div>
-      <button class="thesis-btn-sm" style="color:var(--accent);" onclick="copyThesisToClipboard('${r.sym}')" id="btn-copy-thesis">📋 Copy Thesis</button>
+      <div class="faq-answer">
+        ${item.a}
+      </div>
     </div>
-  `;
+  `).join("");
 }
+
+function toggleFaqItem(el) {
+  const item = el.closest(".faq-item");
+  if (item) item.classList.toggle("open");
+}
+
+function filterFaqCategory(cat, btn) {
+  activeFaqCat = cat;
+  document.querySelectorAll(".faq-cat-btn").forEach(b => b.classList.toggle("active", b === btn));
+  buildFaqAccordion();
+}
+
+function filterFaqItems() {
+  buildFaqAccordion();
+}
+
+function openFaqModal() {
+  const modal = document.getElementById("faq-modal");
+  if (modal) {
+    modal.classList.add("active");
+    buildFaqAccordion();
+    document.body.style.overflow = "hidden";
+  }
+}
+
+function closeFaqModal() {
+  const modal = document.getElementById("faq-modal");
+  if (modal) {
+    modal.classList.remove("active");
+    document.body.style.overflow = "";
+  }
+}
+
+function handleModalOverlayClick(e) {
+  if (e.target && e.target.id === "faq-modal") {
+    closeFaqModal();
+  }
+}
+
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") closeFaqModal();
+});
 
 function selectCandidate(sym) {
   selectedSymbol = sym;
-  if (!isThesisPanelOpen) {
-    toggleThesisPanel();
-  }
-  const expCfg = EXPIRY_CONFIG[currentExpiryMode];
-  const th = getThresholds();
-  const raw = getActiveUniverseArray().find(x => x.sym === sym);
-  if (raw) {
-    const cand = evaluateCandidate(raw, expCfg, th);
-    renderThesisPanel(cand, expCfg);
-    document.querySelectorAll("#screener-tbody tr").forEach(tr => {
-      const hasSym = tr.querySelector(".sym-cell")?.textContent?.includes(sym);
-      tr.classList.toggle("row-selected", !!hasSym);
-    });
-  }
-}
-
-function stepCandidate(delta) {
-  const expCfg = EXPIRY_CONFIG[currentExpiryMode];
-  const th = getThresholds();
-  const rawList = getActiveUniverseArray();
-  let evaluated = rawList.map(item => evaluateCandidate(item, expCfg, th));
-  const qualified = evaluated.filter(r => r.passed);
-  const rowsToShow = showRejectedRows ? evaluated : qualified;
-  rowsToShow.sort((a, b) => {
-    const va = a[currentSortKey] ?? 0;
-    const vb = b[currentSortKey] ?? 0;
-    if (typeof va === "string") return sortDesc ? vb.localeCompare(va) : va.localeCompare(vb);
-    return sortDesc ? (vb - va) : (va - vb);
+  document.querySelectorAll("#screener-tbody tr").forEach(tr => {
+    const hasSym = tr.querySelector(".sym-cell")?.textContent?.includes(sym);
+    tr.classList.toggle("row-selected", !!hasSym);
   });
-  const curIdx = rowsToShow.findIndex(r => r.sym === selectedSymbol);
-  if (curIdx === -1) {
-    if (rowsToShow.length > 0) selectCandidate(rowsToShow[0].sym);
-    return;
-  }
-  let nextIdx = curIdx + delta;
-  if (nextIdx < 0) nextIdx = rowsToShow.length - 1;
-  if (nextIdx >= rowsToShow.length) nextIdx = 0;
-  selectCandidate(rowsToShow[nextIdx].sym);
 }
 
-function toggleThesisPanel() {
-  isThesisPanelOpen = !isThesisPanelOpen;
-  const cont = document.getElementById("main-layout-container");
-  const btn = document.getElementById("btn-toggle-thesis");
-  if (cont) {
-    cont.classList.toggle("with-thesis", isThesisPanelOpen);
-    cont.classList.toggle("without-thesis", !isThesisPanelOpen);
-  }
-  if (btn) {
-    btn.classList.toggle("active", isThesisPanelOpen);
-    btn.textContent = isThesisPanelOpen ? "📑 Thesis on Right (ON)" : "📑 Thesis on Right (OFF)";
-  }
-}
+function syncExchangeExpiries(liveExpiries) {
+  if (!liveExpiries || liveExpiries.length < 3) return;
+  const today = new Date();
 
-function copyThesisToClipboard(sym) {
-  const expCfg = EXPIRY_CONFIG[currentExpiryMode];
-  const th = getThresholds();
-  const raw = getActiveUniverseArray().find(x => x.sym === sym);
-  if (!raw) return;
-  const r = evaluateCandidate(raw, expCfg, th);
-  const t = buildCandidateThesis(r, expCfg);
-  const text = `=== QUANTITATIVE OPTION SELLING THESIS: ${r.sym} ===\n` +
-    `Status: ${r.passed ? 'QUALIFIED' : r.reasons.join(';')}\n` +
-    `Trade: SELL ${r.shortStrike} PE @ ₹${r.shortPutLtp} (Expiry: ${expCfg.dateDisplay})\n` +
-    `POP%: ${r.pop}% | RoM%: ${r.romPct}% | Gross Credit: ₹${r.lotCredit.toLocaleString("en-IN")}\n` +
-    `Cushion: -${r.otmCushion}% OTM (Put Wall: ${r.putWallStrike} PE)\n\n` +
-    `Thesis Summary:\n${t.summary}\n\n` +
-    `5-Pillar Breakdown:\n` +
-    `1. 2024 Base: ${t.p1}\n` +
-    `2. VRP Spread: ${t.p2}\n` +
-    `3. Technical Regime: ${t.p3}\n` +
-    `4. Futures & Trend: ${t.p4}\n` +
-    `5. Fundamental Moat: ${t.p5}\n`;
+  function getDte(isoStr) {
+    const target = new Date(isoStr);
+    const diff = Math.ceil((target - today) / (1000 * 60 * 60 * 24));
+    return Math.max(1, diff);
+  }
 
-  navigator.clipboard.writeText(text).then(() => {
-    const btn = document.getElementById("btn-copy-thesis");
-    if (btn) {
-      const orig = btn.textContent;
-      btn.textContent = "✓ Copied!";
-      btn.style.color = "var(--emerald)";
-      setTimeout(() => { btn.textContent = orig; btn.style.color = "var(--accent)"; }, 1800);
-    }
-  });
+  function formatDisplay(isoStr) {
+    const d = new Date(isoStr);
+    const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    return `${dayNames[d.getDay()]}, ${d.getDate()} ${monthNames[d.getMonth()]} ${d.getFullYear()}`;
+  }
+
+  EXPIRY_CONFIG.current_month.dateISO = liveExpiries[0];
+  EXPIRY_CONFIG.current_month.dateDisplay = formatDisplay(liveExpiries[0]);
+  EXPIRY_CONFIG.current_month.dte = getDte(liveExpiries[0]);
+
+  EXPIRY_CONFIG.next_month.dateISO = liveExpiries[1];
+  EXPIRY_CONFIG.next_month.dateDisplay = formatDisplay(liveExpiries[1]);
+  EXPIRY_CONFIG.next_month.dte = getDte(liveExpiries[1]);
+
+  EXPIRY_CONFIG.far_month.dateISO = liveExpiries[2];
+  EXPIRY_CONFIG.far_month.dateDisplay = formatDisplay(liveExpiries[2]);
+  EXPIRY_CONFIG.far_month.dte = getDte(liveExpiries[2]);
+
+  const bCur = document.querySelector('button[data-exp="current_month"]');
+  if (bCur) bCur.textContent = `Oct 2026 (${EXPIRY_CONFIG.current_month.dateDisplay} • ${EXPIRY_CONFIG.current_month.dte} DTE)`;
+  const bNext = document.querySelector('button[data-exp="next_month"]');
+  if (bNext) bNext.textContent = `Nov 2026 (${EXPIRY_CONFIG.next_month.dateDisplay} • ${EXPIRY_CONFIG.next_month.dte} DTE)`;
+  const bFar = document.querySelector('button[data-exp="far_month"]');
+  if (bFar) bFar.textContent = `Dec 2026 (${EXPIRY_CONFIG.far_month.dateDisplay} • ${EXPIRY_CONFIG.far_month.dte} DTE)`;
+
+  const curCfg = EXPIRY_CONFIG[currentExpiryMode];
+  document.getElementById("active-expiry-pill").textContent = `Target Expiry: ${curCfg.seriesLabel.split(' ')[0]} Series • ${curCfg.dateDisplay} (${curCfg.dte} DTE)`;
+  document.getElementById("dte-label").textContent = `${curCfg.dte} Days to Expiry`;
 }
 
 // ============================================================================
@@ -1778,6 +1967,25 @@ async function triggerLiveUpstoxScan() {
 
   try {
     const activeList = getActiveUniverseArray();
+
+    // 1. Live Exchange Expiry Date Sync from Contract Master
+    try {
+      const expResp = await fetch("https://api.upstox.com/v2/option/contract?instrument_key=NSE_EQ|INE062A01020", {
+        headers: { "Authorization": `Bearer ${token}`, "Accept": "application/json" }
+      });
+      if (expResp.ok) {
+        const expData = await expResp.json();
+        const contracts = expData?.data || [];
+        const liveExpiries = Array.from(new Set(contracts.map(c => c.expiry).filter(Boolean))).sort();
+        if (liveExpiries.length >= 3) {
+          syncExchangeExpiries(liveExpiries);
+        }
+      }
+    } catch (e) {
+      console.warn("Contract expiry check warning:", e);
+    }
+
+    // 2. Fetch Live Market Quotes for Active List
     const queryKeys = [];
     activeList.forEach(item => {
       const k = UPSTOX_INSTRUMENT_KEYS[item.sym];
@@ -1800,18 +2008,51 @@ async function triggerLiveUpstoxScan() {
       const quotes = quoteData?.data || {};
       let updatedCount = 0;
 
+      // Index quotes by symbol ("SBIN", "RELIANCE") and by keys
+      const quotesBySym = {};
+      Object.entries(quotes).forEach(([key, q]) => {
+        if (!q) return;
+        if (q.symbol) quotesBySym[q.symbol] = q;
+        quotesBySym[key] = q;
+        const cleanKey = key.replace(/^NSE_EQ[:|]/i, '');
+        quotesBySym[cleanKey] = q;
+      });
+
       activeList.forEach(item => {
-        const k = UPSTOX_INSTRUMENT_KEYS[item.sym];
-        if (k) {
-          const formattedKey = k.replace("|", ":");
-          const q = quotes[formattedKey] || quotes[k];
-          if (q && q.last_price) {
-            item.spot = Number(q.last_price);
-            if (q.volume) item.fnoVol = Number(q.volume);
-            updatedCount++;
+        const q = quotesBySym[item.sym] || quotes["NSE_EQ:" + item.sym];
+        if (q && q.last_price != null) {
+          item.spot = Number(q.last_price);
+          if (q.volume != null && q.volume > 0) {
+            item.spotVol = Number(q.volume);
           }
+          updatedCount++;
         }
       });
+
+      // 3. Sync Live Option Chain Volume for Liquid Anchor (SBIN)
+      try {
+        const chainResp = await fetch(`https://api.upstox.com/v2/option/chain?instrument_key=NSE_EQ|INE062A01020&expiry_date=${expCfg.dateISO}`, {
+          headers: { "Authorization": `Bearer ${token}`, "Accept": "application/json" }
+        });
+        if (chainResp.ok) {
+          const chainJson = await chainResp.json();
+          const chainRows = chainJson?.data || [];
+          if (chainRows.length > 0) {
+            let chainVol = 0;
+            chainRows.forEach(r => {
+              const cV = r.call_options?.market_data?.volume || 0;
+              const pV = r.put_options?.market_data?.volume || 0;
+              chainVol += (cV + pV);
+            });
+            const sbinItem = activeList.find(x => x.sym === "SBIN");
+            if (sbinItem && chainVol > 0) {
+              sbinItem.fnoVol = chainVol;
+            }
+          }
+        }
+      } catch (err) {
+        console.warn("Chain vol sync warning:", err);
+      }
 
       statusEl.textContent = `🟢 Live Upstox Connected • ${updatedCount} Live Quotes Synced • Expiry ${expCfg.dateDisplay}`;
       statusEl.style.color = "var(--emerald)";

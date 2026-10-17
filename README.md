@@ -4,8 +4,8 @@ Institutional-grade quantitative options screener powered by the **Upstox Develo
 Engineered specifically for **Pure Option Selling (Single-Leg Short OTM Puts)** that expire 100% worthless, harvesting upfront gross premium and **Volatility Risk Premium (VRP)** while calculating **Return on SPAN Margin (RoM %)**.
 
 🌐 **Live Web Dashboards:**
-- 📊 **Single-Screen Full Table View (100% Fit):** [https://gnjnshh.github.io/Options-Tracker/](https://gnjnshh.github.io/Options-Tracker/)
-- 📑 **Quantitative Thesis Split-View (Thesis on Right):** [https://gnjnshh.github.io/Options-Tracker/thesis.html](https://gnjnshh.github.io/Options-Tracker/thesis.html)
+- 📊 **Main Quantitative Screener (Single-Screen 100% Fit):** [https://gnjnshh.github.io/Options-Tracker/](https://gnjnshh.github.io/Options-Tracker/)
+- 📖 **Quantitative Thesis, Criteria & Terminology FAQs:** [https://gnjnshh.github.io/Options-Tracker/thesis.html](https://gnjnshh.github.io/Options-Tracker/thesis.html)
 
 *(Note: The original v1.0 2024 Multi-Year Low screener is preserved on branch **[`v1`](https://github.com/gnjnshh/Options-Tracker/tree/v1)**).*
 
@@ -19,10 +19,10 @@ Engineered specifically for **Pure Option Selling (Single-Leg Short OTM Puts)** 
    - Computes estimated **Return on SPAN Margin (RoM %)** based on exchange margin requirements (~16.5% contract value proxy).
 2. **Exact Target Expiry Month & Date Display**:
    - Dynamically resolves and displays the exact NSE monthly expiration series:
-     - **Oct Series:** Thu, 29 Oct 2026 (12 DTE)
-     - **Nov Series:** Thu, 26 Nov 2026 (40 DTE)
-     - **Dec Series:** Thu, 31 Dec 2026 (75 DTE)
-   - Synchronizes with Upstox API `GET /v2/option/chain`.
+     - **Oct Series:** Tue, 27 Oct 2026 (10 DTE)
+     - **Nov Series:** Mon, 23 Nov 2026 (37 DTE)
+     - **Dec Series:** Tue, 29 Dec 2026 (73 DTE)
+   - Synchronizes directly with Upstox API `GET /v2/option/contract` and `GET /v2/option/chain`.
 3. **Upstox API Option Chain Volume Integration & 1-Click Sort by Volume**:
    - Pulls live total option chain volume (`Σ Call Vol + Put Vol`) and strike-specific volume & open interest (`OI`).
    - Dedicated quick-sort toolbar directly above the table with 1-click **🔥 Sort by F&O Chain Volume** (`--sort vol`).
