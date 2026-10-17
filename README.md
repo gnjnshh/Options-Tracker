@@ -3,7 +3,9 @@
 Institutional-grade quantitative options screener powered by the **Upstox Developer API (v2 & v3)**.
 Engineered specifically for **Pure Option Selling (Single-Leg Short OTM Puts)** that expire 100% worthless, harvesting upfront gross premium and **Volatility Risk Premium (VRP)** while calculating **Return on SPAN Margin (RoM %)**.
 
-🌐 **Live Web Dashboard:** [https://gnjnshh.github.io/Options-Tracker/](https://gnjnshh.github.io/Options-Tracker/)
+🌐 **Live Web Dashboards:**
+- 📊 **Single-Screen Full Table View (100% Fit):** [https://gnjnshh.github.io/Options-Tracker/](https://gnjnshh.github.io/Options-Tracker/)
+- 📑 **Quantitative Thesis Split-View (Thesis on Right):** [https://gnjnshh.github.io/Options-Tracker/thesis.html](https://gnjnshh.github.io/Options-Tracker/thesis.html)
 
 *(Note: The original v1.0 2024 Multi-Year Low screener is preserved on branch **[`v1`](https://github.com/gnjnshh/Options-Tracker/tree/v1)**).*
 
