@@ -418,7 +418,7 @@
     }
 
     .analysis-list {
-      margin: 3px 0 0 0;
+      margin: 0;
       padding: 0;
       list-style: none;
       font-size: 10px;
@@ -434,24 +434,22 @@
       word-break: break-word;
     }
     .analysis-tag-fail {
-      color: #f87171;
+      color: #ef4444;
       font-weight: 700;
       white-space: nowrap;
       flex-shrink: 0;
     }
     .analysis-desc-fail {
-      color: #cbd5e1;
+      color: #fca5a5;
     }
     .analysis-tag-pass {
-      color: #34d399;
+      color: #10b981;
       font-weight: 700;
       white-space: nowrap;
       flex-shrink: 0;
     }
     .analysis-desc-pass {
-      color: #a7f3d0;
-    }
-      color: #a7f3d0;
+      color: #6ee7b7;
     }
 
     tbody tr {
@@ -4736,25 +4734,16 @@ function parseReasonItem(reason) {
 function formatQualificationAnalysis(r) {
   if (r.passed) {
     return `
-      <div style="font-weight:700;color:#34d399;margin-bottom:2px;display:flex;align-items:center;gap:4px;">
-        <span class="badge-pass" style="padding:1px 6px;font-size:9.5px;">✓ QUALIFIED</span>
-        <span style="font-size:9.5px;color:#a7f3d0;font-weight:600;">All 5 Pillars Passed</span>
-      </div>
       <ul class="analysis-list">
-        <li><span class="analysis-tag-pass">✓</span> <span class="analysis-desc-pass">POP ${r.pop}% (≥ 76% target)</span></li>
-        <li><span class="analysis-tag-pass">✓</span> <span class="analysis-desc-pass">Cushion -${r.otmCushion}% OTM (≥ 5.0% wall)</span></li>
-        <li><span class="analysis-tag-pass">✓</span> <span class="analysis-desc-pass">RSI ${r.rsi14} (≤ 60 calm dip)</span></li>
-        <li><span class="analysis-tag-pass">✓</span> <span class="analysis-desc-pass">VRP +${r.vrp}% (≥ +2.0% rich premium)</span></li>
-        <li><span class="analysis-tag-pass">✓</span> <span class="analysis-desc-pass">2020 Base +${r.distBase}% (&lt; 220% max)</span></li>
+        <li><span class="analysis-tag-pass">• POP ${r.pop}%:</span> <span class="analysis-desc-pass">≥ 76% target</span></li>
+        <li><span class="analysis-tag-pass">• Cushion -${r.otmCushion}%:</span> <span class="analysis-desc-pass">≥ 5.0% OTM wall</span></li>
+        <li><span class="analysis-tag-pass">• RSI ${r.rsi14}:</span> <span class="analysis-desc-pass">≤ 60 calm dip</span></li>
+        <li><span class="analysis-tag-pass">• VRP +${r.vrp}%:</span> <span class="analysis-desc-pass">≥ +2.0% rich harvest</span></li>
+        <li><span class="analysis-tag-pass">• 2020 Base +${r.distBase}%:</span> <span class="analysis-desc-pass">&lt; 220% secular floor</span></li>
       </ul>
     `;
   }
-  const count = r.reasons.length;
   return `
-    <div style="font-weight:700;color:#f87171;margin-bottom:2px;display:flex;align-items:center;gap:4px;">
-      <span class="badge-fail" style="padding:1px 6px;font-size:9.5px;">REJECTED</span>
-      <span style="font-size:9.5px;color:#fca5a5;font-weight:600;">${count} Guard Violation${count > 1 ? 's' : ''}</span>
-    </div>
     <ul class="analysis-list">
       ${r.reasons.map(reason => {
         const p = parseReasonItem(reason);
