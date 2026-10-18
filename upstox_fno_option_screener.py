@@ -3717,28 +3717,54 @@ class UpstoxClient:
 # ---------------------------------------------------------------------------
 # Terminal ASCII Output & CSV Exporter (18 Columns)
 # ---------------------------------------------------------------------------
+def get_reason_desc_py(reason: str) -> str:
+    """Returns a short institutional explanation for a screener disqualification reason."""
+    if reason.startswith("TightCushion"):
+        return "Buffer < 5.0% min (gamma breach risk)"
+    if reason.startswith("LowPOP"):
+        return "Empirical POP < 76% target"
+    if reason.startswith("FarFrom2020Base"):
+        return "Distance > 220% max base threshold"
+    if reason.startswith("LowVRP"):
+        return "VRP < +2.0% min premium harvest"
+    if reason.startswith("RSI>") or reason.startswith("OverboughtRSI"):
+        return "RSI > 60 overbought momentum"
+    if reason.startswith("Below200DMA"):
+        return "Trading below 0.92x secular trend floor"
+    if reason.startswith("ParabolicBlowoff"):
+        return "5D Z-score > +1.15σ gap risk"
+    if reason.startswith("FutShortBuildup"):
+        return "Futures OI surge on price decline"
+    if reason.startswith("LowChainVol"):
+        return "Chain volume below liquidity floor"
+    return "Failed quantitative risk threshold"
+
+
 def print_terminal_screener_report(
     evaluated: List[EvaluatedCandidate],
-    show_rejected: bool = False,
+    show_rejected: bool = True,
     sort_mode: str = "worthless_prob",
 ) -> None:
-    """Prints a clean, formatted ASCII table matching the v3.0 dashboard."""
-    # Sorting
-    if sort_mode in ("vol", "fnoVol", "fno_vol"):
-        evaluated.sort(key=lambda r: (r.passed, r.fno_vol), reverse=True)
-    elif sort_mode == "pure_pop":
-        evaluated.sort(key=lambda r: (r.passed, r.pop, r.worthless_score), reverse=True)
-    elif sort_mode == "credit":
-        evaluated.sort(key=lambda r: (r.passed, r.lot_credit), reverse=True)
-    elif sort_mode == "vrp":
-        evaluated.sort(key=lambda r: (r.passed, r.vrp), reverse=True)
-    elif sort_mode == "dist_base":
-        evaluated.sort(key=lambda r: (r.passed, -r.dist_base), reverse=True)
-    else:  # worthless_prob
-        evaluated.sort(key=lambda r: (r.passed, r.worthless_score, r.pop), reverse=True)
-
+    """Prints institutional summary report of candidates to terminal with detailed qualification analysis."""
     qualified = [r for r in evaluated if r.passed]
     display_list = evaluated if show_rejected else qualified
+
+    if sort_mode == "vol":
+        display_list.sort(key=lambda x: x.fno_vol, reverse=True)
+    elif sort_mode == "pure_pop":
+        display_list.sort(key=lambda x: x.pop, reverse=True)
+    elif sort_mode == "credit":
+        display_list.sort(key=lambda x: x.lot_credit, reverse=True)
+    elif sort_mode == "vrp":
+        display_list.sort(key=lambda x: x.vrp, reverse=True)
+    elif sort_mode == "dist_base":
+        display_list.sort(key=lambda x: x.dist_base)
+    elif sort_mode == "rsi":
+        display_list.sort(key=lambda x: x.rsi14)
+    elif sort_mode == "roe":
+        display_list.sort(key=lambda x: x.roe_alpha, reverse=True)
+    else:
+        display_list.sort(key=lambda x: x.worthless_score, reverse=True)
 
     ref_set = qualified if qualified else evaluated
     avg_pop = sum(r.pop for r in ref_set) / max(1, len(ref_set))
@@ -3749,19 +3775,19 @@ def print_terminal_screener_report(
 
     series_info = f"{evaluated[0].expiry_formatted} ({evaluated[0].dte} DTE)" if evaluated else "Next Month Series"
 
-    print("\n" + "=" * 152)
+    print("\n" + "=" * 162)
     print(" UPSTOX F&O QUANT SCREENER v3.0 — PURE SHORT OTM PUT & WORTHLESS EXPIRY HARVESTER")
     print(f" Target Expiry: {series_info}")
     print(" Strategy: Single-Leg Short OTM Put (Sell <Strike> PE) • 100% Upfront Premium Retained on Worthless Expiry")
-    print("=" * 152)
+    print("=" * 162)
     print(f" Qualified Candidates: {len(qualified)} / {len(evaluated)} ({len(qualified)/max(1, len(evaluated))*100:.1f}% pass rate)")
     print(f" Portfolio Averages (Qualified): POP: {avg_pop:.1f}% | Cushion: -{avg_cush:.1f}% OTM | Avg Chain Vol: {avg_vol/1000:.1f}k | Gross Credit: INR {avg_credit:,.0f} (RoM: {avg_rom:.2f}%)")
-    print("-" * 152)
-    print(f"{'RANK & SYMBOL':<14} {'SPOT':<9} {'2020 BASE':<12} {'F&O VOL':<10} {'RSI/MFI':<10} {'ROE/SEC':<14} {'VRP':<7} {'RECOMMENDED SHORT OTM PUT':<28} {'RoM%':<7} {'POP%':<7} {'GROSS CREDIT':<13} {'SCORE':<6} {'STATUS'}")
-    print("-" * 152)
+    print("-" * 162)
+    print(f"{'RANK & SYMBOL':<14} {'SPOT':<9} {'2020 BASE':<12} {'F&O VOL':<10} {'RSI/MFI':<10} {'ROE/SEC':<14} {'VRP':<7} {'RECOMMENDED SHORT OTM PUT':<28} {'RoM%':<7} {'POP%':<7} {'GROSS CREDIT':<13} {'SCORE':<6} {'QUALIFICATION ANALYSIS'}")
+    print("-" * 162)
 
     for idx, r in enumerate(display_list, 1):
-        status = "QUALIFIED" if r.passed else "REJECTED"
+        status = "✓ QUALIFIED (5/5 Pillars)" if r.passed else f"REJECTED: {', '.join(r.reasons[:2])}{'...' if len(r.reasons) > 2 else ''}"
         sym_col = f"{idx}. {r.sym}"
         spot_col = f"₹{r.spot:,.1f}"
         base_col = f"+{r.dist_base:.1f}%"
@@ -3777,14 +3803,15 @@ def print_terminal_screener_report(
 
         print(f"{sym_col:<14} {spot_col:<9} {base_col:<12} {vol_col:<10} {rsi_col:<10} {roe_col:<14} {vrp_col:<7} {trade_col:<28} {rom_col:<7} {pop_col:<7} {credit_col:<13} {score_col:<6} {status}")
         
-        # Thesis / Reason row with volume & OI details
+        # Detailed Qualification Analysis Row
         if r.passed:
-            thesis = f"   [WORTHLESS THESIS] Strike {r.short_strike:.0f} PE sits -{r.otm_cushion:.1f}% below spot (Wall: {r.put_wall_strike:.0f} PE) with {r.pop:.1f}% Empirical POP, +{r.vrp:.1f}% VRP, and {r.strike_pe_oi:,} Put OI. Lot Credit: ₹{r.lot_credit:,} (RoM {r.rom_pct}%)."
+            thesis = f"   [5-PILLAR PASS] POP {r.pop:.1f}% (≥76%) | Cushion -{r.otm_cushion:.1f}% (≥5%) | RSI {r.rsi14:.1f} (≤60) | VRP +{r.vrp:.1f}% (≥+2%) | Base +{r.dist_base:.1f}% (<220%). Wall: {r.put_wall_strike:.0f} PE. Lot Credit: ₹{r.lot_credit:,} (RoM {r.rom_pct}%)."
         else:
-            thesis = f"   [FILTERED] {' • '.join(r.reasons)}"
+            points = " • ".join([f"{p}: {get_reason_desc_py(p)}" for p in r.reasons])
+            thesis = f"   [DISQUALIFICATION POINTS] {points}"
         print(thesis)
 
-    print("-" * 152)
+    print("-" * 162)
 
 
 def export_candidates_csv(evaluated: List[EvaluatedCandidate], filepath: str) -> None:
@@ -3793,18 +3820,23 @@ def export_candidates_csv(evaluated: List[EvaluatedCandidate], filepath: str) ->
         "Rank", "Symbol", "Lot", "Expiry_Date", "DTE", "Spot", "Base2020", "High20_26", "DistToBase2020_Pct",
         "FnO_Chain_Volume", "Strike_PE_Volume", "Strike_PE_OI", "RSI14", "MFI", "Boll_PctB", "ROE_Pct", "ROE_Alpha_Pct",
         "PAT_YoY_Pct", "DownVol", "HV10", "HV20", "ADX14", "IV", "VRP", "Recommended_Short_Put_Strike",
-        "Short_Put_LTP", "OTM_Cushion_Pct", "Empirical_POP_Pct", "Gross_Lot_Credit_INR", "RoM_Pct", "Worthless_Score", "Status"
+        "Short_Put_LTP", "OTM_Cushion_Pct", "Empirical_POP_Pct", "Gross_Lot_Credit_INR", "RoM_Pct", "Worthless_Score", "Qualification_Analysis"
     ]
     with open(filepath, "w", newline="", encoding="utf-8") as f:
         writer = csv.writer(f)
         writer.writerow(headers)
         for idx, r in enumerate(evaluated, 1):
+            analysis_text = (
+                f"QUALIFIED (POP {r.pop:.1f}%; Cushion -{r.otm_cushion:.1f}%; RSI {r.rsi14:.1f}; VRP +{r.vrp:.1f}%; Base +{r.dist_base:.1f}%)"
+                if r.passed
+                else " | ".join([f"{res}: {get_reason_desc_py(res)}" for res in r.reasons])
+            )
             writer.writerow([
                 idx, r.sym, r.lot, r.expiry_iso, r.dte, r.spot, r.base_2020, r.high_20_26, r.dist_base,
                 r.fno_vol, r.strike_pe_vol, r.strike_pe_oi, r.rsi14, r.mfi, r.boll_b, r.roe, r.roe_alpha,
                 r.pat_yoy, r.down_vol, r.hv10, r.yz, r.adx14, r.iv, r.vrp, r.short_strike,
                 r.short_put_ltp, r.otm_cushion, r.pop, r.lot_credit, r.rom_pct, r.worthless_score,
-                "QUALIFIED" if r.passed else "; ".join(r.reasons)
+                analysis_text
             ])
     print(f"\nSaved full quantitative screener report to: {filepath}")
 
