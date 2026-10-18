@@ -234,11 +234,20 @@ def test_live_option_chain_and_quote_integration():
     # 7. Test fallback when LTP and close_price are 0, but ask_price is selling at 1.55 (PIDILITIND fix)
     mock_chain_ask_price = [
         {
+            "strike_price": 1420.0,
+            "underlying_spot_price": 1502.8,
+            "call_options": {"market_data": {"volume": 0, "oi": 0}},
+            "put_options": {
+                "market_data": {"volume": 0, "oi": 0, "ltp": 0.0, "close_price": 0.0, "ask_price": 0.0, "bid_price": 0.0},
+                "option_greeks": {"iv": 28.0, "delta": -0.09, "pop": 90.0},
+            },
+        },
+        {
             "strike_price": 1400.0,
             "underlying_spot_price": 1502.8,
             "call_options": {"market_data": {"volume": 0, "oi": 1000}},
             "put_options": {
-                "market_data": {"volume": 0, "oi": 15000, "ltp": 0.0, "close_price": 0.0, "ask_price": 1.55, "bid_price": 1.50},
+                "market_data": {"volume": 120, "oi": 15000, "ltp": 0.0, "close_price": 0.0, "ask_price": 1.55, "bid_price": 1.50},
                 "option_greeks": {"iv": 28.0, "delta": -0.05, "pop": 94.5},
             },
         }
@@ -250,6 +259,22 @@ def test_live_option_chain_and_quote_integration():
     assert cand_ask.short_put_ltp == 1.55
     assert cand_ask.short_strike == 1400.0
     assert cand_ask.lot == 500
+
+    # 8. Test theoretical BS fallback when chain_data is None (not 14.68!)
+    cand_no_chain = scr.evaluate_candidate(
+        pidi_item, th, expiry_mode="current_month", chain_data=None
+    )
+    assert cand_no_chain.short_put_ltp < 6.0  # Real Black-Scholes ~4.56, not broken 14.68
+    assert cand_no_chain.short_put_ltp > 2.0
+    assert cand_no_chain.short_strike == 1420.0
+    assert cand_no_chain.lot == 500
+
+    # 9. Test cross-expiry non-leakage (switching expiry calculates separate strikes)
+    cand_next = scr.evaluate_candidate(
+        pidi_item, th, expiry_mode="next_month", chain_data=None
+    )
+    assert cand_next.short_strike == 1360.0  # 37 DTE strike is 1360, distinct from 10 DTE 1420
+    assert cand_next.short_put_ltp > cand_no_chain.short_put_ltp
 
     print("test_live_option_chain_and_quote_integration: PASS")
 

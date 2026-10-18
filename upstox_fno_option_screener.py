@@ -3433,6 +3433,8 @@ def evaluate_candidate(
     if chain_data:
         best_row = None
         min_dist = float("inf")
+        best_liquid_row = None
+        min_liquid_dist = float("inf")
         for row in chain_data:
             ce_md = (row.get("call_options") or {}).get("market_data") or {}
             pe_md = (row.get("put_options") or {}).get("market_data") or {}
@@ -3453,9 +3455,23 @@ def evaluate_candidate(
                 min_dist = dist
                 best_row = row
 
-        if best_row:
-            pe_md = (best_row.get("put_options") or {}).get("market_data") or {}
-            pe_greeks = (best_row.get("put_options") or {}).get("option_greeks") or {}
+            has_quote = bool(
+                float(pe_md.get("ltp") or 0.0) > 0
+                or float(pe_md.get("close_price") or 0.0) > 0
+                or float(pe_md.get("ask_price") or 0.0) > 0
+                or float(pe_md.get("bid_price") or 0.0) > 0
+                or int(pe_md.get("volume") or 0) > 0
+                or int(pe_md.get("oi") or 0) > 0
+            )
+            if has_quote and dist < min_liquid_dist:
+                min_liquid_dist = dist
+                best_liquid_row = row
+
+        final_row = best_liquid_row if (best_liquid_row and min_liquid_dist <= step * 2.5) else best_row
+
+        if final_row:
+            pe_md = (final_row.get("put_options") or {}).get("market_data") or {}
+            pe_greeks = (final_row.get("put_options") or {}).get("option_greeks") or {}
             strike_pe_vol = int(pe_md.get("volume") or 0)
             strike_pe_oi = int(pe_md.get("oi") or 0)
             chain_ltp = float(pe_md.get("ltp") or 0.0)
@@ -3470,7 +3486,7 @@ def evaluate_candidate(
             chain_iv = float(pe_greeks.get("iv") or 0.0)
             chain_delta = float(pe_greeks.get("delta") or 0.0)
             chain_pop = float(pe_greeks.get("pop") or 0.0)
-            best_k = float(best_row.get("strike_price") or 0.0)
+            best_k = float(final_row.get("strike_price") or 0.0)
             if best_k > 0:
                 short_strike = best_k
 
@@ -3917,7 +3933,12 @@ def main() -> None:
             batch = quote_keys[i:i + 50]
             batch_quotes = client.fetch_market_quotes(batch)
             if batch_quotes:
-                live_quotes.update(batch_quotes)
+                for k, v in batch_quotes.items():
+                    live_quotes[k] = v
+                    live_quotes[k.replace(":", "|")] = v
+                    live_quotes[k.replace("|", ":")] = v
+                    if isinstance(v, dict) and v.get("symbol"):
+                        live_quotes[v["symbol"].upper()] = v
     except Exception as e:
         print(f"Notice: Live quote batching fallback: {e}")
 
@@ -3943,7 +3964,18 @@ def main() -> None:
             chain_data = None
 
         # 3. Match live market quote
-        sym_quote = live_quotes.get(inst_key) or live_quotes.get(f"NSE_EQ:{sym}") or live_quotes.get(sym)
+        colon_key = inst_key.replace("|", ":")
+        pipe_key = inst_key.replace(":", "|")
+        raw_sym = inst_key.split("|")[-1].split(":")[-1]
+        sym_quote = (
+            live_quotes.get(inst_key)
+            or live_quotes.get(colon_key)
+            or live_quotes.get(pipe_key)
+            or live_quotes.get(f"NSE_EQ:{sym}")
+            or live_quotes.get(f"NSE_EQ|{sym}")
+            or live_quotes.get(sym)
+            or live_quotes.get(raw_sym)
+        )
 
         cand = evaluate_candidate(item, th, args.expiry, chain_data=chain_data, candles=candles, quote_data=sym_quote)
         evaluated.append(cand)

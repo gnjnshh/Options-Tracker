@@ -4262,6 +4262,15 @@ function normCDF(x) {
   return x > 0 ? 1 - p : p;
 }
 
+function blackScholesPut(spot, strike, dteDays, ivPct, r = 0.068) {
+  const T = Math.max(1, dteDays) / 365.0;
+  const sigma = Math.max(0.05, (ivPct || 20.0) / 100.0);
+  const d1 = (Math.log(spot / strike) + (r + 0.5 * sigma * sigma) * T) / (sigma * Math.sqrt(T));
+  const d2 = d1 - sigma * Math.sqrt(T);
+  const put = strike * Math.exp(-r * T) * normCDF(-d2) - spot * normCDF(-d1);
+  return Math.max(0.5, +(put).toFixed(2));
+}
+
 function compute200DMA(closes) {
   if (!closes || closes.length < 200) return null;
   const slice = closes.slice(-200);
@@ -4356,18 +4365,24 @@ function evaluateCandidate(item, expCfg, thresholds) {
 
   // Target ~1.12 SD OTM Short Put Strike snapped down to listed NSE strike interval
   const rawShortK = item.spot * Math.exp(-1.12 * sigmaYZ * Math.sqrt(T));
-  const shortStrike = chainExp?.shortStrike || item.shortStrike || Math.max(item.step, Math.floor(rawShortK / item.step) * item.step);
-  const putWallStrike = chainExp?.putWallStrike || item.putWallStrike || Math.floor((item.spot * 0.94) / item.step) * item.step;
+  const shortStrike = chainExp?.shortStrike || Math.max(item.step, Math.floor(rawShortK / item.step) * item.step);
+  const putWallStrike = chainExp?.putWallStrike || Math.floor((item.spot * 0.94) / item.step) * item.step;
 
   // Empirical Yang-Zhang POP% N(d2)
   const d1_yz = (Math.log(item.spot / shortStrike) + (r + 0.5 * sigmaYZ * sigmaYZ) * T) / (sigmaYZ * Math.sqrt(T));
   const d2_yz = d1_yz - sigmaYZ * Math.sqrt(T);
-  const pop = (chainExp?.pop != null && Number(chainExp.pop) > 0) ? +Number(chainExp.pop).toFixed(1) : ((item.pop != null && Number(item.pop) > 0) ? +Number(item.pop).toFixed(1) : +Math.min(96.8, Math.max(54.0, normCDF(d2_yz) * 100)).toFixed(1));
+  const pop = (chainExp?.pop != null && Number(chainExp.pop) > 0)
+    ? +Number(chainExp.pop).toFixed(1)
+    : +Math.min(96.8, Math.max(54.0, normCDF(d2_yz) * 100)).toFixed(1);
 
   // Black-Scholes Short Put Delta & Single-Leg Option Premium
   const d1_iv = (Math.log(item.spot / shortStrike) + (r + 0.5 * sigmaIV * sigmaIV) * T) / (sigmaIV * Math.sqrt(T));
-  const shortDelta = (chainExp?.shortDelta != null && Number(chainExp.shortDelta) !== 0) ? +Number(chainExp.shortDelta).toFixed(2) : ((item.shortDelta != null && Number(item.shortDelta) !== 0) ? +Number(item.shortDelta).toFixed(2) : +(-(1 - normCDF(d1_iv))).toFixed(2));
-  const shortPutLtp = (chainExp?.shortPutLtp != null && Number(chainExp.shortPutLtp) > 0) ? +Number(chainExp.shortPutLtp).toFixed(2) : ((item.shortPutLtp != null && Number(item.shortPutLtp) > 0) ? +Number(item.shortPutLtp).toFixed(2) : +Math.max(1.5, item.spot * sigmaIV * Math.sqrt(T) * 0.21).toFixed(2));
+  const shortDelta = (chainExp?.shortDelta != null && Number(chainExp.shortDelta) !== 0)
+    ? +Number(chainExp.shortDelta).toFixed(2)
+    : +(-(1 - normCDF(d1_iv))).toFixed(2);
+  const shortPutLtp = (chainExp?.shortPutLtp != null && Number(chainExp.shortPutLtp) > 0)
+    ? +Number(chainExp.shortPutLtp).toFixed(2)
+    : blackScholesPut(item.spot, shortStrike, expCfg.dte, item.iv, r);
 
   // Gross Lot Credit (100% retained on worthless expiry) & Return on SPAN Margin (RoM%)
   const lotCredit = Math.round(shortPutLtp * item.lot);
@@ -4391,8 +4406,8 @@ function evaluateCandidate(item, expCfg, thresholds) {
   const adx14 = item.adx14 || +(18.5 + Math.abs(item.z5d) * 5.2).toFixed(1);
 
   // Strike-specific PE volume & OI from chain
-  const strikePeVol = item.strikePeVol || Math.round(item.fnoVol * 0.085);
-  const strikePeOi = item.strikePeOi || Math.round(item.fnoVol * 0.32);
+  const strikePeVol = chainExp?.strikePeVol || Math.round(item.fnoVol * 0.085);
+  const strikePeOi = chainExp?.strikePeOi || Math.round(item.fnoVol * 0.32);
 
   // 5-Pillar + Multi-Year Base Qualification Checks
   const reasons = [];
@@ -5346,11 +5361,14 @@ const UPSTOX_INSTRUMENT_KEYS = {
   "ZYDUSLIFE": "NSE_EQ|INE010B01027"
 };
 
+let currentScanId = 0;
+
 async function triggerLiveUpstoxScan() {
+  const scanId = ++currentScanId;
   let token = document.getElementById("upstox-token").value.trim();
   token = token.replace(/^Bearer\s+/i, '').replace(/[\r\n\t "']/g, '');
   const statusEl = document.getElementById("api-status-text");
-  const expCfg = EXPIRY_CONFIG[currentExpiryMode];
+  let expCfg = EXPIRY_CONFIG[currentExpiryMode];
 
   if (!token) {
     statusEl.textContent = `⚡ Calibrated Simulation Active (${getActiveUniverseArray().length} Symbols • ${expCfg.dateDisplay})`;
@@ -5380,17 +5398,20 @@ async function triggerLiveUpstoxScan() {
         const liveExpiries = Array.from(new Set(contracts.map(c => c.expiry).filter(Boolean))).sort();
         if (liveExpiries.length >= 3) {
           syncExchangeExpiries(liveExpiries);
+          expCfg = EXPIRY_CONFIG[currentExpiryMode];
         }
       }
     } catch (e) {
       console.warn("Contract expiry check warning:", e);
     }
 
+    if (scanId !== currentScanId) return;
+
     // 2. Fetch Live Market Quotes for Active List in Batches of 50
     const queryKeys = [];
     activeList.forEach(item => {
-      const k = UPSTOX_INSTRUMENT_KEYS[item.sym];
-      if (k) queryKeys.push(k);
+      const k = UPSTOX_INSTRUMENT_KEYS[item.sym] || `NSE_EQ|${item.sym}`;
+      queryKeys.push(k);
     });
 
     const quoteBatchSize = 50;
@@ -5399,8 +5420,9 @@ async function triggerLiveUpstoxScan() {
     let authError = false;
 
     for (let i = 0; i < queryKeys.length; i += quoteBatchSize) {
+      if (scanId !== currentScanId) return;
       const chunk = queryKeys.slice(i, i + quoteBatchSize);
-      const quoteUrl = `https://api.upstox.com/v3/market-quote/quotes?instrument_key=${encodeURIComponent(chunk.join(","))}`;
+      const quoteUrl = `https://api.upstox.com/v3/market-quote/quotes?instrument_key=${chunk.map(k => encodeURIComponent(k)).join(",")}`;
       try {
         const resp = await fetch(quoteUrl, {
           method: "GET",
@@ -5429,6 +5451,8 @@ async function triggerLiveUpstoxScan() {
       return;
     }
 
+    if (scanId !== currentScanId) return;
+
     let updatedCount = 0;
     if (quotesFetched) {
       const quotesBySym = {};
@@ -5436,14 +5460,18 @@ async function triggerLiveUpstoxScan() {
         if (!q) return;
         if (q.symbol) quotesBySym[q.symbol.toUpperCase()] = q;
         quotesBySym[key] = q;
+        quotesBySym[key.replace('|', ':')] = q;
+        quotesBySym[key.replace(':', '|')] = q;
         const cleanKey = key.replace(/^NSE_EQ[:|]/i, '');
         quotesBySym[cleanKey] = q;
       });
 
       activeList.forEach(item => {
-        const k = UPSTOX_INSTRUMENT_KEYS[item.sym];
-        const cleanK = k ? k.replace(/^NSE_EQ[:|]/i, '') : '';
-        const q = quotesBySym[item.sym] || (k && quotesBySym[k]) || (cleanK && quotesBySym[cleanK]) || quotes["NSE_EQ:" + item.sym];
+        const k = UPSTOX_INSTRUMENT_KEYS[item.sym] || `NSE_EQ|${item.sym}`;
+        const cleanK = k.replace(/^NSE_EQ[:|]/i, '');
+        const colonK = k.replace('|', ':');
+        const pipeK = k.replace(':', '|');
+        const q = quotesBySym[item.sym] || quotesBySym[k] || quotesBySym[colonK] || quotesBySym[pipeK] || quotesBySym[cleanK] || quotes["NSE_EQ:" + item.sym];
         if (q && q.last_price != null && Number(q.last_price) > 0) {
           item.spot = Number(q.last_price);
           if (q.volume != null && q.volume > 0) {
@@ -5452,6 +5480,10 @@ async function triggerLiveUpstoxScan() {
           updatedCount++;
         }
       });
+
+      renderTable();
+      statusEl.textContent = `🟢 Live Upstox Connected • ${updatedCount} Live Quotes Synced • Syncing Option Chains (0/${activeList.length})... • Expiry ${expCfg.dateDisplay}`;
+      statusEl.style.color = "var(--emerald)";
     }
 
     // 3. Sync Live Option Chain Volume & Metrics for All Active Leaders
@@ -5459,10 +5491,10 @@ async function triggerLiveUpstoxScan() {
     let chainSynced = 0;
     const batchSize = 6;
     for (let i = 0; i < chainTargets.length; i += batchSize) {
+      if (scanId !== currentScanId) return;
       const batch = chainTargets.slice(i, i + batchSize);
       await Promise.all(batch.map(async (candItem) => {
-        const k = UPSTOX_INSTRUMENT_KEYS[candItem.sym];
-        if (!k) return;
+        const k = UPSTOX_INSTRUMENT_KEYS[candItem.sym] || `NSE_EQ|${candItem.sym}`;
         try {
           const chainResp = await fetch(`https://api.upstox.com/v2/option/chain?instrument_key=${encodeURIComponent(k)}&expiry_date=${expCfg.dateISO}`, {
             headers: { "Authorization": `Bearer ${token}`, "Accept": "application/json" }
@@ -5480,9 +5512,12 @@ async function triggerLiveUpstoxScan() {
 
               let bestStrikeRow = null;
               let bestDist = Infinity;
+              let bestLiquidRow = null;
+              let bestLiquidDist = Infinity;
+
               chainRows.forEach(r => {
-                const cV = r.call_options?.market_data?.volume || 0;
-                const pV = r.put_options?.market_data?.volume || 0;
+                const cV = Number(r.call_options?.market_data?.volume || 0);
+                const pV = Number(r.put_options?.market_data?.volume || 0);
                 chainVol += (cV + pV);
 
                 const pOi = Number(r.put_options?.market_data?.oi || 0);
@@ -5497,10 +5532,18 @@ async function triggerLiveUpstoxScan() {
                   bestDist = dist;
                   bestStrikeRow = r;
                 }
+
+                const peMd = r.put_options?.market_data || {};
+                const hasQuote = (peMd.ltp > 0 || peMd.close_price > 0 || peMd.ask_price > 0 || peMd.bid_price > 0 || peMd.volume > 0 || peMd.oi > 0);
+                if (hasQuote && dist < bestLiquidDist) {
+                  bestLiquidDist = dist;
+                  bestLiquidRow = r;
+                }
               });
 
+              const finalStrikeRow = (bestLiquidRow && bestLiquidDist <= candItem.step * 2.5) ? bestLiquidRow : bestStrikeRow;
+
               if (chainVol > 0) candItem.fnoVol = chainVol;
-              candItem.putWallStrike = putWallK;
 
               if (!candItem.expiryChains) candItem.expiryChains = {};
               const expData = {
@@ -5508,17 +5551,11 @@ async function triggerLiveUpstoxScan() {
                 putWallStrike: putWallK
               };
 
-              if (bestStrikeRow) {
-                const peMd = bestStrikeRow.put_options?.market_data || {};
-                const peGreeks = bestStrikeRow.put_options?.option_greeks || {};
-                if (peMd.volume != null) {
-                  candItem.strikePeVol = Number(peMd.volume);
-                  expData.strikePeVol = Number(peMd.volume);
-                }
-                if (peMd.oi != null) {
-                  candItem.strikePeOi = Number(peMd.oi);
-                  expData.strikePeOi = Number(peMd.oi);
-                }
+              if (finalStrikeRow) {
+                const peMd = finalStrikeRow.put_options?.market_data || {};
+                const peGreeks = finalStrikeRow.put_options?.option_greeks || {};
+                if (peMd.volume != null) expData.strikePeVol = Number(peMd.volume);
+                if (peMd.oi != null) expData.strikePeOi = Number(peMd.oi);
 
                 let chainLtp = 0;
                 if (peMd.ltp != null && Number(peMd.ltp) > 0) chainLtp = Number(peMd.ltp);
@@ -5527,31 +5564,16 @@ async function triggerLiveUpstoxScan() {
                 else if (peMd.bid_price != null && Number(peMd.bid_price) > 0) chainLtp = Number(peMd.bid_price);
                 else if (peMd.prev_close_price != null && Number(peMd.prev_close_price) > 0) chainLtp = Number(peMd.prev_close_price);
 
-                if (chainLtp > 0) {
-                  candItem.shortPutLtp = chainLtp;
-                  expData.shortPutLtp = chainLtp;
-                }
+                if (chainLtp > 0) expData.shortPutLtp = chainLtp;
 
-                if (peGreeks.iv != null && Number(peGreeks.iv) > 0) {
-                  candItem.iv = Number(peGreeks.iv);
-                  expData.iv = Number(peGreeks.iv);
+                if (peGreeks.iv != null && Number(peGreeks.iv) > 0) expData.iv = Number(peGreeks.iv);
+                if (peGreeks.pop != null && Number(peGreeks.pop) > 0) expData.pop = Number(peGreeks.pop);
+                if (peGreeks.delta != null && Number(peGreeks.delta) !== 0) expData.shortDelta = Number(peGreeks.delta);
+                if (finalStrikeRow.underlying_spot_price != null && Number(finalStrikeRow.underlying_spot_price) > 0) {
+                  candItem.spot = Number(finalStrikeRow.underlying_spot_price);
                 }
-                if (peGreeks.pop != null && Number(peGreeks.pop) > 0) {
-                  candItem.pop = Number(peGreeks.pop);
-                  expData.pop = Number(peGreeks.pop);
-                }
-                if (peGreeks.delta != null && Number(peGreeks.delta) !== 0) {
-                  candItem.shortDelta = Number(peGreeks.delta);
-                  expData.shortDelta = Number(peGreeks.delta);
-                }
-                if (bestStrikeRow.underlying_spot_price != null && Number(bestStrikeRow.underlying_spot_price) > 0) {
-                  candItem.spot = Number(bestStrikeRow.underlying_spot_price);
-                }
-                const bestK = Number(bestStrikeRow.strike_price || 0);
-                if (bestK > 0) {
-                  candItem.shortStrike = bestK;
-                  expData.shortStrike = bestK;
-                }
+                const bestK = Number(finalStrikeRow.strike_price || 0);
+                if (bestK > 0) expData.shortStrike = bestK;
               }
 
               candItem.expiryChains[expCfg.code] = expData;
@@ -5562,21 +5584,28 @@ async function triggerLiveUpstoxScan() {
           console.warn(`Chain sync warning for ${candItem.sym}:`, err);
         }
       }));
+
+      if (scanId === currentScanId && (chainSynced % 18 === 0 || i + batchSize >= chainTargets.length)) {
+        statusEl.textContent = `🟢 Live Upstox Connected • ${updatedCount} Live Quotes Synced • ${chainSynced}/${chainTargets.length} Option Chains • Expiry ${expCfg.dateDisplay}`;
+        renderTable();
+      }
     }
 
-    if (quotesFetched || chainSynced > 0) {
-      statusEl.textContent = `🟢 Live Upstox Connected • ${updatedCount} Live Quotes Synced • ${chainSynced} Live Option Chains • Expiry ${expCfg.dateDisplay}`;
-      statusEl.style.color = "var(--emerald)";
-    } else {
-      statusEl.textContent = `Upstox API Connected • Synced ${expCfg.dateDisplay} (${updatedCount} Quotes • ${chainSynced} Chains)`;
-      statusEl.style.color = "var(--amber)";
+    if (scanId === currentScanId) {
+      if (quotesFetched || chainSynced > 0) {
+        statusEl.textContent = `🟢 Live Upstox Connected • ${updatedCount} Live Quotes Synced • ${chainSynced} Live Option Chains • Expiry ${expCfg.dateDisplay}`;
+        statusEl.style.color = "var(--emerald)";
+      } else {
+        statusEl.textContent = `Upstox API Connected • Synced ${expCfg.dateDisplay} (${updatedCount} Quotes • ${chainSynced} Chains)`;
+        statusEl.style.color = "var(--amber)";
+      }
+      renderTable();
     }
   } catch (err) {
     statusEl.textContent = `Upstox Offline / Local Mode Active • Synced ${expCfg.dateDisplay}`;
     statusEl.style.color = "var(--emerald)";
+    renderTable();
   }
-
-  renderTable();
 }
 
 function exportToCSV() {

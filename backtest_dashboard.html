@@ -659,21 +659,54 @@
           let exitReason = "WORTHLESS_EXPIRY";
           let exitPrice = 0;
           let isStoppedOut = false;
+          let isEarlyProfitTaken = false;
+          let exitSpreadLoss = 0;
 
-          // Stop loss check
-          if (stopLossMult && spotInfo && spotInfo.daily_closes) {
-            const stopThresh = cand.put_premium * stopLossMult;
-            for (let d = 1; d < spotInfo.daily_closes.length - 1; d++) {
+          // Day-by-day simulation (early profit take & stop-loss)
+          if (spotInfo && spotInfo.daily_closes && spotInfo.daily_closes.length > 1) {
+            const stopThresh = stopLossMult ? cand.put_premium * stopLossMult : null;
+            for (let d = 1; d < spotInfo.daily_closes.length; d++) {
               const dSpot = spotInfo.daily_closes[d];
               const dDate = spotInfo.daily_dates[d];
-              const daysLeft = Math.max(1, Math.round((new Date(c.expiry_date) - new Date(dDate)) / (1000*3600*24)));
-              const currPut = blackScholesPut(dSpot, cand.short_strike, daysLeft, cand.iv_pct);
-              if (currPut >= stopThresh) {
+              const daysLeft = Math.max(0, Math.round((new Date(c.expiry_date) - new Date(dDate)) / (1000 * 3600 * 24)));
+
+              let currPut = 0;
+              let currLongPut = 0;
+              if (daysLeft === 0) {
+                currPut = Math.max(0, cand.short_strike - dSpot);
+                currLongPut = (useSpread && longStrike) ? Math.max(0, longStrike - dSpot) : 0;
+              } else {
+                currPut = blackScholesPut(dSpot, cand.short_strike, daysLeft, cand.iv_pct);
+                currLongPut = (useSpread && longStrike) ? blackScholesPut(dSpot, longStrike, daysLeft, cand.iv_pct) : 0;
+              }
+
+              // A. Early Profit-Taking: 85% profit captured OR DTE <= 2 days safely OTM
+              if (!useSpread && (currPut <= cand.put_premium * 0.15 || (daysLeft <= 2 && dSpot >= cand.short_strike * 1.03))) {
+                isEarlyProfitTaken = true;
+                exitReason = "EARLY_PROFIT_TAKE";
+                exitDate = dDate;
+                finalSpot = dSpot;
+                exitPrice = currPut;
+                break;
+              } else if (useSpread && ((currPut - currLongPut) <= (netPremium * 0.15) || (daysLeft <= 2 && dSpot >= cand.short_strike * 1.03))) {
+                isEarlyProfitTaken = true;
+                exitReason = "EARLY_PROFIT_TAKE";
+                exitDate = dDate;
+                finalSpot = dSpot;
+                exitPrice = Math.max(0, currPut - currLongPut);
+                break;
+              }
+
+              // B. Stop-Loss Trigger
+              if (stopThresh && currPut >= stopThresh) {
                 isStoppedOut = true;
                 exitReason = "STOP_LOSS";
                 exitDate = dDate;
                 finalSpot = dSpot;
                 exitPrice = currPut;
+                if (useSpread) {
+                  exitSpreadLoss = Math.max(0, currPut - currLongPut);
+                }
                 break;
               }
             }
@@ -681,7 +714,9 @@
 
           let pnl = 0;
           if (isStoppedOut) {
-            pnl = (cand.put_premium - exitPrice) * cand.lot - friction;
+            pnl = useSpread ? (netCredit - exitSpreadLoss * cand.lot) - friction : (cand.put_premium - exitPrice) * cand.lot - friction;
+          } else if (isEarlyProfitTaken) {
+            pnl = useSpread ? (netCredit - exitPrice * cand.lot) - friction : (cand.put_premium - exitPrice) * cand.lot - friction;
           } else if (useSpread) {
             if (finalSpot >= cand.short_strike) {
               exitReason = "WORTHLESS_EXPIRY";
